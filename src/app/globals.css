@@ -1,0 +1,319 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   THEME INLINE — Custom design tokens from Desain.md
+   ============================================================ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+
+  /* shadcn semantic tokens */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand Colors */
+  --color-electric: var(--electric);
+  --color-cyan-brand: var(--cyan-brand);
+  --color-emerald-brand: var(--emerald-brand);
+  --color-research: var(--research);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ============================================================
+   LIGHT MODE — Colors from Desain.md
+   Background: #F8FAFC, Cards: #FFFFFF, Text: #0F172A
+   ============================================================ */
+:root {
+  --radius: 0.625rem;
+
+  /* Background & Surface */
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+
+  /* Brand Colors — from Desain.md */
+  --electric: #0EA5E9;      /* Primary - Electric Blue */
+  --cyan-brand: #06B6D4;    /* Secondary - Cyan */
+  --emerald-brand: #10B981; /* Accent - Emerald */
+  --research: #8B5CF6;      /* Research Accent - Purple */
+
+  /* Semantic Colors mapped to brand */
+  --primary: #0EA5E9;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F0F9FF;
+  --secondary-foreground: #0C4A6E;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #ECFDF5;
+  --accent-foreground: #065F46;
+  --destructive: #EF4444;
+
+  /* Borders & Inputs */
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #0EA5E9;
+
+  /* Liquid Glass */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+
+  /* Section Overlap */
+  --section-overlap: -3rem;
+}
+
+/* ============================================================
+   DARK MODE — Colors from Desain.md
+   Background: #0F172A, Cards: #1E293B, Text: #F8FAFC
+   ============================================================ */
+.dark {
+  --background: #020617;
+  --foreground: #F8FAFC;
+  --card: #0F172A;
+  --card-foreground: #F8FAFC;
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
+
+  --electric: #38BDF8;
+  --cyan-brand: #22D3EE;
+  --emerald-brand: #34D399;
+  --research: #A78BFA;
+
+  --primary: #38BDF8;
+  --primary-foreground: #0C4A6E;
+  --secondary: #1E293B;
+  --secondary-foreground: #E2E8F0;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #1E293B;
+  --accent-foreground: #34D399;
+  --destructive: #F87171;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #38BDF8;
+
+  --glass-bg: rgba(15, 23, 42, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  --section-overlap: -3rem;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+  }
+
+  /* Skip to content link for accessibility */
+  .skip-to-content {
+    @apply absolute left-4 top-4 z-[9999] -translate-y-[200%] rounded-lg px-4 py-2 font-semibold transition-transform focus:translate-y-0;
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  /* Selection color */
+  ::selection {
+    background: var(--electric);
+    color: white;
+  }
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+@layer utilities {
+  /* Liquid Glass Effect */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-subtle {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+    border: 1px solid var(--glass-border);
+  }
+
+  /* Text gradient utility */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--electric), var(--cyan-brand));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-accent {
+    background: linear-gradient(135deg, var(--emerald-brand), var(--cyan-brand));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-research {
+    background: linear-gradient(135deg, var(--research), var(--electric));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow effects */
+  .glow-sm {
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.15);
+  }
+  .glow-md {
+    box-shadow: 0 0 30px rgba(14, 165, 233, 0.2);
+  }
+
+  .dark .glow-sm {
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+  }
+  .dark .glow-md {
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
+  }
+
+  /* Smooth card hover */
+  .card-hover {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(14, 165, 233, 0.12);
+  }
+  .dark .card-hover:hover {
+    box-shadow: 0 12px 40px rgba(56, 189, 248, 0.1);
+  }
+
+  /* Section spacing */
+  .section-padding {
+    @apply px-4 py-16 sm:px-6 md:px-8 md:py-24 lg:py-28;
+  }
+
+  /* Container */
+  .container-main {
+    @apply mx-auto w-full max-w-7xl;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   SCROLLBAR STYLING (subtle)
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--electric);
+}
+
+/* ============================================================
+   TECH GLITCH & CHROMATIC ABERRATION EFFECTS
+   ============================================================ */
+@keyframes cyber-glitch-clip-1 {
+  0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, -1px); }
+  10% { clip-path: inset(60% 0 10% 0); transform: translate(1px, 2px); }
+  20% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, -2px); }
+  30% { clip-path: inset(80% 0 5% 0); transform: translate(2px, 1px); }
+  40% { clip-path: inset(30% 0 50% 0); transform: translate(-2px, -1px); }
+  50% { clip-path: inset(70% 0 15% 0); transform: translate(1px, -2px); }
+  60% { clip-path: inset(5% 0 90% 0); transform: translate(-1px, 2px); }
+  70% { clip-path: inset(90% 0 2% 0); transform: translate(2px, -1px); }
+  80% { clip-path: inset(40% 0 45% 0); transform: translate(-2px, 2px); }
+  90% { clip-path: inset(15% 0 75% 0); transform: translate(1px, -1px); }
+  100% { clip-path: inset(50% 0 30% 0); transform: translate(0, 0); }
+}
+
+@keyframes cyber-glitch-clip-2 {
+  0% { clip-path: inset(80% 0 20% 0); transform: translate(2px, 1px); }
+  10% { clip-path: inset(10% 0 60% 0); transform: translate(-2px, -2px); }
+  20% { clip-path: inset(70% 0 10% 0); transform: translate(1px, 2px); }
+  30% { clip-path: inset(5% 0 80% 0); transform: translate(-1px, -1px); }
+  40% { clip-path: inset(50% 0 30% 0); transform: translate(2px, 2px); }
+  50% { clip-path: inset(15% 0 70% 0); transform: translate(-1px, 1px); }
+  60% { clip-path: inset(90% 0 5% 0); transform: translate(2px, -2px); }
+  70% { clip-path: inset(2% 0 90% 0); transform: translate(-2px, 1px); }
+  80% { clip-path: inset(45% 0 40% 0); transform: translate(1px, -1px); }
+  90% { clip-path: inset(75% 0 15% 0); transform: translate(-1px, 2px); }
+  100% { clip-path: inset(30% 0 50% 0); transform: translate(0, 0); }
+}
+
+.glitch-overlay-1 {
+  clip-path: inset(50% 0 30% 0);
+  animation: cyber-glitch-clip-1 2.5s infinite steps(2, end);
+}
+
+.glitch-overlay-2 {
+  clip-path: inset(30% 0 50% 0);
+  animation: cyber-glitch-clip-2 2.5s infinite steps(2, end);
+}

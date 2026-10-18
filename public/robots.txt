@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://muhammadrehan.vercel.app/sitemap.xml
