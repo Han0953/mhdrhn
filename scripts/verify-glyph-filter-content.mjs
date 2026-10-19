@@ -29,11 +29,11 @@ check('two ESF outcomes add no fabricated category, certificate URL, team or pro
   assert.deepEqual(Array.from(event.outcomes),['Juara 3','Finalis Top 10 Essay']);
   for (const field of ['category','certificate','source','team','projectSlug']) assert.equal(event[field],undefined);
 });
-check('the full official font and its license are bundled and alternate is enabled', () => {
+check('the official brand font remains bundled, licensed and served locally', () => {
   const font = fs.readFileSync('src/app/fonts/Syne-Variable.ttf');
   assert.ok(font.includes(Buffer.from('ss04'))); assert.match(fs.readFileSync('src/app/fonts/OFL-Syne.txt','utf8'),/SIL OPEN FONT LICENSE/);
   assert.match(fs.readFileSync('src/app/globals.css','utf8'),/font-feature-settings:"ss04" 1/);
   assert.match(fs.readFileSync('src/app/layout.tsx','utf8'),/next\/font\/local/);
 });
-fs.writeFileSync('docs/execution/evidence/glyph-filter-content-2026-10-19/targeted-checks.json',JSON.stringify({results},null,2));
+fs.writeFileSync(process.env.MHDRHN_QA_GLYPH_EVIDENCE || 'docs/execution/evidence/glyph-filter-content-2026-10-19/targeted-checks.json',JSON.stringify({results},null,2));
 console.log(`${results.length} targeted regression checks passed.`);

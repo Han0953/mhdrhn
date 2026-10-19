@@ -7,6 +7,9 @@ Downloaded 19 October 2026 from the official Google Fonts repository:
 - SHA-256: `ce5ac77142a65cab2248a1a2ebb740b1d4d9c20b52488877d3ff664d1356104a`.
 
 The previously served Google Fonts Latin subset omitted the `ss04` alternate.
-This full file retains the double-storey g, enabled for all display text in CSS.
+This full file retains the double-storey g. Syne is used for display headings
+and the header/footer wordmark through `--font-brand`; `--font-display` aliases it.
+Body text remains Manrope. The owner requested preserving the original fonts:
+spacing, font size and clearance are adjusted without modifying font outlines.
 See the font designer's explanation: https://gitlab.com/bonjour-monde/fonderie/syne-typeface/-/issues/4.
 No font contours were modified. Font size and spacing remain responsive.

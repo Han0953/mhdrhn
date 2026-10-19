@@ -6,8 +6,8 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { RouteTransition } from "@/components/layout/RouteTransition";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { Footer } from "@/components/layout/Footer";
-// The full font retains ss04 (the complete, double-storey g); the Google subset omits it.
-const display = localFont({ src: "./fonts/Syne-Variable.ttf", variable: "--font-display", weight: "400 800", display: "swap" });
+// Original pairing: Syne for display text and the wordmark, Manrope for body text.
+const brand = localFont({ src: "./fonts/Syne-Variable.ttf", variable: "--font-brand", weight: "400 800", display: "swap" });
 const body = Manrope({ variable: "--font-body", subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
   title: { default: "Muhammad Rehan — Creative Engineering | mhdrhn.", template: "%s | mhdrhn." },
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="id" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+  return <html lang="id" suppressHydrationWarning className={`${brand.variable} ${body.variable}`}>
     <body><ThemeProvider><RouteTransition><a className="skip-link" href="#main-content">Lewati ke konten</a><SiteChrome/><main id="main-content" tabIndex={-1}>{children}</main><Footer/></RouteTransition></ThemeProvider></body>
   </html>;
 }

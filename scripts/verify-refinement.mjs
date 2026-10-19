@@ -105,12 +105,12 @@ if (origin) {
   check('Home SSR delivers nine ordered, readable sections and one H1', () => {
     assert.equal(response.status, 200);
     const sections = [...html.matchAll(/<section\b[^>]*data-home-section="([^"]+)"/g)].map(match => match[1]);
-    assert.deepEqual(sections, ['hero','introduction','selected-works','what-i-do','engineering-process','experience','lab','recognition','closing']);
+    assert.deepEqual(sections, ['hero','introduction','technology','latest-projects','electronics-projects','experience','recognition','certificates','closing']);
     assert.equal((html.match(/<h1\b/g) || []).length, 1);
     ['Creative Engineering.', 'Sense', 'Compute', 'Build', 'Velotow', 'ALGA NOVA', 'Trio Hengker Enjoyer', 'PVTE + HIMPTEKA'].forEach(text => assert.ok(html.includes(text), text));
   });
-  check('three public featured projects, five focus domains, team awards and separate incubators', () => {
-    assert.equal((html.match(/class="project-spread home-/g) || []).length, 3);
+  check('two five-project collections, five focus domains, team awards and separate incubators', () => {
+    assert.equal((html.match(/data-project-slug=/g) || []).length, 10);
     assert.ok(html.includes('/projects/website-pvte-himpteka'));
     assert.ok(html.includes('Mobile Application Testing / QA'));
     assert.ok(html.includes('/projects/iot-egg-incubator-blynk'));
