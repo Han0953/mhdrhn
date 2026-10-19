@@ -1,5 +1,6 @@
 import { HeroSection } from "@/components/sections/HeroSection";
 import { SignalDiagram } from "@/components/sections/SignalDiagram";
+import { TechnologyShowcase } from "@/components/sections/TechnologyShowcase";
 import { EditorialEntrance } from "@/components/effects/EditorialEntrance";
 import { SiteLink } from "@/components/layout/RouteTransition";
 import { Arrow, ProjectSpread } from "@/components/ui/Editorial";
@@ -28,6 +29,7 @@ export default function Home() {
     <section className="section home-focus" data-home-section="what-i-do" aria-labelledby="focus-heading">
       <div className="section-heading"><div><p className="eyebrow accent">04 / What I do</p><h2 id="focus-heading">Lintas medium.<br/>Satu rasa ingin tahu.</h2></div><p>Bidang yang saya eksplorasi, dari benda fisik sampai pengalaman digital.</p></div>
       <ol className="home-focus-list">{focusAreas.map((area, index) => <li key={area.title}><span className="meta">0{index + 1}</span><h3>{area.title}</h3><p>{area.description}</p></li>)}</ol>
+      <div className="home-capabilities"><p className="eyebrow accent">04.1 / Technology & capabilities</p><h3>Teknologi & kemampuan.</h3><TechnologyShowcase preview/></div>
     </section>
 
     <section className="section home-process" data-home-section="engineering-process" aria-labelledby="process-heading">

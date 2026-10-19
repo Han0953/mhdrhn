@@ -1,12 +1,7 @@
 // Content invariants and regression checks. Uses the installed TS compiler; no test dependency.
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import ts from 'typescript';
-const code = ts.transpileModule(fs.readFileSync('src/lib/content.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-const sandbox = { exports: {} };
-vm.runInNewContext(code, sandbox, { timeout: 1000 });
-const data = sandbox.exports;
+import { loadContent } from './load-content.mjs';
+const data = loadContent();
 let checks = 0;
 function check(name, test) { test(); checks++; console.log(`PASS ${name}`); }
 const projects = data.getPublishedProjects();
@@ -18,7 +13,7 @@ check('public records have context, summaries and honest limitations', () => {
   projects.forEach(p => ['title','summary','context','approach','limitation'].forEach(key => assert.ok(p[key]?.trim(), `${p.slug}: ${key}`)));
 });
 check('unknown and noncanonical slugs fail closed', () => {
-  ['../DATA.md', '__proto__', 'Vircuit', 'vircuit/', 'zhy-ai', 'not-published'].forEach(slug => assert.equal(data.getProjectBySlug(slug), undefined));
+  ['../DATA.md', '__proto__', 'Vircuit', 'vircuit/', 'project-manager', 'not-published'].forEach(slug => assert.equal(data.getProjectBySlug(slug), undefined));
 });
 check('outbound links use HTTPS without credentials', () => {
   [...projects.map(p => p.link).filter(Boolean), data.profile.github, ...data.achievements.map(a => a.source)].forEach(href => {

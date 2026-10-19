@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useRef, type ComponentProps, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { resolveNavigation } from "@/lib/navigation";
 import { createRouteWipe } from "@/lib/route-motion";
 
@@ -62,11 +62,21 @@ export function RouteTransition({ children }: { children: ReactNode }) {
   return <TransitionContext value={begin}>{children}<div className="route-transition-viewport" aria-hidden="true"><div className="route-wipe" ref={layer}/></div></TransitionContext>;
 }
 
-export function SiteLink({ href, onNavigate, ...props }: ComponentProps<typeof Link>) {
+function SlowLinkStatus() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const timer = setTimeout(() => setVisible(true), 1200); return () => clearTimeout(timer); }, []);
+  return visible ? <span className="navigation-notice" role="status">Halaman sedang dibuka. Navigasi tetap tersedia.</span> : null;
+}
+function LinkPendingStatus() {
+  const { pending } = useLinkStatus();
+  return pending ? <SlowLinkStatus/> : null;
+}
+
+export function SiteLink({ href, onNavigate, children, ...props }: ComponentProps<typeof Link>) {
   const begin = useContext(TransitionContext);
   return <Link href={href} {...props} onNavigate={event => {
     let cancelled = false;
     onNavigate?.({ preventDefault() { cancelled = true; event.preventDefault(); } });
     if (!cancelled && typeof href === "string") begin(href);
-  }}/>;
+  }}>{children}<LinkPendingStatus/></Link>;
 }

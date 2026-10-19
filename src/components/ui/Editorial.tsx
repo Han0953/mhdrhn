@@ -4,7 +4,8 @@ import type { Project } from "@/lib/content";
 import type { ReactNode } from "react";
 export function Arrow() { return <ArrowUpRight size={20} aria-hidden="true" />; }
 export function PageHeading({ eyebrow, children, description }: { eyebrow: string; children: ReactNode; description?: string }) {
-  return <header className="page-heading"><p className="eyebrow accent">{eyebrow}</p><h1 tabIndex={-1}>{children}<span className="accent">.</span></h1>{description && <p className="page-description">{description}</p>}</header>;
+  const hasPunctuation = typeof children === "string" && /[.!?]$/.test(children.trim());
+  return <header className="page-heading"><p className="eyebrow accent">{eyebrow}</p><h1 tabIndex={-1}>{children}{!hasPunctuation && <span className="accent">.</span>}</h1>{description && <p className="page-description">{description}</p>}</header>;
 }
 export function ProjectArt({ kind, title }: { kind: Project["visual"]; title: string }) {
   return <figure className={`project-art art-${kind}`}>

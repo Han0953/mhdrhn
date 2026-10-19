@@ -122,6 +122,7 @@ if (origin) {
     assert.match(html, /id="theme-options"[^>]*aria-hidden="true"[^>]*inert=""/);
   });
 }
-fs.mkdirSync('docs/execution/evidence/refinement-2026-10-19', { recursive: true });
-fs.writeFileSync('docs/execution/evidence/refinement-2026-10-19/automated-checks.json', JSON.stringify({ origin: origin || null, results, note: 'Controller tests use deterministic DOM/timer doubles. They are not a browser heap measurement.' }, null, 2));
+const evidence = process.env.MHDRHN_QA_REFINEMENT_EVIDENCE || 'docs/execution/evidence/refinement-2026-10-19/automated-checks.json';
+fs.mkdirSync(evidence.slice(0, evidence.lastIndexOf('/')), { recursive: true });
+fs.writeFileSync(evidence, JSON.stringify({ origin: origin || null, results, note: 'Controller tests use deterministic DOM/timer doubles. They are not a browser heap measurement.' }, null, 2));
 console.log(`${results.length} refinement checks passed.${origin ? ' Includes actual HTTP/SSR.' : ' HTTP/SSR not run without MHDRHN_QA_ORIGIN.'}`);

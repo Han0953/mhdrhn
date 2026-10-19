@@ -134,6 +134,7 @@ check('unmount clears hover timeout and every owned listener', () => {
   assert.equal(scheduled.size, 0);
   [...listeners.document.values(), ...listeners.window.values()].forEach(set => assert.equal(set.size, 0));
 });
-fs.mkdirSync('docs/execution/evidence/refinement-2026-10-19', { recursive: true });
-fs.writeFileSync('docs/execution/evidence/refinement-2026-10-19/theme-handler-checks.json', JSON.stringify({ method: 'Actual component handlers with JSX, hooks, DOM and timer doubles; not browser QA or storage/system emulation.', results }, null, 2));
+const evidence = process.env.MHDRHN_QA_THEME_EVIDENCE || 'docs/execution/evidence/refinement-2026-10-19/theme-handler-checks.json';
+fs.mkdirSync(evidence.slice(0, evidence.lastIndexOf('/')), { recursive: true });
+fs.writeFileSync(evidence, JSON.stringify({ method: 'Actual component handlers with JSX, hooks, DOM and timer doubles; not browser QA or storage/system emulation.', results }, null, 2));
 console.log(`${results.length} deterministic theme handler checks passed.`);
