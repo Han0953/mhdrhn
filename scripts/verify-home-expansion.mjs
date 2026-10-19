@@ -4,11 +4,12 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { loadContent } from './load-content.mjs';
 
-const directory = 'docs/execution/evidence/home-expansion-2026-10-19';
+const directory = process.env.MHDRHN_QA_HOME_EVIDENCE || 'docs/execution/evidence/home-expansion-2026-10-19';
 fs.mkdirSync(directory, {recursive:true});
 const results = [];
 async function check(name, fn) { await fn(); results.push({name,status:'PASS'}); console.log(`PASS ${name}`); }
 const home = loadContent('src/lib/home-content.ts');
+const inventory = loadContent('src/lib/technology-inventory.ts');
 await check('latest uses only known years, descending; no invented dates or duplicate identities',()=>{
   assert.equal(home.latestProjects.length,5);
   assert.deepEqual(Array.from(home.latestProjects,p=>p.slug),['vircuit','aura-pod','website-pvte-himpteka','iot-egg-incubator-research','website-lazismu-kuansing']);
@@ -94,13 +95,13 @@ const origin=process.env.MHDRHN_QA_ORIGIN;
 if(origin){
   assert.ok(['127.0.0.1','localhost'].includes(new URL(origin).hostname));
   const response=await fetch(origin);assert.equal(response.status,200);const html=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
-  await check('SSR includes 10 project identities, 11 named logo marks, five outcomes and honest certificate categories',()=>{
-    assert.equal((html.match(/data-project-slug=/g)||[]).length,10);assert.equal((html.match(/data-technology=/g)||[]).length,11);assert.equal((html.match(/data-home-achievement=/g)||[]).length,5);assert.equal((html.match(/data-certificate-category=/g)||[]).length,3);
+  await check('SSR includes 10 project identities, the complete technology inventory, five outcomes and honest certificate categories',()=>{
+    assert.equal((html.match(/data-project-slug=/g)||[]).length,10);assert.equal((html.match(/data-technology=/g)||[]).length,inventory.technologyInventoryItems.length);assert.equal((html.match(/data-home-achievement=/g)||[]).length,5);assert.equal((html.match(/data-certificate-category=/g)||[]).length,3);
     for(const p of [...home.latestProjects,...home.electronicsProjects])assert.ok(html.includes(`/projects/${p.slug}`));
     for(const text of ['Metadata belum tersedia','Team Stack','Learning','bukan dokumentasi','belum menyatakan sertifikasi'])assert.ok(html.includes(text));
     assert.equal((html.match(/<h1\b/g)||[]).length,1);assert.doesNotMatch(html,/AWS Certified|credential ID|Sertifikat terverifikasi/);
   });
-  await check('all technology, project and achievement Home internal links and hashes have real destinations',async()=>{
+  await check('project and achievement Home internal links and hashes have real destinations; technologies are informational',async()=>{
     const links=[...html.matchAll(/href="(\/(?:about|projects|achievements|lab)[^"]*)"/g)].map(m=>m[1].replaceAll('&amp;','&'));
     const cache=new Map();for(const link of new Set(links)){const [path,hash]=link.split('#');if(!cache.has(path)){const r=await fetch(origin+path);assert.equal(r.status,200,path);cache.set(path,await r.text());}if(hash)assert.ok(cache.get(path).includes(`id="${hash}"`),link);}
   });

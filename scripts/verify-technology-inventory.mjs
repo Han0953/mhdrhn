@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { loadContent } from './load-content.mjs';
+
+const directory = 'docs/execution/evidence/technology-inventory-2026-10-19';
+fs.mkdirSync(directory,{recursive:true});
+const master=fs.readFileSync('agent/docs/DATA.md','utf8');
+const {technologyInventoryGroups:groups,technologyInventoryItems:items,ownerSoftware,inventoryIconNames}=loadContent('src/lib/technology-inventory.ts');
+const {skillGroups}=loadContent('src/lib/portfolio.ts');
+const results=[];
+async function check(name,fn){await fn();results.push({name,status:'PASS'});console.log(`PASS ${name}`);}
+function sourceItems(section){
+  const source=master.match(new RegExp(`^## 12\\.${section} [^\\n]+\\n([\\s\\S]*?)(?=^##? |$(?![\\s\\S]))`,'m'));
+  assert.ok(source,`Missing DATA 12.${section}`);
+  return [...source[1].matchAll(/^- (.+)$/gm)].flatMap(match=>match[1].replace(/\s*\([^)]*\)/g,'').split(/,\s*/)).map(name=>name.trim());
+}
+await check('all DATA 12.1–8 inventory entries are present exactly once in Home, independently parsed from the document',()=>{
+  const aliases={'Bug Hunting pada aplikasi/game mobile':'Bug Hunting','User Experience Testing pada aplikasi mobile':'User Experience Testing'};
+  for(let section=1;section<=8;section++)for(const raw of sourceItems(section)){
+    const name=aliases[raw]??raw;const matches=items.filter(item=>item.name===name);
+    assert.equal(matches.length,1,`DATA 12.${section}: ${name}`);assert.equal(matches[0].source,`DATA §12.${section}`);
+  }
+});
+await check('13 requested applications match DATA 12.9 and remain in Tools; MIT App Inventor is software too',()=>{
+  const expected=['VS Code','Antigravity IDE','Codex','Canva','Microsoft Office','Arduino IDE','Android Studio','Git','Wokwi','AutoCAD','Cirkit Designer IDE','Open Code','Claude Code'];
+  assert.deepEqual(Array.from(ownerSoftware,item=>item.name),expected);assert.deepEqual(sourceItems(9),expected);
+  const tools=groups.find(g=>g.id==='tools');assert.equal(tools.items.length,14);
+  expected.concat('MIT App Inventor').forEach(name=>assert.ok(tools.items.some(item=>item.name===name),name));
+  for(const name of ['Monaco Editor','React Flow / XYFlow','Vitest','Playwright','Laravel Pint'])assert.ok(!tools.items.some(item=>item.name===name),name);
+});
+await check('requested and source Learning markers are consistent in Home and About',()=>{
+  const learning=['Python','MicroPython','Dart','Flutter','Firebase','STM32','Raspberry Pi'];
+  assert.deepEqual(Array.from(items.filter(item=>item.learning),item=>item.name).sort(),learning.toSorted());
+  for(const name of learning)assert.equal(skillGroups.flatMap(g=>g.skills).find(item=>item.name===name)?.learning,true,name);
+  assert.ok(master.includes('- Dart (**Learning**)'),'Preserve owner Dart edit');
+});
+await check('every item has one stable ID, name, known icon, source, and no navigation destination',()=>{
+  assert.equal(new Set(items.map(item=>item.id)).size,items.length);assert.equal(new Set(items.map(item=>item.name)).size,items.length);
+  for(const item of items){assert.ok(inventoryIconNames.includes(item.icon),item.name);assert.match(item.source,/^DATA §(?:9|12)\./);assert.ok(!('href'in item));}
+});
+await check('hardware and IoT inventories are complete while project code tools retain accurate provenance',()=>{
+  const embedded=groups.find(g=>g.id==='embedded');assert.equal(embedded.items.length,11);
+  for(const name of ['Arduino Uno','Arduino Nano','ESP8266','ESP32','STM32','Raspberry Pi','MQTT','Blynk / Blynk Cloud HTTP API','Remote Monitoring','Smart Automation','Sensor Monitoring'])assert.ok(embedded.items.some(item=>item.name===name),name);
+  for(const name of ['TypeScript','Monaco Editor','React Flow / XYFlow','Vitest','Playwright'])assert.equal(items.find(item=>item.name===name).basis,'team');
+  assert.equal(items.find(item=>item.name==='Laravel Pint').basis,'project');
+});
+const origin=process.env.MHDRHN_QA_ORIGIN;
+if(origin){
+  assert.ok(['localhost','127.0.0.1'].includes(new URL(origin).hostname));
+  const response=await fetch(origin);assert.equal(response.status,200);const html=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
+  const section=html.match(/<section\b[^>]*data-home-section="technology"[^>]*>([\s\S]*?)<\/section>/)?.[1];assert.ok(section);
+  await check('actual Home SSR technology section contains no links, buttons, tabindex or navigation affordances',()=>{
+    assert.doesNotMatch(section,/<a\b|<button\b|tabindex=|role="(?:link|button)"|Seluruh bidang &amp; kemampuan/i);
+    assert.equal((section.match(/data-inventory-group=/g)||[]).length,4);
+  });
+  await check('all 68 source-backed names and decorative SVGs render in real SSR, with Learning on exactly seven records',()=>{
+    assert.equal(items.length,68);assert.equal((section.match(/data-technology=/g)||[]).length,items.length);
+    assert.equal((section.match(/<svg\b/g)||[]).length,items.length);assert.equal((section.match(/data-basis="learning"/g)||[]).length,7);
+    for(const item of items){const row=section.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);}
+  });
+  await check('About keeps new learning fields and the unrelated Home/story content remains available',async()=>{
+    const about=await fetch(origin+'/about');assert.equal(about.status,200);const text=await about.text();for(const name of ['Raspberry Pi','MicroPython','STM32','Dart'])assert.ok(text.includes(name));
+    assert.equal((html.match(/data-project-slug=/g)||[]).length,10);assert.equal((html.match(/data-home-achievement=/g)||[]).length,5);
+  });
+}
+fs.writeFileSync(`${directory}/inventory-checks.json`,JSON.stringify({origin:origin??null,total:items.length,groups:groups.map(g=>({id:g.id,count:g.items.length})),results},null,2));
+console.log(`${results.length} technology inventory checks passed.`);

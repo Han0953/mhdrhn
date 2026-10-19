@@ -76,7 +76,7 @@ for (const [recordsOfKind, category] of [[portfolio.research,'research'],[portfo
 for (const [index, group] of portfolio.skillGroups.entries()) for (const skill of group.skills) {
   check(`source inventory item: ${group.id}/${skill.name}`, () => {
     assert.ok(sourceSection(`12.${index+1}`).includes(skill.name), skill.name);
-    if (['Flutter','Firebase'].includes(skill.name)) assert.equal(skill.learning,true);
+    if (['Flutter','Firebase','Dart','Python','MicroPython','STM32','Raspberry Pi'].includes(skill.name)) assert.equal(skill.learning,true);
     row(`skill/${group.id}/${skill.name}`,'skill inventory',`DATA §12.${index+1}`,'/about',[skill.name],skill.learning ? 'Learning, not proficiency' : group.description);
   });
 }
