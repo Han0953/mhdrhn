@@ -49,7 +49,7 @@ await check('a clipboard response after unmount cannot update removed UI',async(
 function navigationRuntime(pending) {
   const timers=new Map(); let serial=0, began=0;
   const test=runtime('src/components/layout/RouteTransition.tsx',{
-    begin(){began++;}, 'next/link':{default:'Link',useLinkStatus:()=>({pending})}, 'next/navigation':{}, '@/lib/navigation':{}, '@/lib/route-motion':{},
+    begin(){began++;}, 'next/link':{default:'Link',useLinkStatus:()=>({pending})}, 'next/navigation':{}, '@/lib/navigation':{}, '@/lib/route-motion':{}, '@/lib/route-readiness':{},
   },{setTimeout(callback,delay){const id=++serial;timers.set(id,{callback,delay});return id;},clearTimeout(id){timers.delete(id);}});
   const link=test.render(test.exports.SiteLink,{href:'/projects',children:'Projects'});
   return {test,timers,link,get began(){return began;}};

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { loadContent } from './load-content.mjs';
 
-const directory = 'docs/execution/evidence/technology-inventory-2026-10-19';
+const directory = process.env.MHDRHN_QA_TECHNOLOGY_EVIDENCE || 'docs/execution/evidence/technology-inventory-2026-10-19';
 fs.mkdirSync(directory,{recursive:true});
 const master=fs.readFileSync('agent/docs/DATA.md','utf8');
 const {technologyInventoryGroups:groups,technologyInventoryItems:items,ownerSoftware,inventoryIconNames}=loadContent('src/lib/technology-inventory.ts');

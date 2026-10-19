@@ -3,63 +3,100 @@
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { resolveNavigation } from "@/lib/navigation";
+import { getNavigationIndex, navigation, resolveNavigation } from "@/lib/navigation";
 import { createRouteWipe } from "@/lib/route-motion";
+import { awaitRouteAssets } from "@/lib/route-readiness";
 
 const TransitionContext = createContext<(href: string) => void>(() => {});
+const ReadyContext = createContext<(path: string) => void>(() => {});
+
+export function RouteReady() {
+  const ready = useContext(ReadyContext);
+  const pathname = usePathname();
+  useEffect(() => ready(pathname), [ready, pathname]);
+  return null;
+}
 
 export function RouteTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const layer = useRef<HTMLDivElement>(null);
-  const pending = useRef<string | null>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
+  const pending = useRef<{ id: number; path: string; abort: AbortController; focus: HTMLElement | null } | null>(null);
   const previous = useRef(pathname);
   const wipe = useRef<ReturnType<typeof createRouteWipe> | null>(null);
 
+  const start = useCallback((path: string, from: string, history = false) => {
+    pending.current?.abort.abort();
+    pending.current = null;
+    document.querySelectorAll<HTMLDialogElement>("#site-menu[open], #azura-dialog[open]").forEach(dialog => dialog.close());
+    const movement = resolveNavigation(from, path);
+    if (layer.current) layer.current.dataset.kind = movement.kind;
+    const focus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const id = wipe.current?.play(movement.direction, history, navigation[getNavigationIndex(path)]?.label ?? "Halaman");
+    if (id) pending.current = { id, path, abort: new AbortController(), focus };
+  }, []);
   const begin = useCallback((href: string) => {
     const url = new URL(href, window.location.href);
-    if (url.origin !== window.location.origin || url.pathname === window.location.pathname || url.hash) return;
-    pending.current = url.pathname;
-    const movement = resolveNavigation(window.location.pathname, url.pathname);
-    if (layer.current) layer.current.dataset.kind = movement.kind;
-    wipe.current?.play(movement.direction);
+    if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+    start(url.pathname, window.location.pathname);
+  }, [start]);
+  const ready = useCallback((path: string) => {
+    const request = pending.current;
+    if (!request || request.path !== path) return;
+    void awaitRouteAssets(document.querySelector("main"), request.abort.signal).then(settled => {
+      if (settled && pending.current === request) wipe.current?.ready(request.id);
+    });
   }, []);
 
   useEffect(() => {
-    const controller = createRouteWipe(() => layer.current, () => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const controller = createRouteWipe(() => layer.current, () => window.matchMedia("(prefers-reduced-motion: reduce)").matches, (active, completed) => {
+      if (content.current) content.current.inert = active;
+      if (active) viewport.current?.focus({ preventScroll: true });
+      else {
+        const request = pending.current;
+        pending.current = null;
+        request?.abort.abort();
+        if (completed) document.querySelector<HTMLElement>("main h1, main")?.focus({ preventScroll: true });
+        else if (request?.focus?.isConnected) request.focus.focus({ preventScroll: true });
+      }
+    });
     wipe.current = controller;
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onPreference = () => { if (media.matches) controller.clear(); };
-    const onHidden = () => { if (document.hidden) controller.clear(); };
+    const onPreference = () => controller.preferenceChanged();
+    const onEscape = (event: KeyboardEvent) => { if (event.key === "Escape") controller.clear(); };
     const onHistory = () => {
-      pending.current = null;
-      const movement = resolveNavigation(previous.current, window.location.pathname);
-      if (layer.current) layer.current.dataset.kind = movement.kind;
-      controller.play(movement.direction, true);
+      start(window.location.pathname, previous.current, true);
     };
     media.addEventListener("change", onPreference);
     window.addEventListener("popstate", onHistory);
-    document.addEventListener("visibilitychange", onHidden);
+    document.addEventListener("keydown", onEscape);
     return () => {
       controller.clear();
       wipe.current = null;
       media.removeEventListener("change", onPreference);
       window.removeEventListener("popstate", onHistory);
-      document.removeEventListener("visibilitychange", onHidden);
+      document.removeEventListener("keydown", onEscape);
+      pending.current?.abort.abort();
     };
-  }, []);
+  }, [start]);
 
   useEffect(() => {
-    if (previous.current === pathname) return;
     previous.current = pathname;
-    const requested = pending.current === pathname;
-    pending.current = null;
-    // Router owns history/scroll. Only fill a missing focus target for a new Link navigation.
-    if (requested && !document.querySelector("main")?.contains(document.activeElement)) {
-      document.querySelector<HTMLElement>("main h1, main")?.focus({ preventScroll: true });
-    }
   }, [pathname]);
 
-  return <TransitionContext value={begin}>{children}<div className="route-transition-viewport" aria-hidden="true"><div className="route-wipe" ref={layer}/></div></TransitionContext>;
+  return <TransitionContext value={begin}><ReadyContext value={ready}><div ref={content}>{children}</div></ReadyContext>
+    <div className="route-transition-viewport" ref={viewport} tabIndex={-1} aria-hidden="true" aria-label="Transisi halaman">
+      <div className="route-wipe" ref={layer}>
+        <span className="eyebrow" aria-hidden="true">Membuka halaman</span>
+        <span className="route-title" aria-hidden="true"/>
+        <span className="sr-only" role="status"/>
+        <div className="route-recovery">Pemuatan lebih lama dari biasanya. Tekan Escape atau tutup transisi untuk kembali mengakses navigasi.
+          <button type="button" onClick={() => wipe.current?.clear()}>Tutup transisi</button>
+        </div>
+      </div>
+    </div>
+  </TransitionContext>;
 }
 
 function SlowLinkStatus() {

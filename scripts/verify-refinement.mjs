@@ -33,68 +33,50 @@ check('same path, queries, hashes and unknown groups never invent a tab', () => 
   assert.equal(navigation.resolveNavigation('/missing', '/contact').direction, 0);
 });
 
-let reduced = false;
-let serial = 0;
-const timers = new Map();
-const animations = [];
-const layer = {
-  dataset: {},
-  animate(frames, options) {
-    const animation = { frames, options, onfinish: null, cancelled: false, cancel() { this.cancelled = true; } };
-    animations.push(animation); return animation;
-  },
-};
-const { createRouteWipe } = load('src/lib/route-motion.ts', {
-  setTimeout(callback, delay) { const id = ++serial; timers.set(id, { callback, delay }); return id; },
-  clearTimeout(id) { timers.delete(id); },
+let reduced=false,serial=0;
+const timers=new Map(),animations=[],releases=[];
+const title={},status={};
+const layer={dataset:{},style:{},parentElement:{dataset:{},setAttribute(){}},querySelector(selector){return selector==='.route-title'?title:status;},animate(frames,options){const a={frames,options,onfinish:null,cancelled:false,cancel(){this.cancelled=true;}};animations.push(a);return a;}};
+const {createRouteWipe}=load('src/lib/route-motion.ts',{setTimeout(callback,delay){const id=++serial;timers.set(id,{callback,delay});return id;},clearTimeout(id){timers.delete(id);}});
+const wipe=createRouteWipe(()=>layer,()=>reduced,(active,completed)=>releases.push({active,completed}));
+check('entry mirrors direction and destination title; real pending holds solid red',()=>{
+ wipe.play(1,false,'About');assert.equal(title.textContent,'About');assert.equal(animations.at(-1).frames[0].transform,'translateX(101%)');
+ animations.at(-1).onfinish();assert.equal(layer.dataset.phase,'holding');assert.equal(layer.style.transform,'translateX(0)');assert.equal(timers.size,1);
+ const stall=[...timers.values()][0];assert.equal(stall.delay,12000);stall.callback();assert.equal(layer.dataset.stalled,'true');assert.equal(layer.dataset.phase,'holding');
 });
-const wipe = createRouteWipe(() => layer, () => reduced);
-check('right and left wipes mirror keyframes, remain bounded, and mark their direction', () => {
-  wipe.play(1); const right = animations.at(-1);
-  assert.equal(right.frames[0].transform, 'translateX(101%)');
-  assert.equal(right.frames[2].transform, 'translateX(-101%)');
-  assert.equal(layer.dataset.direction, 'right'); assert.equal(right.options.duration, 360);
-  wipe.play(-1); const left = animations.at(-1);
-  assert.equal(right.cancelled, true); assert.equal(left.frames[0].transform, 'translateX(-101%)');
-  assert.equal(layer.dataset.direction, 'left'); assert.equal(timers.size, 1);
+check('only destination ready reveals; stale completion cannot reveal next route',()=>{
+ const old=wipe.play(-1,false,'Home');animations.at(-1).onfinish();
+ const latest=wipe.play(1,false,'Contact');animations.at(-1).onfinish();wipe.ready(old);assert.equal(layer.dataset.phase,'holding');
+ wipe.ready(latest);assert.equal(layer.dataset.phase,'leaving');assert.equal(animations.at(-1).frames[1].transform,'translateX(-101%)');animations.at(-1).onfinish();
+ assert.equal(layer.dataset.phase,'idle');assert.equal(timers.size,0);assert.equal(releases.at(-1).completed,true);
 });
-check('100 rapid requests keep exactly one animation and watchdog', () => {
-  for (let i = 0; i < 100; i++) wipe.play(i % 2 ? 1 : -1);
-  assert.equal(animations.filter(animation => !animation.cancelled).length, 1);
-  assert.equal(timers.size, 1);
+check('fast readiness still reaches full cover before exiting',()=>{
+ const id=wipe.play(-1);wipe.ready(id);assert.equal(layer.dataset.phase,'entering');animations.at(-1).onfinish();assert.equal(layer.dataset.phase,'leaving');
+ assert.equal(animations.at(-1).frames[0].transform,'translateX(0)');assert.equal(animations.at(-1).frames[1].transform,'translateX(101%)');animations.at(-1).onfinish();
 });
-check('normal completion releases owned animation and timer', () => {
-  animations.at(-1).onfinish();
-  assert.equal(animations.filter(animation => !animation.cancelled).length, 0);
-  assert.equal(timers.size, 0);
+check('100 rapid requests own one animation and two timers, cancellation releases all',()=>{
+ for(let i=0;i<100;i++)wipe.play(i%2?1:-1);assert.equal(animations.filter(a=>!a.cancelled).length,1);assert.equal(timers.size,2);wipe.clear();assert.equal(timers.size,0);assert.equal(releases.at(-1).completed,false);
 });
-check('watchdog clears a missing finish callback within 600ms', () => {
-  wipe.play(1);
-  const watchdog = [...timers.values()][0]; assert.equal(watchdog.delay, 600);
-  watchdog.callback(); assert.equal(timers.size, 0); assert.equal(animations.at(-1).cancelled, true);
+check('a queued callback from a superseded exit cannot clear the new cover',()=>{
+ const old=wipe.play(1);animations.at(-1).onfinish();wipe.ready(old);const stale=animations.at(-1).onfinish;
+ wipe.play(-1,false,'Home');stale();assert.equal(layer.dataset.phase,'entering');assert.equal(title.textContent,'Home');wipe.clear();
 });
-check('history mirrors direction with a shorter, nonblocking 260ms duration', () => {
-  wipe.play(-1, true); assert.equal(layer.dataset.navigation, 'history');
-  assert.equal(animations.at(-1).options.duration, 260); wipe.clear();
+check('missing animation finish watchdog enters holding instead of revealing unloaded content',()=>{
+ const id=wipe.play(1);[...timers.values()].find(t=>t.delay===340).callback();assert.equal(layer.dataset.phase,'holding');wipe.ready(id);[...timers.values()].find(t=>t.delay===340).callback();assert.equal(layer.dataset.phase,'idle');assert.equal(timers.size,0);
 });
-check('live reduced-motion cancellation and unmount cleanup leave zero owned resources', () => {
-  wipe.play(1); reduced = true; wipe.clear();
-  assert.equal(wipe.play(-1), false); assert.equal(timers.size, 0);
-  assert.equal(animations.filter(animation => !animation.cancelled).length, 0);
-  reduced = false;
-  for (let i = 0; i < 20; i++) { wipe.play(1); wipe.clear(); }
-  assert.equal(timers.size, 0);
-  assert.equal(animations.filter(animation => !animation.cancelled).length, 0);
+check('history has mirrored 160ms entry and normal readiness semantics',()=>{
+ const id=wipe.play(-1,true,'Home');assert.equal(layer.dataset.navigation,'history');assert.equal(animations.at(-1).options.duration,160);animations.at(-1).onfinish();wipe.ready(id);animations.at(-1).onfinish();
 });
-check('missing or throwing animation APIs fall back without throwing or timers', () => {
-  assert.equal(createRouteWipe(() => null, () => false).play(1), false);
-  assert.equal(createRouteWipe(() => ({}), () => false).play(1), false);
-  assert.equal(createRouteWipe(() => ({ dataset: {}, animate() { throw new Error('unavailable'); } }), () => false).play(1), false);
-  assert.equal(timers.size, 0);
+check('reduced motion uses a static cover, waits for ready, and live preference cancels movement',()=>{
+ reduced=true;const count=animations.length,id=wipe.play(1);assert.equal(animations.length,count);assert.equal(layer.dataset.phase,'holding');wipe.ready(id);assert.equal(layer.dataset.phase,'idle');
+ reduced=false;wipe.play(1);reduced=true;wipe.preferenceChanged();assert.equal(layer.dataset.phase,'holding');assert.equal(animations.at(-1).cancelled,true);wipe.clear();reduced=false;assert.equal(timers.size,0);
 });
-check('no transition for a zero-direction request', () => {
-  const count = animations.length; assert.equal(wipe.play(0), false);
-  assert.equal(animations.length, count); assert.equal(timers.size, 0);
+check('unavailable or throwing animation API holds a static cover until ready',()=>{
+ assert.equal(createRouteWipe(()=>null,()=>false).play(1),false);
+ for(const mode of ['missing','throw']){const fallback={...layer,dataset:{},animate:mode==='missing'?undefined:()=>{throw Error('unavailable');}};const w=createRouteWipe(()=>fallback,()=>false);const id=w.play(1);assert.equal(fallback.dataset.phase,'holding');w.ready(id);assert.equal(fallback.dataset.phase,'idle');}assert.equal(timers.size,0);
+});
+check('unmount and zero-direction requests leave no animation or timer',()=>{
+ assert.equal(wipe.play(0),false);for(let i=0;i<20;i++){wipe.play(1);wipe.clear();}assert.equal(timers.size,0);assert.equal(animations.filter(a=>!a.cancelled).length,0);
 });
 
 const origin = process.env.MHDRHN_QA_ORIGIN;

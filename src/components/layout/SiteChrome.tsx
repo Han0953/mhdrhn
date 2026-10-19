@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, X, MessageCircle, Send, RotateCcw, ArrowUpRight } from "lucide-react";
+import { Menu, X, MessageCircle, Send, RotateCcw, ArrowUpRight, Maximize2, Minimize2, Minus } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SiteLink } from "./RouteTransition";
 import { navigation } from "@/lib/navigation";
@@ -36,6 +36,7 @@ export function SiteChrome() {
   const log = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatWide, setChatWide] = useState(false);
   const [messages, setMessages] = useState<Exchange[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
@@ -68,7 +69,8 @@ export function SiteChrome() {
   }
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); send(draft); }
   function closeMenu() { menu.current?.close(); }
-  function closeChat() { chat.current?.close(); }
+  function closeChat() { chat.current?.close(); setChatWide(false); }
+  function minimizeChat() { chat.current?.close(); }
   function active(href: string) { return href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`); }
 
   return <>
@@ -82,9 +84,13 @@ export function SiteChrome() {
       <nav aria-label="Menu mobile">{navigation.map((item, index) => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined} onNavigate={closeMenu}><span className="meta">0{index + 1}</span>{item.label}<ArrowUpRight size={24} aria-hidden="true"/></SiteLink>)}</nav>
       <p className="meta menu-note">Electronics · Code · Research</p>
     </dialog>
-    <button className="azura-launcher" type="button" onClick={openChat} aria-label="Buka Azura — demo lokal" aria-expanded={chatOpen} aria-controls="azura-dialog"><MessageCircle size={21} aria-hidden="true"/><span>Azura<span className="launcher-note">Demo lokal</span></span></button>
-    <dialog ref={chat} id="azura-dialog" className="azura-dialog" aria-labelledby="azura-heading" aria-describedby="azura-description" onKeyDown={containDialogFocus} onClose={() => setChatOpen(false)}>
-      <div className="dialog-top"><div><p className="eyebrow accent">Demo lokal</p><h2 id="azura-heading">Azura.</h2></div><button className="icon-button" type="button" onClick={closeChat} aria-label="Tutup Azura"><X aria-hidden="true"/></button></div>
+    <button className="azura-launcher" type="button" onClick={openChat} aria-label="Buka Azura — demo lokal" title="Azura · Demo lokal" aria-expanded={chatOpen} aria-controls="azura-dialog"><MessageCircle size={21} aria-hidden="true"/></button>
+    <dialog ref={chat} id="azura-dialog" className="azura-dialog" data-size={chatWide ? "wide" : "normal"} aria-labelledby="azura-heading" aria-describedby="azura-description" onKeyDown={containDialogFocus} onClose={() => setChatOpen(false)}>
+      <div className="dialog-top"><div><p className="eyebrow accent">Demo lokal</p><h2 id="azura-heading">Azura.</h2></div><div className="dialog-actions">
+        <button className="icon-button" type="button" onClick={() => setChatWide(value => !value)} aria-label={chatWide ? "Kecilkan panel Azura" : "Lebarkan panel Azura"} title={chatWide ? "Kecilkan panel" : "Lebarkan panel"} aria-pressed={chatWide}>{chatWide ? <Minimize2 size={19} aria-hidden="true"/> : <Maximize2 size={19} aria-hidden="true"/>}</button>
+        <button className="icon-button" type="button" onClick={minimizeChat} aria-label="Minimalkan Azura" title="Minimalkan"><Minus size={19} aria-hidden="true"/></button>
+        <button className="icon-button" type="button" onClick={closeChat} aria-label="Tutup Azura" title="Tutup"><X size={20} aria-hidden="true"/></button>
+      </div></div>
       <p id="azura-description" className="meta chat-description">Panduan portfolio dengan jawaban statis. Pesan hanya tersimpan selama halaman ini terbuka dan tidak dikirim ke layanan AI.</p>
       <div className="chat-log" ref={log} role="log" aria-label="Percakapan dengan Azura" aria-live="polite" aria-relevant="additions">
         <div className="chat-reply"><p>Aku Azura. Mau mulai dari karya, eksperimen IoT, atau mengenal Rehan?</p></div>

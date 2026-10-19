@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Play } from "lucide-react";
 import type { EngineeringStep } from "@/lib/content";
 
 export function SignalDiagram({ steps, story = false }: { steps: readonly EngineeringStep[]; story?: boolean }) {
@@ -73,6 +72,7 @@ export function SignalDiagram({ steps, story = false }: { steps: readonly Engine
   return <div className={`signal-widget${story ? " signal-story" : ""}`} ref={root} data-active-step={steps[active].id}>
     <figure className="redline-probe">
       <div className="probe-heading"><span className="eyebrow">{story ? "Dari gagasan ke sistem" : "Dari sinyal ke sistem"}</span><span className="meta">{story ? "FIG. 02" : "FIG. 01"}</span></div>
+      <button type="button" className="signal-canvas" onClick={run} aria-label="Animasikan diagram Sense, Compute, Build">
       <svg viewBox="0 0 440 250" aria-hidden="true" focusable="false">
         <path d="M35 205H400M120 35V215M260 35V215" fill="none" stroke="currentColor" opacity=".2"/>
         <path className="signal-track" d="M35 160H120V70H260V160H400" strokeWidth="9"/>
@@ -80,9 +80,10 @@ export function SignalDiagram({ steps, story = false }: { steps: readonly Engine
         <g className="probe-nodes" strokeWidth="4"><circle className={active === 0 ? "node-active" : ""} cx="35" cy="160" r="13"/><rect className={active === 1 ? "node-active" : ""} x="102" y="52" width="36" height="36"/><circle className={active === 1 ? "node-active" : ""} cx="260" cy="160" r="13"/><circle className={active === 2 ? "node-active" : ""} cx="400" cy="160" r="13"/></g>
         <text x="155" y="105" fill="currentColor" fontSize="12">01 → 02 → 03</text>
       </svg>
+      </button>
       {!story && <div className="probe-controls" role="group" aria-label="Jelajahi alur engineering">{steps.map((step, index) => <button key={step.id} type="button" aria-pressed={active === index} onClick={() => choose(index)}>{step.title}</button>)}</div>}
       <figcaption>{story ? "Alur konseptual untuk menjelaskan proses kreatif." : steps[active].short}</figcaption>
-      <button type="button" className="signal-replay" onClick={run} aria-label="Jalankan alur Sense, Compute, Build"><Play size={13} aria-hidden="true"/> Jalankan alur</button>
+      <p className="signal-hint meta">Klik diagram untuk menggerakkan alur.</p>
     </figure>
     {story && <ol className="process-steps">{steps.map((step, index) => <li key={step.id} data-step={index} data-selected={active === index}>
       <h3><button type="button" aria-pressed={active === index} onClick={() => choose(index)}><span className="eyebrow">0{index + 1}</span>{step.title}<span aria-hidden="true">↗</span></button></h3>
