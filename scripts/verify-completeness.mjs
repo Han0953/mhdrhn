@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { loadContent } from './load-content.mjs';
-const directory = 'docs/execution/evidence/completeness-2026-10-19';
+const directory = process.env.MHDRHN_QA_COMPLETENESS_EVIDENCE || 'docs/execution/evidence/completeness-2026-10-19';
 fs.mkdirSync(directory, { recursive: true });
 const master = fs.readFileSync('agent/docs/DATA.md', 'utf8');
 const legacy = loadContent('src/lib/data.ts');
@@ -37,9 +37,9 @@ check('every project identity resolves to its own source section and summary, no
 for (const group of portfolio.experienceGroups) for (const record of group.items) {
   check(`source identity, role and period: ${record.id}`, () => {
     const section = record.source.replace('DATA §',''); const source = section === '6' ? master.split('# 6. ')[1].split('# 7. ')[0] : sourceSection(section);
-    assert.ok(source.includes(record.role), record.role); assert.ok(source.includes(record.period), record.period);
+    assert.ok(source.includes(record.role), record.role); if (record.period) assert.ok(source.includes(record.period), record.period);
     assert.ok(source.includes(record.organization.split(' · ')[0]), record.organization);
-    row(record.id,`experience/${group.id}`,record.source,'/experience',[record.role,record.organization,record.period],record.context);
+    row(record.id,`experience/${group.id}`,record.source,'/experience',[record.role,record.organization,record.period ?? 'Periode belum dicantumkan'],record.context);
   });
 }
 check('school records match four distinct source claims and legacy education; publication explicitly approved on 19 Oct', () => {
@@ -51,15 +51,21 @@ check('school records match four distinct source claims and legacy education; pu
     row(award.id,'achievement outcome',award.provenance,'/achievements',[award.result,award.context],'Owner approved publication; school period is not award date; no certificate claim');
   }
 });
-check('two BPDC outcomes share one event; FESTRA is a separate team event; ESF is excluded', () => {
+check('BPDC/FESTRA team results and owner-approved ESF results retain their event contexts', () => {
   const [aura,vircuit] = awards.featuredAchievements;
   assert.equal(aura.team,'ALGA NOVA'); assert.equal(aura.projectSlug,'aura-pod'); assert.deepEqual(Array.from(aura.outcomes),['Juara 1','Most Favorite']);
-  assert.equal(vircuit.team,'Trio Hengker Enjoyer'); assert.equal(vircuit.projectSlug,'vircuit'); assert.equal(awards.publicAchievementOutcomeCount,7);
+  assert.equal(vircuit.team,'Trio Hengker Enjoyer'); assert.equal(vircuit.projectSlug,'vircuit'); assert.equal(awards.publicAchievementOutcomeCount,9);
   for (const award of awards.featuredAchievements) for (const outcome of award.outcomes) {
     assert.ok(sourceSection(award.id === 'aura-2026' ? '11.1' : '11.2').includes(award.team));
     row(`${award.id}/${outcome}`,'achievement outcome',award.provenance,'/achievements',[award.result,award.additional,award.event,award.team],`One event row ${award.id}; public article link, not certificate`);
   }
-  assert.doesNotMatch(JSON.stringify(awards),/Economic and Social|Top 10|UIN SUSKA/);
+  const [esf] = awards.festivalAchievements;
+  assert.deepEqual(Array.from(esf.outcomes), ['Juara 3','Finalis Top 10 Essay']);
+  assert.equal(esf.year,2025); assert.equal(esf.certificate,undefined); assert.equal(esf.source,undefined);
+  for (const outcome of esf.outcomes) {
+    assert.ok(sourceSection('11.3').includes(outcome));
+    row(`${esf.id}/${outcome}`,'achievement outcome',esf.provenance,'/achievements',[outcome,esf.event,esf.organizer,esf.evidence],'Owner approved; certificate not yet supplied; categories/round relationship unspecified');
+  }
 });
 for (const [recordsOfKind, category] of [[portfolio.research,'research'],[portfolio.communityService,'community service']]) for (const record of recordsOfKind) {
   check(`source title and public context: ${record.id}`, () => {
@@ -96,15 +102,13 @@ for(const [items,kind,section] of [[portfolio.interests,'interest','1.3'],[portf
 row('contact/github','contact','DATA §14','/contact',[content.profile.github,'Han0953']);
 row('contact/location','contact','DATA §14','/contact',[content.profile.location]);
 for(const [id,category,source,note] of [
-  ['esf-third','achievement outcome','DATA §11.3','Juara 3 category, relationship to Top 10 and evidence unresolved'],
-  ['esf-top-ten','achievement outcome','DATA §11.3','Top 10 Essay relationship/evidence unresolved'],
-  ['robotic','experience','DATA §5.2','Institution, period, responsibilities missing'],['project-manager','experience','DATA §5.3','Project/organization, period, responsibilities missing'],
+  ['robotic-period','experience field','DATA §5.2','Period not supplied; role and duties approved and public'],
   ['gpa','profile field','DATA §1 / §2.1','Current value unconfirmed'],['semester','profile field','DATA §1','Time-sensitive field unconfirmed'],
   ['contact/email','contact','DATA §14','No address'],['contact/linkedin','contact','DATA §14','No URL'],['contact/instagram','contact','DATA §14','No URL'],['contact/production','contact','DATA §14','No confirmed host'],
   ['certificates','asset slot','DATA §15.1','Zero supplied certificate records'],['papers','asset slot','DATA §15.2','Zero confirmed published papers'],['media','asset slot','DATA §15.4','Project evidence and Azura asset unavailable'],
 ]) row(id,category,source,null,[],note,'REVIEW');
-for(const [id,note] of [['Pranala Institute','Retracted organization'],['ASUS ROG UI','Retracted testing'],['Xiaomi HyperOS','Retracted testing'],['Cum Laude (Expected)','Unsubstantiated prediction withdrawn'],['quickStats','Unsupported aggregate claims']]) row(id,'exclusion','B05 / previous review',null,[],note,'WITHDRAWN');
-for(const [id,note] of [['pvte-himpteka','One website, not two projects'],['research-mqtt-project','Lab record references existing MQTT incubator'],['lazismu-service-project','Service record references existing website'],['school-legacy-occurrences','Four legacy references corroborate the same four school outcomes'],['esf-legacy-occurrences','Two legacy references corroborate the same held outcomes']]) row(id,'source relationship','DATA / legacy',null,[],note,'DUPLICATE REFERENCE');
+for(const [id,note] of [['Project Manager','Withdrawn by owner 19 Oct 2026'],['Pranala Institute','Retracted organization'],['ASUS ROG UI','Retracted testing'],['Xiaomi HyperOS','Retracted testing'],['Cum Laude (Expected)','Unsubstantiated prediction withdrawn'],['quickStats','Unsupported aggregate claims']]) row(id,'exclusion','Owner / previous review',null,[],note,'WITHDRAWN');
+for(const [id,note] of [['pvte-himpteka','One website, not two projects'],['research-mqtt-project','Lab record references existing MQTT incubator'],['lazismu-service-project','Service record references existing website'],['school-legacy-occurrences','Four legacy references corroborate the same four school outcomes'],['esf-legacy-occurrences','Two legacy references corroborate the same owner-approved outcomes']]) row(id,'source relationship','DATA / legacy',null,[],note,'DUPLICATE REFERENCE');
 const htmlCache = new Map();
 if(origin) for (const record of records.filter(r=>r.publication==='PUBLIC')) {
   if(!htmlCache.has(record.route)) {
@@ -117,9 +121,9 @@ if(origin) for (const record of records.filter(r=>r.publication==='PUBLIC')) {
     record.implementation='SSR VERIFIED';
   });
 }
-check('review and withdrawn values are absent from all public source payloads',()=>assert.doesNotMatch(JSON.stringify({content,portfolio,awards,capabilities}),/Pranala|HyperOS|ASUS ROG|Project Manager|Lab Robotic|Economic and Social Festival|Top 10 Finalis|3\.85|Cum Laude/));
-if(origin) check('all six achievement rows and three groups are SSR; Home stays a preview',()=>{
-  const html = htmlCache.get('/achievements'); assert.equal((html.match(/data-achievement-id=/g)||[]).length,6);
+check('withdrawn values remain absent after owner-approved content updates',()=>assert.doesNotMatch(JSON.stringify({content,portfolio,awards,capabilities}),/Pranala|HyperOS|ASUS ROG|Project Manager|Lab Robotic|3\.85|Cum Laude/));
+if(origin) check('all seven achievement rows and three capability groups are SSR; Home stays a preview',()=>{
+  const html = htmlCache.get('/achievements'); assert.equal((html.match(/data-achievement-id=/g)||[]).length,7);
   assert.equal((htmlCache.get('/about').match(/class="capability-group"/g)||[]).length,3);
 });
 const counts = {};
@@ -127,7 +131,7 @@ for(const category of new Set(records.map(r=>r.category))) {
   const rows=records.filter(r=>r.category===category);
   counts[category]={sourceUnits:rows.length,eligible:rows.filter(r=>r.publication==='PUBLIC').length,rendered:rows.filter(r=>r.implementation==='SSR VERIFIED').length,review:rows.filter(r=>r.publication==='REVIEW').length,withdrawn:rows.filter(r=>r.publication==='WITHDRAWN').length,duplicateReferences:rows.filter(r=>r.publication==='DUPLICATE REFERENCE').length};
 }
-const ledger={method:'Explicit source-section/identity/field assertions, then script-free SSR text for each public row. Not browser visual QA.',counting:'Counts are per category; never sum skills, showcase and project stacks as unique competencies. Asset slots and profile fields are not missing person/project records. Achievement unit = atomic outcome (9 candidates, 7 public, 2 review); 6 UI rows, 2 team events, 4 school records. Duplicate references are not extra achievements.',counts,records,results};
+const ledger={method:'Explicit source-section/identity/field assertions, then script-free SSR text for each public row. Not browser visual QA.',counting:'Counts are per category; never sum skills, showcase and project stacks as unique competencies. Asset slots and profile fields are not missing person/project records. Achievement unit = atomic outcome (9 public outcomes); 7 UI rows, 2 team events, 1 ESF event, 4 school records. Duplicate references are not extra achievements.',counts,records,results};
 fs.writeFileSync(`${directory}/content-coverage.json`,JSON.stringify(ledger,null,2));
 const lines=['# Content coverage — 19 October 2026','',ledger.counting,'','| Record ID | Kategori | Status sumber / sumber | Ditampilkan di | Status implementasi | Catatan |','|---|---|---|---|---|---|'];
 for(const r of records) lines.push(`| ${r.id} | ${r.category} | ${r.publication} · ${r.source} | ${r.route||'—'} | ${r.implementation} | ${r.note} |`);

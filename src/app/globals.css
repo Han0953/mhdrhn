@@ -377,12 +377,19 @@ dialog::backdrop { background:rgb(0 0 0 / .65); }
 .context-disclosure[open] summary { color:var(--accent-text); }
 .context-disclosure p { font-size:15px; color:var(--muted); padding:8px 0 16px; }
 .lab-records h3 { font-size:clamp(25px,3vw,38px); }
-.search-form { display:grid; width:100%; min-width:0; grid-template-columns:minmax(0,1fr) auto; align-items:end; }
-.search-form>input { grid-column:1/-1; }
+.search-form { display:grid; width:100%; min-width:0; grid-template-columns:minmax(0,1fr); align-items:end; gap:16px; }
+.search-field { min-width:0; }
+.search-field label,.status-field>label { display:block; font-size:12px; margin-bottom:6px; color:var(--muted); }
 .status-field { min-width:0; }
-.status-field label { display:block; font-size:12px; margin-bottom:6px; color:var(--muted); }
-.status-field select { width:100%; min-height:48px; min-width:0; border:1px solid var(--control); background:var(--canvas); color:var(--ink); padding:10px 12px; font:inherit; border-radius:0; }
-.search-form button { min-height:48px; }
+.search-form .status-trigger { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; border:1px solid var(--control); background:var(--canvas); padding:10px 12px; text-align:left; border-radius:0; }
+.status-trigger:hover,.status-trigger[data-popup-open] { border-color:var(--accent-text); }
+.status-positioner { z-index:45; }
+.status-popup { width:var(--anchor-width); max-width:calc(100vw - 40px); max-height:var(--available-height); overflow-y:auto; border:1px solid var(--control); background:var(--canvas); color:var(--ink); border-radius:0; padding:4px; box-shadow:none; }
+.status-option { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding:10px 12px; cursor:pointer; outline-offset:-3px; font-size:14px; }
+.status-option[data-highlighted] { background:var(--surface); outline:1px solid var(--control); }
+.status-option[data-selected] { color:var(--accent-text); font-weight:700; }
+.filter-help { grid-column:1/-1; font-size:12px; color:var(--muted); }
+.search-form[data-pending] { border-bottom:2px solid var(--accent-text); padding-bottom:6px; }
 .catalog-feedback { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 24px; margin:24px 0 32px; }
 .catalog-feedback .result-count { margin:0; }
 .breadcrumb { display:flex; flex-wrap:wrap; gap:4px 12px; align-items:center; }
@@ -428,7 +435,8 @@ dialog::backdrop { background:rgb(0 0 0 / .65); }
 }
 @media(min-width:768px) {
   .interest-columns,.skill-groups { grid-template-columns:repeat(2,minmax(0,1fr)); gap:48px; }
-  .search-form { grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto; align-items:end; }
-  .search-form>input { grid-column:auto; }
+  .search-form { grid-template-columns:minmax(180px,1fr) minmax(230px,1fr); align-items:end; }
   .project-pagination { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
+/* Keep this after font shorthands, which reset OpenType features. */
+h1,h2,h3,h4,.capability-category h3,.capability-category h4,.wordmark,.art-letter,.project-number,.award-result,.contact-link strong,.footer-cta,.footer-wordmark,.menu-dialog nav a,.capability-name { font-feature-settings:"ss04" 1; }

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Syne, Manrope } from "next/font/google";
+import { Manrope } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { RouteTransition } from "@/components/layout/RouteTransition";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { Footer } from "@/components/layout/Footer";
-const display = Syne({ variable: "--font-display", subsets: ["latin"], display: "swap" });
+// The full font retains ss04 (the complete, double-storey g); the Google subset omits it.
+const display = localFont({ src: "./fonts/Syne-Variable.ttf", variable: "--font-display", weight: "400 800", display: "swap" });
 const body = Manrope({ variable: "--font-body", subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
   title: { default: "Muhammad Rehan — Creative Engineering | mhdrhn.", template: "%s | mhdrhn." },

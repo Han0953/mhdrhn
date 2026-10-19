@@ -26,11 +26,12 @@ check('category, search and public-status filters intersect without inventing Co
   assert.equal(data.filterProjects('Semua', '', 'Belum dipublikasikan').length, 20);
   assert.equal(data.filterProjects('Semua', '<script>alert(1)</script>').length, 0);
 });
-check('all nine experience IDs and four groups have source and correct periods', () => {
+check('ten experience IDs preserve known periods; new approved lab has no invented date', () => {
   const records = portfolio.experienceGroups.flatMap(g => g.items);
-  assert.equal(records.length, 9); assert.equal(portfolio.experienceGroups.length, 4);
-  assert.equal(new Set(records.map(r => r.id)).size, 9);
-  records.forEach(r => { assert.ok(r.period); assert.match(r.source, /DATA §/); });
+  assert.equal(records.length, 10); assert.equal(portfolio.experienceGroups.length, 4);
+  assert.equal(new Set(records.map(r => r.id)).size, 10);
+  records.forEach(r => { if (r.id !== 'lab-automation-robotics-pvte') assert.ok(r.period); assert.match(r.source, /DATA §/); });
+  assert.equal(records.find(r => r.id === 'lab-automation-robotics-pvte').period, undefined);
   assert.equal(records.find(r => r.id === 'e2id-vii-2026').period, '2026');
   assert.equal(records.find(r => r.id === 'himpteka-vice-2025').role, 'Wakil Bupati');
 });

@@ -1,7 +1,10 @@
-export interface ExperienceRecord { id: string; period: string; role: string; organization: string; source: string; context: string }
+export interface ExperienceRecord { id: string; period?: string; role: string; organization: string; source: string; context: string }
 export interface ExperienceGroup { id: string; group: string; items: readonly ExperienceRecord[] }
 export const experienceGroups: readonly ExperienceGroup[] = [
-  { id: "laboratorium", group: "Laboratorium", items: [{ id: "lab-electronics-2026", period: "2026", role: "Asisten Laboratorium", organization: "Laboratorium Elektronika", source: "DATA §5.1", context: "Pengalaman di laboratorium elektronika. Lingkup tugas terperinci belum dipublikasikan." }] },
+  { id: "laboratorium", group: "Laboratorium", items: [
+    { id: "lab-electronics-2026", period: "2026", role: "Asisten Laboratorium", organization: "Laboratorium Elektronika", source: "DATA §5.1", context: "Pengalaman di laboratorium elektronika. Lingkup tugas terperinci belum dipublikasikan." },
+    { id: "lab-automation-robotics-pvte", role: "Asisten Lab Otomasi Cerdas dan Robotika", organization: "PVTE", source: "DATA §5.2", context: "Pengelolaan laboratorium, pengecekan barang, alat, dan komponen praktik elektronika, serta dukungan teknis." },
+  ] },
   { id: "organisasi", group: "Organisasi", items: [
     { id: "himpteka-vice-2025", period: "2025–2026", role: "Wakil Bupati", organization: "HIMPTEKA UMRI", source: "DATA §3.1", context: "Peran organisasi di Himpunan Mahasiswa Pendidikan Vokasional Teknik Elektronika UMRI." },
     { id: "himpteka-kominfo-2024", period: "2024–2025", role: "Anggota KOMINFO", organization: "HIMPTEKA UMRI", source: "DATA §3.2", context: "Keterlibatan dalam bidang KOMINFO HIMPTEKA UMRI." },

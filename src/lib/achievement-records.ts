@@ -12,4 +12,12 @@ export const educationAchievements = [
   { id: "school-rank-grade-10", result: "Juara 1 Kelas 10", context: "Pendidikan SMKS Bina Profesi Pekanbaru", period: "2021–2024", publication: "PUBLIC", provenance: "DATA §2.2; legacy education.achievements[1]" },
 ] as const;
 
-export const publicAchievementOutcomeCount = featuredAchievements.reduce((count, record) => count + record.outcomes.length, 0) + educationAchievements.length;
+// Owner confirmed both outcomes. Category/round relationships remain unspecified.
+export const festivalAchievements = [{
+  id: "esf-2025", event: "Economic and Social Festival", year: 2025,
+  organizer: "Dewan Eksekutif Mahasiswa Fakultas Ekonomi dan Ilmu Sosial UIN SUSKA Riau",
+  outcomes: ["Juara 3", "Finalis Top 10 Essay"], publication: "PUBLIC",
+  provenance: "DATA §11.3 · konfirmasi pemilik, 19 Oktober 2026",
+  evidence: "Dikonfirmasi pemilik. Sertifikat akan ditambahkan setelah tersedia.",
+}] as const;
+export const publicAchievementOutcomeCount = featuredAchievements.reduce((count, record) => count + record.outcomes.length, 0) + educationAchievements.length + festivalAchievements.reduce((count, record) => count + record.outcomes.length, 0);

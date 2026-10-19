@@ -37,8 +37,10 @@ check('two distinct incubators and one PVTE system', () => {
   assert.equal(projects.filter(p => /pvte|himpteka/.test(p.slug)).length, 1);
   assert.equal(data.getProjectBySlug('iot-egg-incubator-blynk').year, undefined);
 });
-check('withdrawn and unconfirmed experience records stay out of public data', () => {
-  assert.doesNotMatch(JSON.stringify(data.experiences), /Pranala|HyperOS|ASUS|Project Manager|Robotic|Robotika/i);
+check('withdrawn records stay out; owner-approved robotics duties are public without an invented period', () => {
+  assert.doesNotMatch(JSON.stringify(data.experiences), /Pranala|HyperOS|ASUS|Project Manager|Lab Robotic/i);
+  const lab = data.experiences.flatMap(group => group.items).find(item => item.id === 'lab-automation-robotics-pvte');
+  assert.ok(lab); assert.equal(lab.period, undefined); assert.match(lab.context, /pengecekan barang, alat, dan komponen praktik elektronika/);
   assert.equal(data.profile.gpa, undefined); assert.equal(data.profile.currentSemester, undefined);
 });
 console.log(`${checks} content checks passed.`);

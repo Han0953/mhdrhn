@@ -10,7 +10,7 @@ export function loadContent(file = 'src/lib/content.ts', cache = new Map()) {
   const code = ts.transpileModule(fs.readFileSync(absolute, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
   const exports = {};
   cache.set(absolute, exports);
-  vm.runInNewContext(code, { exports, require(specifier) {
+  vm.runInNewContext(code, { exports, URLSearchParams, require(specifier) {
     if (!specifier.startsWith('./')) throw new Error(`Unexpected content dependency: ${specifier}`);
     return loadContent(path.resolve(path.dirname(absolute), `${specifier}.ts`), cache);
   } }, { timeout: 1000 });
