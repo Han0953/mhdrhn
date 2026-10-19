@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X, MessageCircle, Send, RotateCcw, ArrowUpRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SiteLink } from "./RouteTransition";
-import { navigation } from "@/lib/content";
+import { navigation } from "@/lib/navigation";
 
 interface Reply { text: string; href: string; label: string }
 interface Exchange { id: number; question: string; reply: Reply }

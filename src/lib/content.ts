@@ -64,11 +64,6 @@ export const profile = {
   name: "Muhammad Rehan", brand: "mhdrhn.", location: "Pekanbaru, Indonesia", github: "https://github.com/Han0953",
   bio: "Mahasiswa Pendidikan Vokasional Teknik Elektronika di Universitas Muhammadiyah Riau. Mengeksplorasi Internet of Things, embedded systems, pengembangan perangkat lunak, dan penelitian teknologi.",
 };
-export const navigation = [
-  { href: "/", label: "Home" }, { href: "/projects", label: "Projects" }, { href: "/about", label: "About" },
-  { href: "/experience", label: "Experience" }, { href: "/lab", label: "Lab" },
-  { href: "/achievements", label: "Achievements" }, { href: "/contact", label: "Contact" },
-] as const;
 export const experiences = [
   { group: "Organisasi & laboratorium", items: [
     { period: "2025–2026", role: "Wakil Bupati", organization: "HIMPTEKA UMRI" },
@@ -90,6 +85,31 @@ export const achievements = [
   { id: "aura-2026", result: "Juara 1", additional: "& Most Favorite", event: "BPDC · SiCheCo UNSRI", year: 2026, team: "ALGA NOVA", projectSlug: "aura-pod", source: "https://www.umri.ac.id/artikel/baca/2026-09-30-1790769863-usung-inovasi-dekarbonisasi-industri-mahasiswa-umri-raih-juara-1-dan-most-favorite-sicheco-2026" },
   { id: "vircuit-2026", result: "Juara 3", additional: "Web Development", event: "FESTRA UNRI", year: 2026, team: "Trio Hengker Enjoyer", projectSlug: "vircuit", source: "https://pvte.fkip.umri.ac.id/artikel/baca/mahasiswa-pvte-umri-raih-juara-3-web-development-festra-2026-melalui-inovasi-laboratorium-virtual-berbasis-iot-dan-ai" },
 ] as const;
+
+/** Editorial introductions derived from DATA sections 1, 5, 6, 8 and 12. */
+export const focusAreas = [
+  { title: "Electronics & Embedded Systems", description: "Menghubungkan sensor, mikrokontroler, dan komponen elektronik agar benda dapat berinteraksi dengan lingkungannya." },
+  { title: "Internet of Things", description: "Mengeksplorasi komunikasi perangkat, monitoring, dan kendali melalui sistem yang terhubung." },
+  { title: "Web & Software Development", description: "Mengembangkan antarmuka dan sistem informasi yang membantu orang menemukan, memahami, dan memakai informasi." },
+  { title: "Research & Prototyping", description: "Membawa pertanyaan teknis ke eksperimen dan prototipe, lalu mencatat apa yang masih perlu dibuktikan." },
+  { title: "Mobile Application Testing / QA", description: "Pengalaman menguji aplikasi dan game mobile, dengan perhatian pada perilaku serta masalah yang muncul saat digunakan." },
+] as const;
+
+export interface EngineeringStep {
+  id: "sense" | "compute" | "build";
+  title: string;
+  short: string;
+  description: string;
+}
+
+/** A creative analogy requested by the owner, not a formal research methodology. */
+export const engineeringSteps: readonly EngineeringStep[] = [
+  { id: "sense", title: "Sense", short: "Mulai dari pengamatan.", description: "Mengenali kebutuhan, memperhatikan konteks, dan merumuskan pertanyaan yang ingin dijawab." },
+  { id: "compute", title: "Compute", short: "Susun logikanya.", description: "Menghubungkan informasi dengan konsep elektronika dan perangkat lunak untuk mengeksplorasi cara kerja yang mungkin." },
+  { id: "build", title: "Build", short: "Beri bentuk pada gagasan.", description: "Membawa gagasan ke rangkaian, antarmuka, atau prototipe; mengujinya dan melihat apa yang perlu diperbaiki." },
+];
+
+export const experienceHighlights = [experiences[0].items[2], experiences[0].items[0], experiences[2].items[0]] as const;
 export function getPublishedProjects(): readonly Project[] { return projects; }
 export function getProjectBySlug(slug: string): Project | undefined { return projects.find(project => project.slug === slug); }
 export function getFeaturedProjects(): Project[] { return projects.filter(project => project.featured !== undefined).sort((a, b) => a.featured! - b.featured!); }

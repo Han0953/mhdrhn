@@ -23,6 +23,6 @@ const checks = [
     assert.match(html, /noindex/);
     results.push({ path, status: response.status, h1: 1, publicSubset: true });
   }
-  fs.writeFileSync('docs/execution/evidence/frontend-redesign/http-smoke.json', JSON.stringify(results, null, 2));
+  fs.writeFileSync(process.env.MHDRHN_QA_EVIDENCE || 'docs/execution/evidence/frontend-redesign/http-smoke.json', JSON.stringify(results, null, 2));
   console.log(`${results.length} HTTP/SSR route checks passed; includes two actual HTTP 404 responses.`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

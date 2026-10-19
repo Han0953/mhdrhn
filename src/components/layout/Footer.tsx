@@ -1,6 +1,7 @@
 import { SiteLink } from "@/components/layout/RouteTransition";
 import { Arrow } from "@/components/ui/Editorial";
-import { navigation, profile } from "@/lib/content";
+import { profile } from "@/lib/content";
+import { navigation } from "@/lib/navigation";
 export function Footer() {
   return <footer className="site-footer"><div className="wrap">
     <div className="footer-top"><div><p className="eyebrow">Punya gagasan untuk dibicarakan?</p><SiteLink className="footer-cta" href="/contact">Mari terhubung <Arrow/></SiteLink></div><p className="meta">Elektronika, kode,<br/>dan pertanyaan berikutnya.</p></div>
