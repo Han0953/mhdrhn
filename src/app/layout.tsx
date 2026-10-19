@@ -1,98 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Syne, Manrope } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import { LenisProvider } from "@/providers/LenisProvider";
-
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
+import { RouteTransition } from "@/components/layout/RouteTransition";
+import { SiteChrome } from "@/components/layout/SiteChrome";
+import { Footer } from "@/components/layout/Footer";
+const display = Syne({ variable: "--font-display", subsets: ["latin"], display: "swap" });
+const body = Manrope({ variable: "--font-body", subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
-  title: "Muhammad Rehan | Electronic Engineering & IoT Portfolio",
-  description:
-    "Portfolio of Muhammad Rehan — Electronic Engineering Student, IoT Engineer, Research Enthusiast, and Software Tester at Universitas Muhammadiyah Riau. Specializing in IoT, Embedded Systems, and Web Development.",
-  keywords: [
-    "Muhammad Rehan",
-    "Electronic Engineering",
-    "IoT Engineer",
-    "Embedded Systems",
-    "ESP32",
-    "Arduino",
-    "Portfolio",
-    "Research",
-    "UMRI",
-    "Universitas Muhammadiyah Riau",
-  ],
+  title: { default: "Muhammad Rehan — Creative Engineering | mhdrhn.", template: "%s | mhdrhn." },
+  description: "Muhammad Rehan. Elektronika, kode, dan riset. Jelajahi karya IoT, pengembangan web, dan eksperimen teknologi dari Pekanbaru.",
   authors: [{ name: "Muhammad Rehan" }],
-  creator: "Muhammad Rehan",
-  openGraph: {
-    type: "website",
-    locale: "id_ID",
-    title: "Muhammad Rehan | Electronic Engineering & IoT Portfolio",
-    description:
-      "Electronic Engineering Student & IoT Engineer — Building technology that connects electronics, software, and real-world solutions.",
-    siteName: "Muhammad Rehan Portfolio",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Muhammad Rehan | Electronic Engineering & IoT Portfolio",
-    description:
-      "Electronic Engineering Student & IoT Engineer — Building technology that connects electronics, software, and real-world solutions.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  // Release hostname and indexing are intentionally deferred to the release gate.
+  robots: { index: false, follow: true },
 };
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="id" suppressHydrationWarning className={`${inter.variable}`}>
-      <head>
-        {/* Structured Data — JSON-LD Person Schema */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Person",
-              name: "Muhammad Rehan",
-              jobTitle: "Electronic Engineering Student & IoT Engineer",
-              affiliation: {
-                "@type": "EducationalOrganization",
-                name: "Universitas Muhammadiyah Riau",
-              },
-              url: "https://github.com/Han0953",
-              sameAs: ["https://github.com/Han0953"],
-              knowsAbout: [
-                "Internet of Things",
-                "Embedded Systems",
-                "Electronics",
-                "Software Testing",
-                "Web Development",
-              ],
-              address: {
-                "@type": "PostalAddress",
-                addressLocality: "Pekanbaru",
-                addressRegion: "Riau",
-                addressCountry: "ID",
-              },
-            }),
-          }}
-        />
-      </head>
-      <body className="min-h-screen antialiased">
-        <ThemeProvider>
-          <LenisProvider>{children}</LenisProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="id" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+    <body><ThemeProvider><RouteTransition><a className="skip-link" href="#main-content">Lewati ke konten</a><SiteChrome/><main id="main-content" tabIndex={-1}>{children}</main><Footer/></RouteTransition></ThemeProvider></body>
+  </html>;
 }

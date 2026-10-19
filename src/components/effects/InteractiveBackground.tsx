@@ -48,7 +48,7 @@ export function InteractiveBackground() {
     let width = 0;
     let height = 0;
 
-    let mouse = { x: -1000, y: -1000, radius: 150 };
+    const mouse = { x: -1000, y: -1000, radius: 150 };
     const isMobile = () => window.innerWidth < 768;
 
     // Brand Colors

@@ -1,12 +1,3 @@
 import type { MetadataRoute } from "next";
-
-export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: "https://muhammadrehan.vercel.app",
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 1,
-    },
-  ];
-}
+// A production origin has not been approved. Never publish an invented hostname.
+export default function sitemap(): MetadataRoute.Sitemap { return []; }

@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# mhdrhn.
 
-## Getting Started
+Portfolio Muhammad Rehan: elektronika, pengembangan web, dan riset. Frontend Next.js App Router, React, TypeScript, Tailwind CSS, dan next-themes.
 
-First, run the development server:
+## Menjalankan lokal
 
-```bash
+Dependency existing menggunakan npm dan `package-lock.json`.
+
+```powershell
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build produksi lokal (Google Fonts membutuhkan jaringan saat build):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+npm run build
+npm run start -- --hostname 127.0.0.1 --port 3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pemeriksaan
 
-## Learn More
+```powershell
+npm run lint
+node node_modules/typescript/bin/tsc --noEmit --incremental false
+node scripts/verify-public-content.mjs
+# Jalankan setelah production server lokal aktif pada port 3000:
+node scripts/smoke-frontend.mjs
+```
 
-To learn more about Next.js, take a look at the following resources:
+Route: Home `/`, `/projects`, `/projects/[slug]`, `/about`, `/experience`, `/lab`, `/achievements`, `/contact`. Projects memakai query `category` dan `q`, dengan fallback form GET. Slug tidak dikenal menghasilkan 404.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Konteks dan batas implementasi
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Aturan proyek: `agent/docs/AGENTS.md`. Direktori `context/` belum tersedia.
+- Data sumber: `agent/docs/DATA.md`; subset publik ada di `src/lib/content.ts`. Field yang belum terkonfirmasi tidak diterbitkan.
+- Desain aktif: `docs/redesign/VISUAL_DESIGN_DIRECTION.md`, Redline Field Notes, Syne + Manrope, Light/Dark/System.
+- Azura berupa demo deterministik lokal, maksimum 500 karakter per pertanyaan dan 20 pertanyaan per percakapan. Reset/refresh menghapus percakapan; tidak ada API AI atau persistensi server.
+- Ilustrasi proyek berlabel konsep; bukan screenshot produk. Avatar resmi Azura dan media karya masih menunggu aset.
+- Scroll native dan transisi Web Animations API berdurasi 360 ms, dengan pembatalan serta reduced-motion. Komponen efek lama belum dihapus, tetapi tidak dipasang pada route baru.
+- Lisensi font disertakan di `public/licenses/`.
+- Metadata masih `noindex`, sitemap kosong sampai hostname produksi disetujui. Tidak ada deployment pada sesi implementasi ini.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Bukti implementasi dan batas QA: [laporan frontend](docs/execution/FRONTEND-REDESIGN-2026-10-18.md).

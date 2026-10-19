@@ -1,37 +1,11 @@
-"use client";
-
-import { Navbar } from "@/components/layout/Navbar";
 import { HeroSection } from "@/components/sections/HeroSection";
-import { AboutSection } from "@/components/sections/AboutSection";
-import { EducationSection } from "@/components/sections/EducationSection";
-import { ExperienceSection } from "@/components/sections/ExperienceSection";
-import { ResearchSection } from "@/components/sections/ResearchSection";
-import { SkillsSection } from "@/components/sections/SkillsSection";
-import { ProjectsSection } from "@/components/sections/ProjectsSection";
-import { AchievementsSection } from "@/components/sections/AchievementsSection";
-import { ContactSection } from "@/components/sections/ContactSection";
-import { Footer } from "@/components/layout/Footer";
-import { CursorEffect } from "@/components/effects/CursorEffect";
-import { BackToTop } from "@/components/ui/BackToTop";
-
+import { SiteLink } from "@/components/layout/RouteTransition";
+import { Arrow, ProjectSpread } from "@/components/ui/Editorial";
+import { getFeaturedProjects } from "@/lib/content";
 export default function Home() {
-  return (
-    <>
-      <CursorEffect />
-      <BackToTop />
-      <Navbar />
-      <main id="main-content" role="main">
-        <HeroSection />
-        <AboutSection />
-        <EducationSection />
-        <ExperienceSection />
-        <ResearchSection />
-        <SkillsSection />
-        <ProjectsSection />
-        <AchievementsSection />
-        <ContactSection />
-      </main>
-      <Footer />
-    </>
-  );
+  return <div className="wrap">
+    <HeroSection/>
+    <section className="section" aria-labelledby="selected-heading"><div className="section-heading"><div><p className="eyebrow accent">Selected works / 01–02</p><h2 id="selected-heading">Gagasan,<br/>dibangun.</h2></div><p>Karya pilihan dari elektronika, teknologi web, dan eksplorasi bersama tim.</p></div>{getFeaturedProjects().slice(0, 2).map((project, i) => <ProjectSpread key={project.slug} project={project} number={i + 1}/>)}<SiteLink className="text-link" href="/projects">Lihat seluruh karya <Arrow/></SiteLink></section>
+    <section className="section home-lab"><div><p className="eyebrow accent">The ongoing curiosity</p><h2>Rasa ingin tahu<br/>punya ruang kerja.</h2></div><div><p>Catatan riset, eksperimen elektronika, dan teknologi yang bertemu kebutuhan sehari-hari.</p><SiteLink className="text-link" href="/lab">Masuk ke Lab & Research <Arrow/></SiteLink><SiteLink className="text-link" href="/achievements">Pengakuan untuk karya tim <Arrow/></SiteLink></div></section>
+  </div>;
 }

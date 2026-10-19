@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { personalInfo } from "@/lib/data";
-import { MapPin, Mail, Send, Link2 } from "lucide-react";
+import { MapPin, Mail, Send } from "lucide-react";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);

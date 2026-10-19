@@ -47,7 +47,7 @@ export function SectionParticles({ variant = "about" }: SectionParticlesProps) {
 
     let cw = 0;
     let ch = 0;
-    let mouse = { x: -9999, y: -9999 };
+    const mouse = { x: -9999, y: -9999 };
     const isMobile = () => window.innerWidth < 768;
 
     const initCanvas = () => {
