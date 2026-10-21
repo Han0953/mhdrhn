@@ -41,8 +41,8 @@ const {createRouteWipe}=load('src/lib/route-motion.ts',{setTimeout(callback,dela
 const wipe=createRouteWipe(()=>layer,()=>reduced,(active,completed)=>releases.push({active,completed}));
 check('entry mirrors direction and destination title; real pending holds solid red',()=>{
  wipe.play(1,false,'About');assert.equal(title.textContent,'About');assert.equal(animations.at(-1).frames[0].transform,'translateX(101%)');
- animations.at(-1).onfinish();assert.equal(layer.dataset.phase,'holding');assert.equal(layer.style.transform,'translateX(0)');assert.equal(timers.size,1);
- const stall=[...timers.values()][0];assert.equal(stall.delay,12000);stall.callback();assert.equal(layer.dataset.stalled,'true');assert.equal(layer.dataset.phase,'holding');
+ animations.at(-1).onfinish();assert.equal(layer.dataset.phase,'holding');assert.equal(layer.style.transform,'translateX(0)');assert.equal(timers.size,2);
+ const stall=[...timers.values()][0];assert.equal(stall.delay,1500);stall.callback();assert.equal(layer.dataset.pending,"true");[...timers.values()].find(t=>t.delay===8000).callback();assert.equal(layer.dataset.stalled,'true');assert.equal(layer.dataset.phase,'holding');
 });
 check('only destination ready reveals; stale completion cannot reveal next route',()=>{
  const old=wipe.play(-1,false,'Home');animations.at(-1).onfinish();
@@ -54,8 +54,8 @@ check('fast readiness still reaches full cover before exiting',()=>{
  const id=wipe.play(-1);wipe.ready(id);assert.equal(layer.dataset.phase,'entering');animations.at(-1).onfinish();assert.equal(layer.dataset.phase,'leaving');
  assert.equal(animations.at(-1).frames[0].transform,'translateX(0)');assert.equal(animations.at(-1).frames[1].transform,'translateX(101%)');animations.at(-1).onfinish();
 });
-check('100 rapid requests own one animation and two timers, cancellation releases all',()=>{
- for(let i=0;i<100;i++)wipe.play(i%2?1:-1);assert.equal(animations.filter(a=>!a.cancelled).length,1);assert.equal(timers.size,2);wipe.clear();assert.equal(timers.size,0);assert.equal(releases.at(-1).completed,false);
+check('100 rapid requests own one animation and three timers, cancellation releases all',()=>{
+ for(let i=0;i<100;i++)wipe.play(i%2?1:-1);assert.equal(animations.filter(a=>!a.cancelled).length,1);assert.equal(timers.size,3);wipe.clear();assert.equal(timers.size,0);assert.equal(releases.at(-1).completed,false);
 });
 check('a queued callback from a superseded exit cannot clear the new cover',()=>{
  const old=wipe.play(1);animations.at(-1).onfinish();wipe.ready(old);const stale=animations.at(-1).onfinish;

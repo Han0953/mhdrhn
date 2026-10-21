@@ -8,19 +8,21 @@ const slots = [];
 let cursor = 0;
 let tree;
 let theme = 'system';
+let motion = 'system';
 let serial = 0;
 let dirty = false;
 const scheduled = new Map();
 const effects = [];
 const listeners = { document: new Map(), window: new Map() };
 const results = [];
+let scrollPosition = 2160;
 class TestNode {
   constructor(name) { this.name = name; }
-  focus() { document.activeElement = this; }
+  focus(options) { document.activeElement = this; if (!options?.preventScroll) scrollPosition = 0; }
 }
 const outside = new TestNode('outside');
 const trigger = new TestNode('trigger');
-const optionNodes = ['light', 'dark', 'system'].map(name => new TestNode(name));
+const optionNodes = ['light', 'dark', 'system', 'motion-system', 'motion-minimal'].map(name => new TestNode(name));
 const root = new TestNode('root');
 root.contains = node => node === root || node === trigger || optionNodes.includes(node);
 root.querySelectorAll = () => optionNodes;
@@ -67,6 +69,7 @@ const sandbox = {
     if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx };
     if (name === 'next-themes') return { useTheme: () => ({ theme, setTheme(value) { theme = value; } }) };
     if (name === 'lucide-react') return { Sun: 'Sun', Moon: 'Moon', Monitor: 'Monitor' };
+    if (name === '@/lib/motion/preferences') return { getMotionPreference: () => motion, subscribeMotion: () => () => {}, setMotionPreference(value) { motion = value; } };
     throw new Error(`Unexpected dependency ${name}`);
   },
 };
@@ -83,6 +86,8 @@ function render() {
 }
 const button = () => tree.props.children[0];
 const popup = () => tree.props.children[1];
+const themeButtons = () => popup().props.children[1].props.children;
+const motionButtons = () => popup().props.children[3].props.children;
 const event = key => ({ key, target: trigger, preventDefault() {}, stopPropagation() {} });
 function check(name, test) { test(); results.push({ name, status: 'PASS' }); console.log(`PASS ${name}`); }
 render();
@@ -93,7 +98,7 @@ check('one trigger, current System icon, closed inert options', () => {
 });
 check('mouse enter opens three options and pointer bridge cancels pending close', () => {
   tree.props.onPointerEnter({ pointerType: 'mouse' }); render();
-  assert.equal(button().props['aria-expanded'], true); assert.equal(popup().props.children.length, 3);
+  assert.equal(button().props['aria-expanded'], true); assert.equal(themeButtons().length, 3); assert.equal(motionButtons().length, 2);
   tree.props.onPointerLeave(); assert.equal(scheduled.size, 1);
   tree.props.onPointerEnter({ pointerType: 'mouse' }); render(); assert.equal(scheduled.size, 0);
 });
@@ -107,15 +112,51 @@ check('tap and keyboard activation toggle options without hover', () => {
   button().props.onClick({ detail: 0 }); render(); assert.equal(popup().props.inert, false);
 });
 check('selecting Dark calls next-themes, marks selection and returns focus', () => {
-  popup().props.children[1].props.onClick(); render();
+  themeButtons()[1].props.onClick(); render();
   assert.equal(theme, 'dark'); assert.equal(button().props.children.type, 'Moon');
-  assert.equal(popup().props.children[1].props['aria-pressed'], true);
+  assert.equal(themeButtons()[1].props['aria-pressed'], true);
   assert.equal(button().props['aria-expanded'], false); assert.equal(document.activeElement, trigger);
 });
 check('ArrowDown opens; Escape closes and restores the trigger', () => {
   tree.props.onKeyDown(event('ArrowDown')); render(); assert.equal(popup().props.inert, false);
   tree.props.onKeyDown(event('Escape')); render(); assert.equal(popup().props.inert, true);
   assert.equal(document.activeElement, trigger);
+});
+check('Minimal changes only motion, marks selection and restores focus; System restores OS policy', () => {
+  tree.props.onKeyDown(event('ArrowDown')); render(); motionButtons()[1].props.onClick(); render();
+  assert.equal(motion, 'minimal'); assert.equal(theme, 'dark'); assert.equal(motionButtons()[1].props['aria-pressed'], true);
+  assert.equal(popup().props.inert, true); assert.equal(document.activeElement, trigger);
+  tree.props.onKeyDown(event('ArrowDown')); render(); motionButtons()[0].props.onClick(); render();
+  assert.equal(motion, 'system'); assert.equal(theme, 'dark'); assert.equal(motionButtons()[0].props['aria-pressed'], true);
+});
+check('Home and End reach the full preference group including its motion controls', () => {
+  tree.props.onKeyDown(event('ArrowDown')); render();
+  popup().props.onKeyDown(event('End')); assert.equal(document.activeElement, optionNodes[4]);
+  popup().props.onKeyDown(event('Home')); assert.equal(document.activeElement, optionNodes[0]);
+  tree.props.onKeyDown(event('Escape')); render();
+});
+check('primary mouse, touch and pen focus preserve reading position on trigger and all five choices', () => {
+  const controls = [button(), ...themeButtons(), ...motionButtons()];
+  for (const pointerType of ['mouse', 'touch', 'pen']) for (const [index, control] of controls.entries()) {
+    scrollPosition = 2160; let prevented = false; const node = index === 0 ? trigger : optionNodes[index - 1];
+    control.props.onPointerDown({ button: 0, pointerType, currentTarget: node, preventDefault() { prevented = true; } });
+    assert.equal(prevented, true); assert.equal(document.activeElement, node); assert.equal(scrollPosition, 2160);
+  }
+});
+check('theme/motion choices, Escape, Home and End never scroll when restoring or moving focus', () => {
+  for (const choose of [...themeButtons(), ...motionButtons()]) {
+    scrollPosition = 2160; tree.props.onKeyDown(event('ArrowDown')); render(); choose.props.onClick(); render();
+    assert.equal(scrollPosition, 2160); assert.equal(document.activeElement, trigger);
+  }
+  scrollPosition = 2160; tree.props.onKeyDown(event('ArrowDown')); render();
+  popup().props.onKeyDown(event('End')); assert.equal(scrollPosition, 2160);
+  popup().props.onKeyDown(event('Home')); assert.equal(scrollPosition, 2160);
+  tree.props.onKeyDown(event('Escape')); render(); assert.equal(scrollPosition, 2160);
+});
+check('secondary pointer button retains native behavior and does not steal focus', () => {
+  document.activeElement = outside;
+  button().props.onPointerDown({ button: 2, currentTarget: trigger, preventDefault() { assert.fail('secondary click prevented'); } });
+  assert.equal(document.activeElement, outside);
 });
 check('internal focus stays open and Tab leaving the group closes it', () => {
   button().props.onClick({ detail: 0 }); render();

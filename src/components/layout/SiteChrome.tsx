@@ -5,6 +5,7 @@ import { Menu, X, MessageCircle, Send, RotateCcw, ArrowUpRight, Maximize2, Minim
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SiteLink } from "./RouteTransition";
 import { navigation } from "@/lib/navigation";
+import { mountDialog } from "@/lib/motion/dialog";
 
 interface Reply { text: string; href: string; label: string }
 interface Exchange { id: number; question: string; reply: Reply }
@@ -41,6 +42,15 @@ export function SiteChrome() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const nextId = useRef(0);
+  const resetChatSize = useRef(false);
+  const menuMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
+  const chatMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
+
+  useEffect(() => {
+    if (menu.current) menuMotion.current = mountDialog(menu.current, true);
+    if (chat.current) chatMotion.current = mountDialog(chat.current);
+    return () => { menuMotion.current?.dispose(); chatMotion.current?.dispose(); menuMotion.current = null; chatMotion.current = null; };
+  }, []);
 
   useEffect(() => { menu.current?.close(); chat.current?.close(); }, [pathname]);
   useEffect(() => {
@@ -57,8 +67,8 @@ export function SiteChrome() {
   }, [menuOpen, chatOpen]);
   useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [messages]);
 
-  function openMenu() { chat.current?.close(); menu.current?.showModal(); setMenuOpen(true); }
-  function openChat() { menu.current?.close(); chat.current?.showModal(); setChatOpen(true); }
+  function openMenu() { chat.current?.close(); if (menuMotion.current) menuMotion.current.open(); else menu.current?.showModal(); setMenuOpen(true); }
+  function openChat() { resetChatSize.current = false; menu.current?.close(); if (chatMotion.current) chatMotion.current.open(); else chat.current?.showModal(); setChatOpen(true); }
   function send(question: string) {
     const value = question.trim();
     if (!value) { setError("Tulis pertanyaan terlebih dahulu."); return; }
@@ -68,9 +78,9 @@ export function SiteChrome() {
     setDraft(""); setError("");
   }
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); send(draft); }
-  function closeMenu() { menu.current?.close(); }
-  function closeChat() { chat.current?.close(); setChatWide(false); }
-  function minimizeChat() { chat.current?.close(); }
+  function closeMenu() { if (menuMotion.current) menuMotion.current.close(); else menu.current?.close(); }
+  function closeChat() { resetChatSize.current = true; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
+  function minimizeChat() { resetChatSize.current = false; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
   function active(href: string) { return href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`); }
 
   return <>
@@ -79,13 +89,13 @@ export function SiteChrome() {
       <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>
       <div className="header-controls"><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={openMenu} aria-label="Buka menu" aria-expanded={menuOpen} aria-controls="site-menu"><Menu size={21} aria-hidden="true"/></button></div>
     </div></header>
-    <dialog ref={menu} id="site-menu" className="menu-dialog" aria-labelledby="menu-heading" onKeyDown={containDialogFocus} onClose={() => setMenuOpen(false)} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}>
+    <dialog ref={menu} id="site-menu" className="menu-dialog" aria-labelledby="menu-heading" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeMenu(); }} onClose={() => setMenuOpen(false)} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}>
       <div className="dialog-top"><h2 id="menu-heading">Jelajahi.</h2><button className="icon-button" type="button" aria-label="Tutup menu" onClick={closeMenu}><X aria-hidden="true"/></button></div>
       <nav aria-label="Menu navigasi">{navigation.map((item, index) => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined} onNavigate={closeMenu}><span className="meta">0{index + 1}</span>{item.label}<ArrowUpRight size={24} aria-hidden="true"/></SiteLink>)}</nav>
       <p className="meta menu-note">Electronics · Code · Research</p>
     </dialog>
     <button className="azura-launcher" type="button" onClick={openChat} aria-label="Buka Azura — demo lokal" title="Azura · Demo lokal" aria-expanded={chatOpen} aria-controls="azura-dialog"><MessageCircle size={21} aria-hidden="true"/></button>
-    <dialog ref={chat} id="azura-dialog" className="azura-dialog" data-size={chatWide ? "wide" : "normal"} aria-labelledby="azura-heading" aria-describedby="azura-description" onKeyDown={containDialogFocus} onClose={() => setChatOpen(false)}>
+    <dialog ref={chat} id="azura-dialog" className="azura-dialog" data-size={chatWide ? "wide" : "normal"} aria-labelledby="azura-heading" aria-describedby="azura-description" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeChat(); }} onClose={() => { setChatOpen(false); if (resetChatSize.current) setChatWide(false); resetChatSize.current = false; }}>
       <div className="dialog-top"><div><p className="eyebrow accent">Demo lokal</p><h2 id="azura-heading">Azura.</h2></div><div className="dialog-actions">
         <button className="icon-button" type="button" onClick={() => setChatWide(value => !value)} aria-label={chatWide ? "Kecilkan panel Azura" : "Lebarkan panel Azura"} title={chatWide ? "Kecilkan panel" : "Lebarkan panel"} aria-pressed={chatWide}>{chatWide ? <Minimize2 size={19} aria-hidden="true"/> : <Maximize2 size={19} aria-hidden="true"/>}</button>
         <button className="icon-button" type="button" onClick={minimizeChat} aria-label="Minimalkan Azura" title="Minimalkan"><Minus size={19} aria-hidden="true"/></button>

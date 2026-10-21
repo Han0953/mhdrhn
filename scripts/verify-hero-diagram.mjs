@@ -1,3 +1,4 @@
+import { motionDependencies } from "./motion-test-support.mjs";
 import fs from 'node:fs';import vm from 'node:vm';import ts from 'typescript';import assert from 'node:assert/strict';
 const results=[];function check(name,fn){fn();results.push({name,status:'PASS'});console.log(`PASS ${name}`);}
 function runtime(reduced=false){let cursor=0,serial=0;const slots=[],effects=[],timers=new Map(),animations=[];
@@ -7,7 +8,7 @@ const changed=(a,b)=>!a||b.some((x,i)=>!Object.is(x,a[i]));
 const react={useState(v){const i=cursor++;slots[i]??={value:v};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];},useRef(v){const i=cursor++;return slots[i]??={current:v};},useCallback(fn,deps){const i=cursor++;if(changed(slots[i]?.deps,deps))slots[i]={value:fn,deps};return slots[i].value;},useEffect(fn,deps){const i=cursor++;if(changed(slots[i]?.deps,deps))effects.push(()=>{slots[i]?.cleanup?.();slots[i]={deps,cleanup:fn()};});}};
 const jsx=(type,props)=>({type,props}),exports={};
 const code=ts.transpileModule(fs.readFileSync('src/components/sections/SignalDiagram.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020}}).outputText;
-vm.runInNewContext(code,{exports,window:{matchMedia(){return media;}},document:doc,setTimeout(fn,delay){const id=++serial;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);},require(id){if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};throw Error(id);}},{timeout:1000});
+vm.runInNewContext(code,{exports,window:{matchMedia(){return media;}},document:doc,setTimeout(fn,delay){const id=++serial;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);},require(id){if(id in motionDependencies(media))return motionDependencies(media)[id];if(id==='react')return react;if(id==='react/jsx-runtime')return {jsx,jsxs:jsx};throw Error(id);}},{timeout:1000});
 const signal={animate(frames,options){const a={frames,options,cancelled:false,cancel(){this.cancelled=true;}};animations.push(a);return a;}},root={querySelectorAll(){return [];}};
 function nodes(tree){return !tree||typeof tree!=='object'?[]:[tree,...(Array.isArray(tree.props?.children)?tree.props.children:[tree.props?.children]).flatMap(nodes)];}
 const steps=['sense','compute','build'].map(id=>({id,title:id,short:id,description:id}));

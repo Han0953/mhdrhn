@@ -22,7 +22,7 @@ for(const path of paths)await check(`public copy and SEO: ${path}`,async()=>{
  if(path.startsWith('/projects/')){const project=content.getProjectBySlug(path.split('/').at(-1));assert.ok(plain(html).includes(project.summary));assert.ok(plain(html).includes(project.approach));assert.ok(plain(html).includes(project.limitation));}
 });
 await check('all ten experience descriptions are initially closed, preserving native disclosure, identities and approved lab duties',()=>{
- const html=pages.get('/experience');assert.equal((html.match(/class="timeline-row"/g)||[]).length,10);assert.equal((html.match(/<details\b[^>]*\bopen=""/g)||[]).length,0);assert.equal((html.match(/<summary>Tentang peran<\/summary>/g)||[]).length,10);
+ const html=pages.get('/experience');assert.equal((html.match(/class="timeline-row"/g)||[]).length,10);assert.equal((html.match(/<details\b[^>]*\bopen=""/g)||[]).length,0);assert.equal([...html.matchAll(/<summary\b[^>]*>([\s\S]*?)<\/summary>/g)].filter(match=>plain(match[1]).trim()==="Tentang peran").length,10);
  for(const record of portfolio.experienceGroups.flatMap(g=>g.items)){assert.ok(plain(html).includes(record.context),record.id);assert.ok(record.context.length>=40,record.id);}
  assert.doesNotMatch(html,/Project Manager|Lab Robotic|pegawai tetap|karyawan tetap/);
 });
@@ -48,11 +48,11 @@ await check('status wording stays separate from stable query values; unknown sta
 });
 function component(file,mocks={}){
  const exports={};const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020}}).outputText;
- vm.runInNewContext(code,{exports,require(id){if(id in mocks)return mocks[id];if(id==='@/components/layout/RouteTransition')return {SiteLink:'a'};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});return exports;
+ vm.runInNewContext(code,{exports,require(id){if(id in mocks)return mocks[id];if(id==='@/components/layout/RouteTransition')return {SiteLink:'a',RouteReady:()=>null};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});return exports;
 }
 await check('error and not-found copy render with one heading; actual retry callback remains callable',()=>{
- const editorial=component('src/components/ui/Editorial.tsx');const ErrorPage=component('src/app/error.tsx').default,NotFound=component('src/app/not-found.tsx',{'@/components/ui/Editorial':editorial}).default;
- let retried=0;const error=ErrorPage({reset(){retried++;}});const markup=renderToStaticMarkup(error);assert.match(markup,/Coba lagi/);assert.match(markup,/Halaman belum/);error.props.children[1].props.children[0].props.onClick();assert.equal(retried,1);
+ const editorial=component('src/components/ui/Editorial.tsx');let refreshed=0;const ErrorPage=component('src/app/error.tsx',{'next/navigation':{useRouter:()=>({refresh(){refreshed++;}})},react:{useTransition:()=>[false,fn=>fn()]}}).default,NotFound=component('src/app/not-found.tsx',{'@/components/ui/Editorial':editorial}).default;
+ let retried=0;const error=ErrorPage({reset(){retried++;}});const markup=renderToStaticMarkup(error);assert.match(markup,/Coba lagi/);assert.match(markup,/Halaman belum/);error.props.children.find(child=>child?.props?.className==="actions").props.children[0].props.onClick();assert.equal(retried,1);assert.equal(refreshed,1);
  const notfound=renderToStaticMarkup(NotFound());assert.equal((notfound.match(/<h1\b/g)||[]).length,1);assert.match(notfound,/Alamat yang kamu buka tidak tersedia/);
  fs.writeFileSync(`${directory}/recovery-copy.html`,markup+'\n'+notfound);
 });

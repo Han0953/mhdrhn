@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { EngineeringStep } from "@/lib/content";
+import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
+import { motionTokens } from "@/lib/motion/tokens";
 
 export function SignalDiagram({ steps, story = false }: { steps: readonly EngineeringStep[]; story?: boolean }) {
   const [active, setActive] = useState(0);
@@ -26,18 +28,18 @@ export function SignalDiagram({ steps, story = false }: { steps: readonly Engine
     progress.current = next;
     setActive(index);
     animation.current?.cancel();
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !signal.current?.animate) return;
+    if (prefersReducedMotion() || !signal.current?.animate) return;
     try {
       animation.current = signal.current.animate([
         { strokeDashoffset: String(1 - previous) }, { strokeDashoffset: String(1 - next) },
-      ], { duration: 280, easing: "ease-out" });
+      ], { duration: motionTokens.duration.signal, easing: "ease-out" });
     } catch { /* The static SVG and selected node already describe the state. */ }
   }, [steps.length]);
 
   function choose(index: number) { clear(); select(index); }
   function run() {
     clear();
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { select(2); return; }
+    if (prefersReducedMotion()) { select(2); return; }
     running.current = true;
     select(0);
     timers.current = [
@@ -47,15 +49,14 @@ export function SignalDiagram({ steps, story = false }: { steps: readonly Engine
   }
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onPreference = () => {
-      if (!media.matches) return;
+      if (!prefersReducedMotion()) return;
       const wasRunning = running.current;
       clear();
       if (wasRunning) select(2);
     };
     const onHidden = () => { if (document.hidden) clear(); };
-    media.addEventListener("change", onPreference);
+    const unsubscribe = subscribeMotion(onPreference);
     document.addEventListener("visibilitychange", onHidden);
     const observer = story && typeof IntersectionObserver !== "undefined" ? new IntersectionObserver(entries => {
       const entry = entries.filter(item => item.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -64,7 +65,7 @@ export function SignalDiagram({ steps, story = false }: { steps: readonly Engine
     root.current?.querySelectorAll("[data-step]").forEach(node => observer?.observe(node));
     return () => {
       clear(); observer?.disconnect();
-      media.removeEventListener("change", onPreference);
+      unsubscribe();
       document.removeEventListener("visibilitychange", onHidden);
     };
   }, [clear, select, story]);

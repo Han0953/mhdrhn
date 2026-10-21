@@ -1,3 +1,5 @@
+import { prefersReducedMotion, subscribeMotion } from "./motion/preferences";
+
 /** Native scroll enhancement. No wheel interception, root scroll lock or external animation library. */
 export function mountProjectStory(root: HTMLElement) {
   const sticky = root.querySelector<HTMLElement>(".story-sticky")!;
@@ -5,7 +7,6 @@ export function mountProjectStory(root: HTMLElement) {
   const viewport = root.querySelector<HTMLElement>(".story-viewport")!;
   const track = root.querySelector<HTMLElement>(".story-track")!;
   const cards = Array.from(track.querySelectorAll<HTMLElement>(".story-card"));
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
   const desktop = window.matchMedia("(min-width: 1024px)");
   let travel = 0, pinned = false, frame = 0, destroyed = false, pinTop = 0;
   const top = () => Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-height"));
@@ -23,7 +24,7 @@ export function mountProjectStory(root: HTMLElement) {
     const gutter = Math.max(0, root.getBoundingClientRect().left);
     root.style.setProperty("--story-gutter", `${gutter}px`);
     root.style.setProperty("--story-height", `${window.innerHeight - top()}px`);
-    pinned = !list && !reduced.matches && window.innerHeight - top() >= 480;
+    pinned = !list && !prefersReducedMotion() && window.innerHeight - top() >= 480;
     root.dataset.mode = pinned ? "pinned" : "native";
     // Let the introduction scroll out before the card stage pins, on every breakpoint.
     const overviewHeight = overview.getBoundingClientRect().height;
@@ -75,14 +76,15 @@ export function mountProjectStory(root: HTMLElement) {
   view.observe(root, { attributes: true, attributeFilter: ["data-view"] });
   window.addEventListener("scroll", requestDraw, { passive: true });
   window.addEventListener("resize", measure);
-  reduced.addEventListener("change", measure); desktop.addEventListener("change", measure);
+  const unsubscribe = subscribeMotion(measure);
+  desktop.addEventListener("change", measure);
   root.addEventListener("focusin", onFocus); root.addEventListener("click", onClick);
   void document.fonts.ready.then(measure);
   measure();
   return () => {
     destroyed = true; cancelAnimationFrame(frame); resize.disconnect(); view.disconnect();
     window.removeEventListener("scroll", requestDraw); window.removeEventListener("resize", measure);
-    reduced.removeEventListener("change", measure); desktop.removeEventListener("change", measure);
+    unsubscribe(); desktop.removeEventListener("change", measure);
     root.removeEventListener("focusin", onFocus); root.removeEventListener("click", onClick);
     delete root.dataset.mode; root.style.height = ""; track.style.transform = "";
     for (const property of ["--story-progress", "--story-gutter", "--story-height", "--story-overview-height", "--story-top"]) root.style.removeProperty(property);

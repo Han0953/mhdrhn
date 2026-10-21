@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
+import { motionTokens } from "@/lib/motion/tokens";
 
 export function RotatingRoles({ roles }: { roles: readonly string[] }) {
   const [index, setIndex] = useState(0);
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     let timer: ReturnType<typeof setInterval> | undefined;
     let visible = true;
     let hovered = false, focused = false;
     function sync() {
       clearInterval(timer);
       timer = undefined;
-      if (!hovered && !focused && !media.matches && !document.hidden && visible && roles.length > 1) {
-        timer = setInterval(() => setIndex(current => (current + 1) % roles.length), 3000);
+      if (!hovered && !focused && !prefersReducedMotion() && !document.hidden && visible && roles.length > 1) {
+        timer = setInterval(() => setIndex(current => (current + 1) % roles.length), motionTokens.cadence.role);
       }
     }
     const element = root.current;
@@ -29,13 +30,13 @@ export function RotatingRoles({ roles }: { roles: readonly string[] }) {
     element?.addEventListener("focusout", blur);
     const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); });
     if (root.current) observer.observe(root.current);
-    media.addEventListener("change", sync);
+    const unsubscribe = subscribeMotion(sync);
     document.addEventListener("visibilitychange", sync);
     sync();
     return () => {
       clearInterval(timer);
       observer.disconnect();
-      media.removeEventListener("change", sync);
+      unsubscribe();
       document.removeEventListener("visibilitychange", sync);
       element?.removeEventListener("pointerenter", enter);
       element?.removeEventListener("pointerleave", leave);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@base-ui/react/select";
 import { Check, ChevronDown } from "lucide-react";
@@ -14,6 +14,11 @@ export function ProjectFilters({ category, query, status }: { category: Category
   const router = useRouter();
   const search = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
+  // Retain the native input node/caret on submit; synchronize Back/Forward URL
+  // changes without remounting the focused control.
+  useEffect(() => {
+    if (search.current && search.current.value !== query) search.current.value = query;
+  }, [query]);
   const apply = (nextStatus: ProjectStatus) => {
     const href = projectFilterHref(category, search.current?.value ?? query, nextStatus);
     startTransition(() => router.replace(href, { scroll: false }));
@@ -21,7 +26,7 @@ export function ProjectFilters({ category, query, status }: { category: Category
 
   return <form action="/projects" className="search-form" data-pending={pending ? "" : undefined} aria-busy={pending} onSubmit={event => { event.preventDefault(); apply(status); }}>
     {category !== "Semua" && <input type="hidden" name="category" value={category}/>}
-    <div className="search-field"><label htmlFor="project-search">Cari proyek</label><input ref={search} id="project-search" name="q" placeholder="Nama proyek atau teknologi…" defaultValue={query} key={query} maxLength={100} type="search" aria-describedby="project-filter-help" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); apply(status); } }} onChange={event => { if (!event.currentTarget.value) apply(status); }}/></div>
+    <div className="search-field"><label htmlFor="project-search">Cari proyek</label><input ref={search} id="project-search" name="q" placeholder="Nama proyek atau teknologi…" defaultValue={query} maxLength={100} type="search" aria-describedby="project-filter-help" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); apply(status); } }} onChange={event => { if (!event.currentTarget.value) apply(status); }}/></div>
     <div className="status-field">
       <label id="project-status-label">Status proyek</label>
       <Select.Root value={status} name="status" modal={false} onValueChange={value => { if (value) apply(value); }}>

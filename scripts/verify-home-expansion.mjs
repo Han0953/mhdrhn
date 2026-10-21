@@ -1,3 +1,4 @@
+import { motionDependencies } from "./motion-test-support.mjs";
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -43,7 +44,7 @@ function storyRuntime() {
   const sticky={getBoundingClientRect(){return {height:700};}};
   const root=emitter({dataset:{view:'scroll'},style:style(),contains(){return true;},getBoundingClientRect(){return {top:1000-y,left:20};},querySelector(selector){return {'.story-sticky':sticky,'.story-overview':{getBoundingClientRect(){return {height:200};}},'.story-track':track,'.story-viewport':viewport}[selector];}});
   class Observer {constructor(fn){this.fn=fn;this.disconnected=false;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}}
-  const {mountProjectStory}=compile('src/lib/project-story-motion.ts',{window:browser,document:{documentElement:{},fonts:{ready:Promise.resolve()}},getComputedStyle(){return {getPropertyValue(){return '80px';}};},ResizeObserver:Observer,MutationObserver:Observer,requestAnimationFrame(fn){frames.set(++rafId,fn);return rafId;},cancelAnimationFrame(id){frames.delete(id);}});
+  const {mountProjectStory}=compile('src/lib/project-story-motion.ts',{window:browser,document:{documentElement:{},fonts:{ready:Promise.resolve()}},getComputedStyle(){return {getPropertyValue(){return '80px';}};},ResizeObserver:Observer,MutationObserver:Observer,requestAnimationFrame(fn){frames.set(++rafId,fn);return rafId;},cancelAnimationFrame(id){frames.delete(id);}},motionDependencies(reduced));
   const cleanup=mountProjectStory(root);
   return {root,track,cards,viewport,browser,reduced,desktop,observers,frames,cleanup,setY(value){y=value;},get y(){return y;},flush(){const pending=[...frames.values()];frames.clear();pending.forEach(fn=>fn());}};
 }
@@ -96,7 +97,7 @@ const media=emitter({matches:false}), doc=emitter({hidden:false});
 const react={useRef(value){const i=cursor++;return slots[i]??=( {current:value});},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];},useEffect(fn,deps){const i=cursor++;if(!slots[i]||deps.some((d,j)=>d!==slots[i].deps[j]))effects.push(()=>{slots[i]?.cleanup?.();slots[i]={deps,cleanup:fn()};});}};
 const jsx=(type,props)=>({type,props});
 class RoleObserver {constructor(fn){this.fn=fn;roleObservers.push(this);}observe(){}disconnect(){this.disconnected=true;}}
-const {RotatingRoles}=compile('src/components/sections/RotatingRoles.tsx',{window:{matchMedia(){return media;}},document:doc,IntersectionObserver:RoleObserver,setInterval(fn,delay){intervals.set(++serial,{fn,delay});return serial;},clearInterval(id){intervals.delete(id);}},{react,'react/jsx-runtime':{jsx,jsxs:jsx},'lucide-react':{Pause:'Pause',Play:'Play'}});
+const {RotatingRoles}=compile('src/components/sections/RotatingRoles.tsx',{window:{matchMedia(){return media;}},document:doc,IntersectionObserver:RoleObserver,setInterval(fn,delay){intervals.set(++serial,{fn,delay});return serial;},clearInterval(id){intervals.delete(id);}},{...motionDependencies(media),react,'react/jsx-runtime':{jsx,jsxs:jsx},'lucide-react':{Pause:'Pause',Play:'Play'}});
 const roleElement=emitter({contains(target){return target===this;}});const roles=['First','Second','Third'];function render(){cursor=0;const tree=RotatingRoles({roles});tree.props.ref.current=roleElement;effects.splice(0).forEach(fn=>fn());return tree;}
 await check('role advances at 3000ms with stable reserved labels and a non-live accessible summary',()=>{
   const tree=render();assert.equal(intervals.size,1);const timer=[...intervals.values()][0];assert.equal(timer.delay,3000);timer.fn();const updated=render();
