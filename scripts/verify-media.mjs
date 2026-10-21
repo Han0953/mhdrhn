@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
 import {loadContent} from './load-content.mjs';
-const directory='docs/execution/evidence/phase1-media-2026-10-21';
+const directory=process.env.MHDRHN_QA_MEDIA_EVIDENCE||'docs/execution/evidence/phase1-media-2026-10-21';
 const origin=process.env.MHDRHN_QA_ORIGIN||'http://127.0.0.1:3005';
 assert.ok(['localhost','127.0.0.1'].includes(new URL(origin).hostname));
 const media=loadContent('src/lib/media.ts'),content=loadContent(),results=[],sizes=[];

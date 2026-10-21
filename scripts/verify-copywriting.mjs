@@ -32,7 +32,14 @@ await check('22 individual project summaries replace the archive template withou
 });
 await check('achievements retain seven rows and nine outcomes; certificates reflect identified owner documents without invented credentials',()=>{
  const html=pages.get('/achievements');assert.equal((html.match(/data-achievement-id=/g)||[]).length,7);assert.equal(loadContent('src/lib/achievement-records.ts').publicAchievementOutcomeCount,9);
- assert.equal((html.match(/data-certificate-id=/g)||[]).length,loadContent('src/lib/media.ts').certificates.length);assert.match(html,/Dokumen belum tersedia/);assert.doesNotMatch(html,/AWS Certified|credential ID|Sertifikat terverifikasi|record-provenance/);
+ const certificates=loadContent('src/lib/media.ts').certificates.filter(c=>c.media.publication==='PUBLIC');
+ const archive=html.match(/<section\b[^>]*id="certificates"[\s\S]*?<\/section>/)?.[0];assert.ok(archive);
+ const preview=pages.get('/').match(/<section\b[^>]*data-home-section="certificates"[\s\S]*?<\/section>/)?.[0];assert.ok(preview);
+ for(const section of [archive,preview]){assert.equal((section.match(/data-certificate-id=/g)||[]).length,certificates.length);assert.doesNotMatch(section,/data-certificate-category|certificate-group|Dokumen belum tersedia|AWS Certified|credential ID|Sertifikat terverifikasi|record-provenance/);}
+ assert.doesNotMatch(preview,/<img\b|<dialog\b|media-gallery|Diterbitkan|Nomor sertifikat/);
+ assert.equal((archive.replace(/<dialog\b[\s\S]*?<\/dialog>/g,'').match(/<img\b/g)||[]).length,certificates.length);
+ assert.equal((preview.match(/<details>/g)||[]).length,certificates.length);assert.doesNotMatch(preview,/<details\b[^>]*\bopen\b/);
+ for(const certificate of certificates){assert.ok(certificate.description.length>40);assert.ok(plain(preview).includes(certificate.title));assert.ok(plain(preview).includes(certificate.description));assert.ok(plain(archive).includes(certificate.description));assert.ok(preview.includes(`/achievements#certificate-${certificate.id}`));assert.ok(archive.includes(`id="certificate-${certificate.id}"`));assert.ok(archive.includes(encodeURIComponent(certificate.media.src)));}
 });
 await check('status wording stays separate from stable query values; unknown status still returns the same twenty projects',async()=>{
  assert.equal(content.projectStatusLabels['Belum dipublikasikan'],'Belum diinformasikan');

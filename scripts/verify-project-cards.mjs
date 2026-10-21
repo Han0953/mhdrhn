@@ -31,13 +31,13 @@ if(origin){
   assert.ok(stories[0].includes(home.projectSectionIntros.latest));assert.ok(stories[1].includes(home.projectSectionIntros.electronics));
   for(const s of stories)assert.doesNotMatch(s,/urutannya bersifat editorial|Proyek tanpa tahun|Pilihan ini bukan urutan waktu|Lima pilihan lain/);
  });
- await check('all ten actual SSR previews use their own documented image or a clearly editorial fallback, with no caption overlay',()=>{
+ await check('all ten Home previews retain real media or project-specific graphics without caption overlays',()=>{
   const figures=stories.flatMap(s=>[...s.matchAll(/<figure\b[^>]*>[\s\S]*?<\/figure>/g)].map(m=>m[0]));assert.equal(figures.length,10);
   const media=loadContent('src/lib/media.ts');
   for(const [i,p] of [...home.latestProjects,...home.electronicsProjects].entries()){
    const f=figures[i],cover=media.getProjectMedia(p.slug)[0];assert.ok(f.includes(`data-media-project="${p.slug}"`));assert.doesNotMatch(f,/<figcaption|art-top|Ilustrasi konsep|bukan dokumentasi/);
    if(cover){assert.ok(f.includes(encodeURIComponent(cover.src)),p.slug);assert.match(f,/<img\b/);assert.match(f,/alt="[^"]+"/);}
-   else{assert.match(f,/data-media-status="fallback"/);assert.match(f,/editorial-cover/);assert.ok(f.includes(p.title));}
+   else{assert.match(f,/data-media-status="fallback"/);assert.match(f,/project-graphic/);assert.match(f,/<svg\b/);assert.doesNotMatch(f,/editorial-cover|<text\b/);const kind={'air-quality-monitoring':'air','smart-home-iot':'home','drone-stm32':'drone'}[p.slug];assert.ok(kind,p.slug);assert.ok(f.includes(`data-project-graphic="${kind}"`),p.slug);}
   }
  });
  await check('ten named project CTAs replace Lihat catatan and resolve to the original project identities',()=>{

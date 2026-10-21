@@ -18,7 +18,7 @@ export function ProjectStory({ id, number, title, intro, projects, href, linkLab
         <ol className="story-track">{projects.map((project, index) => {
           return <li className="story-card" id={`${id}-project-${index}`} key={project.slug} data-project-slug={project.slug}>
             <div className="story-card-top"><span className="eyebrow accent">{String(index + 1).padStart(2, "0")} / 05</span></div>
-            <ProjectCover project={project} preview/>
+            <ProjectCover project={project} preview graphicFallback/>
             <div className="story-copy">
             <p className="eyebrow story-category">{project.categories.join(" / ")}</p>
             <h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3>

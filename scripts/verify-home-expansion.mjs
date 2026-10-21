@@ -21,10 +21,10 @@ await check('electronics has five public domain records, no overlap; incubators 
   for(const p of home.electronicsProjects){assert.ok(p.categories.some(c=>['IoT','Electronics','Embedded'].includes(c)));assert.ok(!home.latestProjects.some(q=>q.slug===p.slug));}
   assert.ok(home.electronicsProjects.some(p=>p.slug==='iot-egg-incubator-blynk'));
 });
-await check('five atomic outcomes preserve three event contexts; certificate categories are not credentials',()=>{
+await check('five atomic outcomes preserve three event contexts; certificates use actual document titles',()=>{
   assert.equal(home.homeAchievements.length,5); assert.equal(new Set(home.homeAchievements.map(a=>a.event)).size,3);
   for(const a of home.homeAchievements) {assert.match(a.href,/^\/achievements#/);assert.match(a.source,/DATA/);}
-  assert.deepEqual(Array.from(home.certificateCategories),['AI','Organisasi','AWS']);
+  assert.equal(loadContent('src/lib/media.ts').certificates.length,3);
   for(const r of home.heroRoles) assert.match(r.source,/DATA/);
 });
 function compile(file, globals={}, dependencies={}) {
@@ -37,7 +37,7 @@ function storyRuntime() {
   let y=0, rafId=0;const frames=new Map(),observers=[];
   const reduced=emitter({matches:false}), desktop=emitter({matches:true});
   const browser=emitter({innerHeight:1000,get scrollY(){return y;},scrollTo({top}){y=top;},matchMedia(query){return query.includes('reduce')?reduced:desktop;}});
-  const cards=Array.from({length:5},(_,i)=>({offsetLeft:i*1020,clientHeight:500,scrollHeight:500,contains(target){return target.card===i;}}));
+  const cards=Array.from({length:5},(_,i)=>({offsetLeft:20+i*980,offsetWidth:960,clientHeight:500,scrollHeight:500,contains(target){return target.card===i;}}));
   const track={scrollWidth:5000,style:style(),querySelectorAll(){return cards;}};
   const viewport={clientWidth:1000,clientHeight:700,scrollLeft:0,getBoundingClientRect(){return {left:0,right:1000};},scrollTo({left}){this.scrollLeft=left;}};
   const sticky={getBoundingClientRect(){return {height:700};}};
@@ -54,8 +54,8 @@ await check('viewport gutter and available screen height are measured; overflowi
   t.cleanup();assert.equal(t.root.style['--story-gutter'],undefined);assert.equal(t.root.style['--story-height'],undefined);
 });
 await check('sticky native scrolling maps start, midpoint and end with bounded transforms',()=>{
-  const t=storyRuntime(); assert.equal(t.root.dataset.mode,'pinned');assert.equal(t.root.style.height,'4700px');
-  for(const [y,x] of [[0,0],[2920,2000],[4920,4000],[9000,4000]]){t.setY(y);t.browser.listeners.get('scroll')();t.flush();assert.equal(t.track.style.transform,`translate3d(${-x}px,0,0)`);}
+  const t=storyRuntime(); assert.equal(t.root.dataset.mode,'pinned');assert.equal(t.root.style.height,'4758px');
+  for(const [y,x] of [[0,0],[3120,2000],[5040,3920],[9000,3920]]){t.setY(y);t.browser.listeners.get('scroll')();t.flush();assert.equal(t.track.style.transform,`translate3d(${-x}px,0,0)`);}
   t.cleanup();
 });
 await check('reduced motion and explicit list remove pin; mobile retains sequential horizontal storytelling',()=>{
@@ -70,15 +70,21 @@ await check('reduced motion and explicit list remove pin; mobile retains sequent
 await check('offscreen keyboard focus and direct selection reveal the requested card; short screens fall back',()=>{
   const t=storyRuntime();t.viewport.scrollLeft=500;
   t.root.listeners.get('focusin')({target:{card:4,getBoundingClientRect(){return {left:4080,right:4500};}}});
-  assert.equal(t.y,4920);assert.equal(t.viewport.scrollLeft,0);
-  t.root.listeners.get('click')({target:{closest(){return {dataset:{storyTarget:'0'}};}}});assert.equal(t.y,920);
-  t.browser.innerHeight=600;t.browser.listeners.get('resize')();assert.equal(t.root.dataset.mode,'native');
-  t.root.listeners.get('click')({target:{closest(){return {dataset:{storyTarget:'3'}};}}});assert.equal(t.viewport.scrollLeft,3060);t.cleanup();
+  assert.equal(t.y,5040);assert.equal(t.viewport.scrollLeft,0);
+  t.root.listeners.get('click')({target:{closest(){return {dataset:{storyTarget:'0'}};}}});assert.equal(t.y,1120);
+  t.browser.innerHeight=500;t.browser.listeners.get('resize')();assert.equal(t.root.dataset.mode,'native');
+  t.root.listeners.get('click')({target:{closest(){return {dataset:{storyTarget:'3'}};}}});assert.equal(t.viewport.scrollLeft,2940);t.cleanup();
 });
 await check('mobile scroll finishes horizontal travel before releasing the section, with reversible bounds',()=>{
  const t=storyRuntime();t.desktop.matches=false;t.desktop.listeners.get('change')();
- for(const [y,x] of [[1000,0],[1120,0],[3120,2000],[5120,4000],[6000,4000],[3120,2000]]){t.setY(y);t.browser.listeners.get('scroll')();t.flush();assert.equal(t.track.style.transform,`translate3d(${-x}px,0,0)`);}
- t.root.listeners.get('click')({target:{closest(){return {dataset:{storyTarget:'4'}};}}});assert.equal(t.y,5120);t.cleanup();
+ for(const [y,x] of [[1000,0],[1120,0],[3120,2000],[5040,3920],[6000,3920],[3120,2000]]){t.setY(y);t.browser.listeners.get('scroll')();t.flush();assert.equal(t.track.style.transform,`translate3d(${-x}px,0,0)`);}
+ t.root.listeners.get('click')({target:{closest(){return {dataset:{storyTarget:'4'}};}}});assert.equal(t.y,5040);t.cleanup();
+});
+await check('last-card geometry retains the trailing gutter even when scrollWidth under-reports flex overflow; laptop heights stay pinned',()=>{
+ const t=storyRuntime();t.track.scrollWidth=3800;t.browser.innerHeight=720;t.browser.listeners.get('resize')();assert.equal(t.root.dataset.mode,'pinned');
+ t.setY(5040);t.browser.listeners.get('scroll')();t.flush();assert.equal(t.track.style.transform,'translate3d(-3920px,0,0)');
+ assert.equal(t.cards.at(-1).offsetLeft+t.cards.at(-1).offsetWidth-3920,t.viewport.clientWidth-20);
+ assert.equal(Number.parseFloat(t.root.style.height)-700-3920,96);t.cleanup();
 });
 await check('twenty mount/unmount cycles release observers, listeners, RAF and pending fonts callbacks',async()=>{
   for(let i=0;i<20;i++){const t=storyRuntime();t.browser.listeners.get('scroll')();t.browser.listeners.get('resize')();t.cleanup();await Promise.resolve();assert.equal(t.frames.size,0);assert.equal(t.root.listeners.size+t.browser.listeners.size+t.reduced.listeners.size+t.desktop.listeners.size,0);assert.ok(t.observers.every(o=>o.disconnected));assert.equal(t.root.style.height,'');}
@@ -107,10 +113,10 @@ const origin=process.env.MHDRHN_QA_ORIGIN;
 if(origin){
   assert.ok(['127.0.0.1','localhost'].includes(new URL(origin).hostname));
   const response=await fetch(origin);assert.equal(response.status,200);const html=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
-  await check('SSR includes 10 project identities, the curated technology preview, five outcomes and honest certificate categories',()=>{
-    assert.equal((html.match(/data-project-slug=/g)||[]).length,10);assert.equal((html.match(/data-technology=/g)||[]).length,inventory.homeTechnologyGroups.flatMap(g=>g.items).length);assert.equal((html.match(/data-home-achievement=/g)||[]).length,5);assert.equal((html.match(/data-certificate-category=/g)||[]).length,3);
+  await check('SSR includes 10 project identities, the curated technology preview, five outcomes and named certificate disclosures',()=>{
+    assert.equal((html.match(/data-project-slug=/g)||[]).length,10);assert.equal((html.match(/data-technology=/g)||[]).length,inventory.homeTechnologyGroups.flatMap(g=>g.items).length);assert.equal((html.match(/data-home-achievement=/g)||[]).length,5);assert.equal((html.match(/data-certificate-category=/g)||[]).length,0);
     for(const p of [...home.latestProjects,...home.electronicsProjects])assert.ok(html.includes(`/projects/${p.slug}`));
-    for(const text of ['Dokumen belum tersedia','Learning','AI Ready ASEAN','Siswa Tersertifikasi Gemini'])assert.ok(html.includes(text));
+    for(const text of ['Learning','AI Ready ASEAN','Siswa Tersertifikasi Gemini','Google Fill &amp; Feel Festival'])assert.ok(html.includes(text));
     assert.doesNotMatch(html,/belum ada dokumen yang dapat ditampilkan/);
     assert.doesNotMatch(html,/Team Stack/);
     assert.ok(html.includes(home.projectSectionIntros.latest));assert.ok(html.includes(home.projectSectionIntros.electronics));

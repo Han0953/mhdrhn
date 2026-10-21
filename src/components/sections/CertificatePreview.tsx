@@ -1,26 +1,25 @@
-import { FileCheck2 } from "lucide-react";
-import { certificateCategories } from "@/lib/home-content";
 import { certificates } from "@/lib/media";
 import { MediaGallery } from "@/components/media/MediaGallery";
+import { SiteLink } from "@/components/layout/RouteTransition";
+import { Arrow } from "@/components/ui/Editorial";
+import { ChevronDown } from "lucide-react";
 
-const certificateDescriptions: Record<typeof certificateCategories[number], string> = {
-  AI: "Pembelajaran seputar kecerdasan buatan dan penerapannya.",
-  Organisasi: "Kegiatan kemahasiswaan, kepanitiaan, dan pengembangan organisasi.",
-  AWS: "Pembelajaran layanan dan teknologi cloud AWS.",
-};
-
-export function CertificatePreview() {
+export function CertificatePreview({ preview = false }: { preview?: boolean }) {
+  const records = certificates.filter(certificate => certificate.media.publication === "PUBLIC");
+  if (preview) return <ol className="certificate-title-list">{records.map(certificate => <li key={certificate.id} data-certificate-id={certificate.id}>
+    <details><summary><h3>{certificate.title}<ChevronDown size={20} aria-hidden="true"/></h3></summary>
+      <div className="certificate-description"><p>{certificate.description}</p><SiteLink className="text-link" href={`/achievements#certificate-${certificate.id}`}>Lihat sertifikat <Arrow/></SiteLink></div>
+    </details>
+  </li>)}</ol>;
   return <div className="certificate-preview">
     <p className="section-note">Sertifikat menjadi dokumentasi atas kesempatan belajar dan kegiatan yang saya ikuti.</p>
-    <div className="certificate-collection">{certificateCategories.map(category => <section key={category} data-certificate-category={category} className="certificate-group">
-      <div className="certificate-group-heading"><FileCheck2 size={26} strokeWidth={1.5} aria-hidden="true"/><h3>{category}</h3><p>{certificateDescriptions[category]}</p></div>
-      {certificates.filter(certificate => certificate.category === category).map(certificate => <article className="certificate-record" key={certificate.id} data-certificate-id={certificate.id}>
+    <div className="certificate-collection">{records.map(certificate => <article className="certificate-record" id={`certificate-${certificate.id}`} key={certificate.id} data-certificate-id={certificate.id}>
+        <h3>{certificate.title}</h3>
         <MediaGallery items={[certificate.media]} label={certificate.title} sizes="(max-width: 767px) 100vw, 33vw" compact/>
-        <h4>{certificate.title}</h4><p>{certificate.issuer}</p><p className="meta">Diterbitkan {certificate.issued}{certificate.expires && ` · Berlaku sampai ${certificate.expires}`}</p>
+        <p className="certificate-summary">{certificate.description}</p>
+        <p>{certificate.issuer}</p><p className="meta">Diterbitkan {certificate.issued}{certificate.expires && ` · Berlaku sampai ${certificate.expires}`}</p>
         {certificate.credentialId && <p className="meta">Nomor sertifikat: {certificate.credentialId}</p>}
         {certificate.verificationUrl && <a className="text-link" href={certificate.verificationUrl} rel="noopener noreferrer" target="_blank">Verifikasi sertifikat</a>}
-      </article>)}
-      {!certificates.some(certificate => certificate.category === category) && <p className="meta certificate-empty">Dokumen belum tersedia</p>}
-    </section>)}</div>
+      </article>)}</div>
   </div>;
 }

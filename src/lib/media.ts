@@ -58,6 +58,7 @@ export function getAchievementMedia(id: string): readonly MediaAsset[] {
 export interface CertificateRecord {
   id: string;
   title: string;
+  description: string;
   issuer: string;
   category: "AI" | "Organisasi" | "AWS";
   issued: string;
@@ -67,7 +68,7 @@ export interface CertificateRecord {
   media: MediaAsset;
 }
 export const certificates: readonly CertificateRecord[] = [
-  { id: "ai-ready-asean", title: "Certificate of Completion — AI Ready ASEAN", issuer: "ASEAN Foundation", category: "AI", issued: "17 Juli 2026", media: mediaAssets.aiAsean },
-  { id: "gemini-student", title: "Siswa Tersertifikasi Gemini", issuer: "Google for Education", category: "AI", issued: "03/08/2026", expires: "03/08/2029", media: mediaAssets.gemini },
-  { id: "fill-feel-festival", title: "Sertifikat Apresiasi — Google Fill & Feel Festival", issuer: "Panitia Google Fill & Feel Festival", category: "Organisasi", issued: "26 Juli 2026", credentialId: "236/SER-KM/IBTPI/VII/2026", media: mediaAssets.fillFeel },
+  { id: "ai-ready-asean", title: "Certificate of Completion — AI Ready ASEAN", description: "Penyelesaian modul pembelajaran kecerdasan buatan selama 12 jam dalam program AI Ready ASEAN dari ASEAN Foundation.", issuer: "ASEAN Foundation", category: "AI", issued: "17 Juli 2026", media: mediaAssets.aiAsean },
+  { id: "gemini-student", title: "Siswa Tersertifikasi Gemini", description: "Pengakuan atas pengetahuan dan keterampilan dasar menggunakan AI Google dalam lingkungan pendidikan.", issuer: "Google for Education", category: "AI", issued: "03/08/2026", expires: "03/08/2029", media: mediaAssets.gemini },
+  { id: "fill-feel-festival", title: "Sertifikat Apresiasi — Google Fill & Feel Festival", description: "Keikutsertaan sebagai peserta Google Fill & Feel Festival bertema New Knowledge, New Upgrade di Institut Bisnis dan Teknologi Pelita Indonesia.", issuer: "Panitia Google Fill & Feel Festival", category: "Organisasi", issued: "26 Juli 2026", credentialId: "236/SER-KM/IBTPI/VII/2026", media: mediaAssets.fillFeel },
 ];

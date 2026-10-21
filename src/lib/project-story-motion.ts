@@ -20,11 +20,13 @@ export function mountProjectStory(root: HTMLElement) {
     if (destroyed) return;
     const list = root.dataset.view === "list";
     // Use the layout viewport (without the scrollbar), never 100vw that can spill horizontally.
-    root.style.setProperty("--story-gutter", `${Math.max(0, root.getBoundingClientRect().left)}px`);
+    const gutter = Math.max(0, root.getBoundingClientRect().left);
+    root.style.setProperty("--story-gutter", `${gutter}px`);
     root.style.setProperty("--story-height", `${window.innerHeight - top()}px`);
-    pinned = !list && !reduced.matches && window.innerHeight - top() >= (desktop.matches ? 600 : 480);
+    pinned = !list && !reduced.matches && window.innerHeight - top() >= 480;
     root.dataset.mode = pinned ? "pinned" : "native";
-    const overviewHeight = desktop.matches ? 0 : overview.getBoundingClientRect().height;
+    // Let the introduction scroll out before the card stage pins, on every breakpoint.
+    const overviewHeight = overview.getBoundingClientRect().height;
     pinTop = top() - overviewHeight;
     root.style.setProperty("--story-overview-height", `${overviewHeight}px`);
     root.style.setProperty("--story-top", `${pinTop}px`);
@@ -33,9 +35,12 @@ export function mountProjectStory(root: HTMLElement) {
       pinned = false;
       root.dataset.mode = "native";
     }
-    travel = Math.max(0, track.scrollWidth - viewport.clientWidth);
+    // Flex overflow can omit the trailing padding. Measure the final card and retain its gutter.
+    const lastCard = cards.at(-1);
+    travel = lastCard ? Math.max(0, Math.ceil(lastCard.offsetLeft + lastCard.offsetWidth + gutter - viewport.clientWidth)) : 0;
     if (travel <= 0) { pinned = false; root.dataset.mode = "native"; }
-    root.style.height = pinned ? `${sticky.getBoundingClientRect().height + travel}px` : "";
+    const endPause = Math.min(160, (window.innerHeight - top()) * .15);
+    root.style.height = pinned ? `${sticky.getBoundingClientRect().height + travel + endPause}px` : "";
     if (pinned) { viewport.scrollLeft = 0; draw(); }
     else { track.style.transform = ""; root.style.removeProperty("--story-progress"); }
   }

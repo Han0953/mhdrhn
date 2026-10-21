@@ -40,7 +40,7 @@ export default function Home() {
     </section>
     <section className="section home-certificates" data-home-section="certificates" aria-labelledby="certificates-heading">
       <div className="section-heading"><div><p className="eyebrow accent">09 / Certificates</p><h2 id="certificates-heading">Sertifikat<br/>pembelajaran.</h2></div><SiteLink href="/achievements#certificates" className="text-link">Arsip sertifikat <Arrow/></SiteLink></div>
-      <CertificatePreview/>
+      <CertificatePreview preview/>
     </section>
     <section className="section home-closing" data-home-section="closing" aria-labelledby="closing-heading">
       <p className="eyebrow">10 / The next conversation</p>

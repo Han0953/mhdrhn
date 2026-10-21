@@ -56,4 +56,3 @@ export const homeAchievements = [
 ];
 
 // Explicitly requested category previews. These are not credential records.
-export const certificateCategories = ["AI", "Organisasi", "AWS"] as const;
