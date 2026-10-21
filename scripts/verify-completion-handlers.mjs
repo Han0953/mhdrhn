@@ -39,7 +39,7 @@ for (const unavailable of [true,false]) await check(`clipboard ${unavailable?'un
   const test=runtime('src/components/ui/CopyProjectLink.tsx',{}, {window:{location:browserLocation},navigator});
   let tree=test.render(test.exports.CopyProjectLink); await tree.props.children[0].props.onClick(); tree=test.render(test.exports.CopyProjectLink);
   const label=tree.props.children[2]; assert.equal(label.type,'label'); assert.equal(label.props.children[1].props.readOnly,true);
-  assert.equal(label.props.children[1].props.value,'http://127.0.0.1:3003/projects/drone-stm32'); assert.match(tree.props.children[1].props.children,/manual/); test.unmount();
+  assert.equal(label.props.children[1].props.value,'http://127.0.0.1:3003/projects/drone-stm32'); assert.match(tree.props.children[1].props.children,/Ctrl\+C/); assert.match(tree.props.children[1].props.children,/menu salin/); test.unmount();
 });
 await check('a clipboard response after unmount cannot update removed UI',async()=>{
   let finish;
@@ -65,7 +65,7 @@ await check('fast pending navigation cancels its notice timer before anything is
 await check('a genuinely pending Link gets one polite notice after 1200ms and releases resources',()=>{
   const r=navigationRuntime(true), pending=r.test.render(r.link.props.children[1].type);r.test.render(pending.type);
   const [id,timer]=[...r.timers][0];r.timers.delete(id);timer.callback(); const notice=r.test.render(pending.type);
-  assert.equal(notice.props.role,'status');assert.match(notice.props.children,/Navigasi tetap tersedia/); r.test.unmount();assert.equal(r.timers.size,0);
+  assert.equal(notice.props.role,'status');assert.match(notice.props.children,/tetap bisa memakai navigasi/); r.test.unmount();assert.equal(r.timers.size,0);
 });
 fs.writeFileSync(process.env.MHDRHN_QA_HANDLER_EVIDENCE || 'docs/execution/evidence/completion-2026-10-19/handler-checks.json',JSON.stringify({method:'Actual handlers with React, timer and clipboard doubles; no slow network or OS preference emulation.',results},null,2));
 console.log(`${results.length} completion handler checks passed.`);

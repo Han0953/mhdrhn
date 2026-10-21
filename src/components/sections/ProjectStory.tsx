@@ -3,6 +3,7 @@ import { Arrow, ProjectArt } from "@/components/ui/Editorial";
 import { Cpu, Radio, CircuitBoard, Wind, House } from "lucide-react";
 import type { Project } from "@/lib/content";
 import { ProjectStoryViewport } from "./ProjectStoryViewport";
+import { projectPreviewSummaries } from "@/lib/home-content";
 
 export function ProjectStory({ id, number, title, intro, projects, href, linkLabel }: {
   id: "latest" | "electronics"; number: string; title: string; intro: string;
@@ -18,12 +19,14 @@ export function ProjectStory({ id, number, title, intro, projects, href, linkLab
           const Icon = [Radio, Wind, House, CircuitBoard, Cpu][index];
           return <li className="story-card" id={`${id}-project-${index}`} key={project.slug} data-project-slug={project.slug}>
             <div className="story-card-top"><span className="eyebrow accent">{String(index + 1).padStart(2, "0")} / 05</span></div>
-            {id === "latest" ? <ProjectArt kind={project.visual} title={project.title}/> : <figure className="electronics-mark"><Icon size={64} strokeWidth={1} aria-hidden="true"/><figcaption>Simbol bidang · bukan dokumentasi perangkat</figcaption></figure>}
+            {id === "latest" ? <ProjectArt kind={project.visual} title={project.title} variant="preview"/> : <figure className="electronics-mark" aria-hidden="true"><Icon size={64} strokeWidth={1} aria-hidden="true"/></figure>}
+            <div className="story-copy">
             <p className="eyebrow story-category">{project.categories.join(" / ")}</p>
             <h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3>
-            <p className="story-summary">{project.summary}</p>
-            <p className="meta story-context">{project.role ? `${project.context} · ${project.role}` : project.format === "summary" ? "Catatan arsip · detail teknis belum dipublikasikan" : "Status penyelesaian belum dipublikasikan"}</p>
-            <SiteLink className="text-link" href={`/projects/${project.slug}`}>Lihat catatan <Arrow/></SiteLink>
+            <p className="story-summary">{projectPreviewSummaries[project.slug] ?? project.summary}</p>
+            {project.role && <p className="meta story-context">{project.context}</p>}
+            <SiteLink className="text-link" href={`/projects/${project.slug}`} aria-label={`Jelajahi proyek ${project.title}`}>Jelajahi proyek <Arrow/></SiteLink>
+            </div>
           </li>;
         })}</ol>
       </div>

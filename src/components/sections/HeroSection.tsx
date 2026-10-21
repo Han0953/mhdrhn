@@ -11,7 +11,7 @@ export function HeroSection() {
       <div className="hero-grid"><div className="hero-identity"><h1 id="home-title" tabIndex={-1}><span>Muhammad</span><span>Rehan<span className="accent">.</span></span></h1><RotatingRoles roles={heroRoles.map(role => role.label)}/></div>
         <SignalDiagram steps={engineeringSteps}/>
       </div>
-      <div className="hero-bottom"><p>Mengeksplorasi hubungan antara elektronika, perangkat lunak, dan gagasan yang bisa diwujudkan.</p><div className="actions"><SiteLink className="button-primary" href="/projects">Jelajahi karya <Arrow/></SiteLink><SiteLink className="text-link" href="/about">Tentang Rehan <Arrow/></SiteLink></div></div>
+      <div className="hero-bottom"><p>Saya mengerjakan proyek sambil mempelajari cara kerja teknologi yang ada di baliknya.</p><div className="actions"><SiteLink className="button-primary" href="/projects">Jelajahi karya <Arrow/></SiteLink><SiteLink className="text-link" href="/about">Tentang Rehan <Arrow/></SiteLink></div></div>
     </section>
   );
 }

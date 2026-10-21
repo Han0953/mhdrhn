@@ -82,8 +82,7 @@ export function SignalDiagram({ steps, story = false }: { steps: readonly Engine
       </svg>
       </button>
       {!story && <div className="probe-controls" role="group" aria-label="Jelajahi alur engineering">{steps.map((step, index) => <button key={step.id} type="button" aria-pressed={active === index} onClick={() => choose(index)}>{step.title}</button>)}</div>}
-      <figcaption>{story ? "Alur konseptual untuk menjelaskan proses kreatif." : steps[active].short}</figcaption>
-      <p className="signal-hint meta">Klik diagram untuk menggerakkan alur.</p>
+      {story && <figcaption>Alur konseptual untuk menjelaskan proses kreatif.</figcaption>}
     </figure>
     {story && <ol className="process-steps">{steps.map((step, index) => <li key={step.id} data-step={index} data-selected={active === index}>
       <h3><button type="button" aria-pressed={active === index} onClick={() => choose(index)}><span className="eyebrow">0{index + 1}</span>{step.title}<span aria-hidden="true">↗</span></button></h3>

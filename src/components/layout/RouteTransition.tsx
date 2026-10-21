@@ -88,11 +88,10 @@ export function RouteTransition({ children }: { children: ReactNode }) {
   return <TransitionContext value={begin}><ReadyContext value={ready}><div ref={content}>{children}</div></ReadyContext>
     <div className="route-transition-viewport" ref={viewport} tabIndex={-1} aria-hidden="true" aria-label="Transisi halaman">
       <div className="route-wipe" ref={layer}>
-        <span className="eyebrow" aria-hidden="true">Membuka halaman</span>
         <span className="route-title" aria-hidden="true"/>
         <span className="sr-only" role="status"/>
-        <div className="route-recovery">Pemuatan lebih lama dari biasanya. Tekan Escape atau tutup transisi untuk kembali mengakses navigasi.
-          <button type="button" onClick={() => wipe.current?.clear()}>Tutup transisi</button>
+        <div className="route-recovery">Halaman membutuhkan waktu lebih lama. Tekan Escape atau tutup tampilan ini untuk kembali ke navigasi.
+          <button type="button" onClick={() => wipe.current?.clear()}>Kembali ke navigasi</button>
         </div>
       </div>
     </div>
@@ -102,7 +101,7 @@ export function RouteTransition({ children }: { children: ReactNode }) {
 function SlowLinkStatus() {
   const [visible, setVisible] = useState(false);
   useEffect(() => { const timer = setTimeout(() => setVisible(true), 1200); return () => clearTimeout(timer); }, []);
-  return visible ? <span className="navigation-notice" role="status">Halaman sedang dibuka. Navigasi tetap tersedia.</span> : null;
+  return visible ? <span className="navigation-notice" role="status">Sedang membuka halaman… Kamu tetap bisa memakai navigasi.</span> : null;
 }
 function LinkPendingStatus() {
   const { pending } = useLinkStatus();

@@ -7,6 +7,10 @@ import { featuredAchievements } from "./achievement-records";
 export const categories = ["Semua", "Web", "IoT", "Electronics", "Embedded", "Research", "AI"] as const;
 export type Category = (typeof categories)[number];
 export const projectStatuses = ["Semua", "Online", "Dalam pengembangan", "Belum dipublikasikan"] as const;
+// Public wording is separate from stable filter/query values.
+export const projectStatusLabels: Record<typeof projectStatuses[number], string> = {
+  Semua: "Semua status", Online: "Online", "Dalam pengembangan": "Dalam pengembangan", "Belum dipublikasikan": "Belum diinformasikan",
+};
 export type ProjectStatus = Exclude<(typeof projectStatuses)[number], "Semua" | "Belum dipublikasikan">;
 export interface Project {
   slug: string; title: string; subtitle: string; summary: string;
@@ -17,60 +21,60 @@ export interface Project {
 }
 const projects: readonly Project[] = [
   {
-    slug: "vircuit", title: "Vircuit", subtitle: "Virtual electronics laboratory", source: "DATA §9.2",
-    summary: "Laboratorium virtual berbasis web untuk mengeksplorasi elektronika, mikrokontroler, dan IoT. Belajar dengan mencoba, merangkai, dan memahami kesalahan.",
+    slug: "vircuit", title: "Vircuit", subtitle: "Belajar elektronika melalui laboratorium virtual", source: "DATA §9.2",
+    summary: "Vircuit menyediakan ruang belajar elektronika, mikrokontroler, dan IoT melalui simulasi di browser. Pengguna dapat menyusun rangkaian, menulis kode, dan memahami kesalahan saat mencoba.",
     categories: ["Web"], year: 2026, context: "Trio Hengker Enjoyer", role: "Anggota tim pengembangan",
     technologies: ["Next.js", "React", "TypeScript", "Tailwind CSS", "shadcn/ui", "Radix UI", "GSAP", "Lenis", "Three.js", "React Three Fiber", "React Flow / XYFlow", "Monaco Editor", "Zustand", "Web Worker", "Supabase", "Google Gemini / Cirra", "React Hook Form", "Zod", "Vitest", "Playwright", "PGlite", "pnpm"],
-    approach: "Menurut deskripsi pemilik, Vircuit mempertemukan drag-and-drop komponen dan wiring antarpin, simulasi mikrokontroler edukatif Arduino Uno/ESP32, editor Arduino C/C++, serial monitor, dan debugging. Pendekatannya adalah Learning by Doing & Learning from Mistakes. Asisten Cirra menggunakan Google Gemini; logika simulasi custom berjalan melalui Web Worker.",
-    limitation: "Karya ini dikembangkan bersama tim. Rincian modul kontribusi pribadi belum dipublikasikan. Cakupan simulasi dan kompatibilitas firmware tidak dinyatakan setara dengan perangkat fisik.",
+    approach: "Pembelajaran dimulai dengan memilih komponen dan menghubungkan pin pada kanvas rangkaian. Editor Arduino C/C++, simulasi edukatif Arduino Uno/ESP32, serta serial monitor membantu pengguna mencoba dan menelusuri kode. Logika simulasi berjalan melalui Web Worker, sementara asisten Cirra menggunakan Google Gemini.",
+    limitation: "Vircuit dikembangkan bersama tim Trio Hengker Enjoyer. Pembagian modul yang saya kerjakan belum diuraikan di sini. Simulasinya ditujukan untuk pembelajaran; kesetaraan dengan perangkat fisik dan kompatibilitas firmware penuh belum dibuktikan.",
     featured: 1, visual: "circuit", link: "https://vircuit.vercel.app/",
   },
   {
-    slug: "aura-pod", title: "AURA POD", subtitle: "Electronics for a lower-carbon future", source: "DATA §9.1",
-    summary: "Inovasi tim ALGA NOVA yang menghubungkan fotobioreaktor mikroalga, elektronika, dan IoT untuk mendukung transisi industri rendah karbon.",
+    slug: "aura-pod", title: "AURA POD", subtitle: "Fotobioreaktor mikroalga dengan dukungan elektronika dan IoT", source: "DATA §9.1",
+    summary: "AURA POD adalah inovasi fotobioreaktor mikroalga dari tim ALGA NOVA untuk mendukung transisi industri rendah karbon. Dashboard web menjadi bagian dari sistem pemantauan dan kontrolnya.",
     categories: ["IoT", "Web"], year: 2026, context: "ALGA NOVA", role: "Anggota tim · bidang elektronika dan IoT",
     technologies: ["React", "TypeScript", "JavaScript", "Vite", "Tailwind CSS", "React Router", "GSAP", "Recharts", "Lucide React", "Blynk Cloud HTTP API", "Google Gemini / Aira", "Vercel Serverless", "npm"],
-    approach: "Komponen digital AURA POD berupa dashboard monitoring dan kontrol dengan integrasi Blynk Cloud HTTP API serta visualisasi sensor. Asisten Aira memakai Google Gemini melalui endpoint serverless. Dashboard menjadi bagian dari inovasi fotobioreaktor yang dikembangkan bersama tim; ini bukan klaim penerapan industri secara penuh.",
-    limitation: "Penghargaan diberikan kepada inovasi tim secara keseluruhan. Keterhubungan perangkat pada deployment dan kontribusi kode individual belum diverifikasi dalam portfolio ini.",
+    approach: "Dashboard menampilkan data sensor dan menyediakan antarmuka kontrol melalui Blynk Cloud HTTP API. Asisten Aira menggunakan Google Gemini melalui endpoint serverless. Peran saya dalam tim berada pada bidang elektronika dan IoT.",
+    limitation: "Penghargaan AURA POD diraih oleh inovasi tim secara keseluruhan. Pembagian kontribusi kode belum dijelaskan secara rinci, dan koneksi perangkat pada dashboard online belum diverifikasi. Penerapan industri penuh belum dapat disimpulkan dari proyek ini.",
     featured: 2, visual: "aura", link: "https://aura-pod-dashboard.vercel.app/",
   },
   {
-    slug: "website-pvte-himpteka", title: "PVTE + HIMPTEKA", subtitle: "Satu sistem, dua ruang informasi", source: "DATA §9.3", status: "Online",
-    summary: "Website Program Studi Pendidikan Vokasional Teknik Elektronika dan HIMPTEKA UMRI. Informasi akademik dan organisasi dalam satu sistem web.",
+    slug: "website-pvte-himpteka", title: "PVTE + HIMPTEKA", subtitle: "Informasi program studi dan organisasi dalam satu website", source: "DATA §9.3", status: "Online",
+    summary: "Website untuk menyajikan informasi Program Studi Pendidikan Vokasional Teknik Elektronika dan HIMPTEKA UMRI. Dua portal berbagi satu sistem untuk kebutuhan akademik dan organisasi.",
     categories: ["Web"], year: 2026, context: "PVTE · Universitas Muhammadiyah Riau", role: "Full Stack Web Developer",
     technologies: ["React", "JavaScript / JSX", "Vite", "Tailwind CSS", "React Router", "GSAP", "Framer Motion", "Lenis", "Laravel", "PHP", "MySQL", "REST API", "Laravel Sanctum", "Blade", "TF-IDF / cosine similarity", "Google Gemini / Vira", "PHPUnit", "Laravel Pint"],
-    approach: "Frontend interaktif dipadukan dengan backend Laravel dan panel pengelolaan konten berbasis Blade. PVTE dan HIMPTEKA adalah dua bagian dari satu website. Menurut data pemilik, asisten Vira menggunakan pencarian lokal TF-IDF/cosine similarity dan Google Gemini; urutan integrasi teknisnya belum diaudit di portfolio ini.",
-    limitation: "Website telah online menurut pemilik; pengembangan lanjutan dapat tetap berjalan. Ketersediaan semua fitur pada deployment tidak diaudit melalui portfolio ini.",
+    approach: "Saya berperan sebagai Full Stack Web Developer. Antarmuka React terhubung dengan backend Laravel dan panel pengelolaan konten berbasis Blade. Asisten Vira memakai pencarian informasi lokal dengan TF-IDF/cosine similarity serta Google Gemini.",
+    limitation: "Website sudah online dan masih dapat dikembangkan lebih lanjut. Uraian ini belum mencakup pemeriksaan seluruh fitur pada website aktif maupun alur integrasi Vira secara terperinci.",
     featured: 3, visual: "portal", link: "https://pvte.fkip.umri.ac.id/",
   },
   {
-    slug: "iot-egg-incubator-research", title: "Inkubator penelitian MQTT", subtitle: "ESP32 · kendali suhu dan kelembaban", source: "DATA §8.1 / §9.4",
-    summary: "Penelitian dosen mengenai sistem penetasan telur ayam kate berbasis ESP32, dengan kendali otomatis dan komunikasi MQTT tanpa tombol fisik.",
+    slug: "iot-egg-incubator-research", title: "Inkubator penelitian MQTT", subtitle: "Kendali penetasan telur ayam kate berbasis ESP32", source: "DATA §8.1 / §9.4",
+    summary: "Proyek penelitian dosen tentang inkubator telur ayam kate dengan kendali otomatis berbasis ESP32. MQTT digunakan dalam rancangan komunikasi sistem, tanpa tombol kontrol fisik.",
     categories: ["IoT", "Research"], year: 2026, context: "Penelitian dosen", role: "IoT Engineer",
     technologies: ["ESP32", "MQTT", "DHT22", "LCD I2C"],
-    approach: "Rancangan mengatur pemanas melalui histeresis dan pembalikan telur secara terjadwal. MQTT digunakan dalam rancangan komunikasi dan monitoring sistem.",
-    limitation: "Hasil akhir pengujian MQTT, data eksperimen, dan tingkat keberhasilan penetasan belum tersedia. Proyek ini berbeda dari inkubator Blynk dengan tombol fisik.", visual: "research",
+    approach: "Sebagai IoT Engineer, saya terlibat pada rancangan kendali dan komunikasi perangkat. Pemanas diatur berdasarkan batas suhu melalui histeresis, sedangkan pembalikan telur dijadwalkan oleh sistem. MQTT menjadi jalur komunikasi untuk kebutuhan pemantauan.",
+    limitation: "Hasil akhir pengujian MQTT, data eksperimen, dan tingkat keberhasilan penetasan belum tersedia untuk ditampilkan. Inkubator ini merupakan proyek penelitian yang berbeda dari versi Blynk dengan tombol fisik.", visual: "research",
   },
   {
-    slug: "iot-egg-incubator-blynk", title: "Inkubator Blynk", subtitle: "Interaksi jarak jauh dan kontrol lokal", source: "DATA §9.5",
-    summary: "Inkubator telur IoT dengan integrasi Blynk dan tombol fisik untuk interaksi lokal.",
+    slug: "iot-egg-incubator-blynk", title: "Inkubator Blynk", subtitle: "Kendali inkubator melalui Blynk dan tombol fisik", source: "DATA §9.5",
+    summary: "Proyek inkubator telur yang menggabungkan integrasi IoT melalui Blynk dengan tombol kendali pada perangkat.",
     categories: ["IoT"], context: "Pengembangan sistem IoT", technologies: ["Blynk", "Tombol fisik"],
-    approach: "Rancangan menggabungkan interaksi melalui Blynk dengan tombol kontrol pada perangkat. Kedua cara interaksi menjadi pembeda dari inkubator penelitian berbasis MQTT.",
-    limitation: "Status penyelesaian, jenis board dan sensor, serta rincian kontribusi belum dipublikasikan. Spesifikasi inkubator MQTT tidak diwariskan ke proyek ini.", visual: "research",
+    approach: "Blynk menjadi antarmuka kendali jarak jauh, sementara tombol fisik menyediakan interaksi langsung pada inkubator. Pendekatan ini berbeda dari inkubator penelitian MQTT yang bekerja tanpa tombol fisik.",
+    limitation: "Rincian board, sensor, kontribusi pribadi, dan tahap penyelesaian belum tersedia. Spesifikasi versi penelitian MQTT tidak digunakan untuk menjelaskan perangkat pada proyek ini.", visual: "research",
   },
   {
-    slug: "website-lazismu-kuansing", title: "LAZISMU Kuansing", subtitle: "Website & pendampingan digital", source: "DATA §7.2 / §9.6",
-    summary: "Pembuatan dan pelatihan pengoperasian website LAZISMU Kabupaten Kuantan Singingi sebagai media informasi dan komunikasi.",
+    slug: "website-lazismu-kuansing", title: "LAZISMU Kuansing", subtitle: "Website informasi dan pelatihan pengelolaannya", source: "DATA §7.2 / §9.6",
+    summary: "Website LAZISMU Kabupaten Kuantan Singingi sebagai media informasi dan komunikasi. Pengembangannya disertai pelatihan pengoperasian dalam kegiatan pengabdian masyarakat.",
     categories: ["Web"], year: 2024, context: "Pengabdian kepada masyarakat", role: "Full Stack Web Developer",
     technologies: ["HTML", "CSS", "JavaScript", "PHP", "MySQL"],
-    approach: "Pengembangan website disertai pelatihan pengoperasian untuk mendukung pengelolaan informasi oleh organisasi.",
-    limitation: "Ringkasan mengikuti catatan proyek. Metrik penggunaan dan dampak layanan tidak tersedia untuk dipublikasikan.", visual: "portal", link: "https://lazismukuansing.org/",
+    approach: "Saya berperan sebagai Full Stack Web Developer pada pembuatan website. Pelatihan pengoperasian menjadi bagian dari kegiatan agar pengelolaan informasi dapat dipahami oleh pihak organisasi.",
+    limitation: "Halaman ini menjelaskan pengembangan dan pelatihan website. Data penggunaan serta evaluasi dampak layanan belum tersedia.", visual: "portal", link: "https://lazismukuansing.org/",
   },
   ...archiveProjects,
 ];
 export const profile = {
   name: "Muhammad Rehan", brand: "mhdrhn.", location: "Pekanbaru, Indonesia", github: "https://github.com/Han0953",
-  bio: "Mahasiswa Pendidikan Vokasional Teknik Elektronika di Universitas Muhammadiyah Riau. Mengeksplorasi Internet of Things, embedded systems, pengembangan perangkat lunak, dan penelitian teknologi.",
+  bio: "Saya Muhammad Rehan, mahasiswa S1 Pendidikan Vokasional Teknik Elektronika di Universitas Muhammadiyah Riau. Berangkat dari latar Teknik Komputer dan Jaringan, saya mendalami teknologi lewat proyek dan pengalaman langsung. Saya belajar memahami cara kerja sebuah sistem, mencoba menerapkan gagasan, dan mengerjakannya secara mandiri maupun bersama tim. Proses itu menjadi bagian dari cara saya memperdalam kemampuan, terutama dalam elektronika dan pengembangan perangkat lunak.",
 };
 export const experiences = experienceGroups;
 // Compatibility for curated Home and project relations; the full archive also has education records.

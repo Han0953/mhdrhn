@@ -45,11 +45,11 @@ check('research and community service keep canonical relationships and never cla
   assert.equal(portfolio.research.length, 2); assert.equal(portfolio.communityService.length, 2);
   assert.equal(portfolio.research.find(r => r.id === 'research-mqtt-2026').projectSlug, 'iot-egg-incubator-research');
   const telehealth = portfolio.research.find(r => r.id === 'research-telehealth-2026');
-  assert.equal(telehealth.projectSlug, undefined); assert.equal(telehealth.role, undefined); assert.match(telehealth.note, /tidak dinyatakan sebagai artikel jurnal terbit/);
+  assert.equal(telehealth.projectSlug, undefined); assert.equal(telehealth.role, undefined); assert.match(telehealth.note, /hasil validasi belum tersedia/); assert.match(telehealth.note, /Belum ada tautan publikasi ilmiah/);
   assert.equal(portfolio.communityService.find(r => r.id === 'pkm-lazismu-2024').projectSlug, 'website-lazismu-kuansing');
 });
 check('public payload excludes held/retracted and temporal personal fields', () => {
-  assert.doesNotMatch(JSON.stringify({ ...data, portfolio }), /Pranala|HyperOS|ASUS ROG|Project Manager|Lab Robotic|Economic and Social Festival|3\.85|Cum Laude|MQ135|DHT11/);
+  assert.doesNotMatch(JSON.stringify({ ...data, portfolio }), /Pranala|HyperOS|ASUS ROG|Project Manager|Lab Robotic|Economic and Social Festival|Cum Laude|MQ135|DHT11/);
 });
 check('related projects are bounded, resolve and never self-reference', () => {
   projects.forEach(p => { const related = data.getRelatedProjects(p); assert.ok(related.length <= 2); related.forEach(r => { assert.notEqual(r.slug, p.slug); assert.ok(data.getProjectBySlug(r.slug)); }); });
@@ -63,11 +63,11 @@ if (origin) {
     check(`HTTP/SSR public project ${project.slug}`, () => { assert.equal(response.status, 200); assert.equal((html.match(/<h1\b/g)||[]).length, 1); assert.ok(html.includes(project.title.replaceAll('&', '&amp;'))); assert.match(html, /Salin tautan proyek/); assert.doesNotMatch(html, /Project Manager|Pranala Institute|ASUS ROG UI|Xiaomi HyperOS/); });
   }
   for (const [path, expected, absent] of [
-    ['/about', ['Learning','Photography','Firebase','STM32'], ['3.85','semester 5']],
+    ['/about', ['Learning','Photography','Firebase','STM32','IPK','3.85','/4.00','Nilai rata-rata','/100','S1 Pendidikan Vokasional Teknik Elektronika'], ['semester 5']],
     ['/lab', ['Heart Rate','Oxygen Saturation','Bukit Payung','LAZISMU'], ['Project Manager']],
     ['/experience?category=mobile-testing', ['Velotow','War Thunder Mobile','Modern Warships'], ['HIMPTEKA UMRI','E2ID VII']],
-    ['/projects?status=Online', ['1 karya ditampilkan','PVTE + HIMPTEKA','Reset semua filter'], ['<h3><a href="/projects/vircuit"']],
-    ['/projects?category=IoT&status=Online', ['0 karya ditampilkan','Belum ada yang cocok'], []],
+    ['/projects?status=Online', ['1 proyek ditemukan','PVTE + HIMPTEKA','Hapus semua filter'], ['<h3><a href="/projects/vircuit"']],
+    ['/projects?category=IoT&status=Online', ['0 proyek ditemukan','Proyek tidak ditemukan'], []],
   ]) {
     const response = await fetch(origin + path), html = (await response.text()).replace(/<!--[\s\S]*?-->/g, '');
     check(`HTTP/SSR content and query ${path}`, () => { assert.equal(response.status, 200); expected.forEach(text => assert.ok(html.includes(text), text)); absent.forEach(text => assert.ok(!html.includes(text), text)); });

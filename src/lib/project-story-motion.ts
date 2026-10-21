@@ -29,7 +29,7 @@ export function mountProjectStory(root: HTMLElement) {
     root.style.setProperty("--story-overview-height", `${overviewHeight}px`);
     root.style.setProperty("--story-top", `${pinTop}px`);
     // Long text, zoom and short windows must remain readable rather than trapped in a crop.
-    if (pinned && cards.some(card => card.scrollHeight > card.clientHeight + 1)) {
+    if (pinned && cards.some(card => card.scrollHeight > card.clientHeight + 1 || card.clientHeight > viewport.clientHeight)) {
       pinned = false;
       root.dataset.mode = "native";
     }

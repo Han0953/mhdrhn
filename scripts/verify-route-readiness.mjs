@@ -35,5 +35,5 @@ for(const reduced of [false,true])await check(`footer back-to-top focuses main a
  let scrolled,focused;const jsx=(type,props)=>({type,props});const {BackToTop}=load('src/components/ui/BackToTop.tsx',{window:{matchMedia(){return {matches:reduced};},scrollTo(value){scrolled=value;}},document:{querySelector(){return {focus(value){focused=value;}};}}},{'react/jsx-runtime':{jsx,jsxs:jsx},'lucide-react':{ArrowUp:'ArrowUp'}});
  BackToTop().props.onClick();assert.equal(scrolled.top,0);assert.equal(scrolled.behavior,reduced?'instant':'smooth');assert.equal(focused.preventScroll,true);
 });
-const directory='docs/execution/evidence/immersive-navigation-2026-10-19';fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(`${directory}/readiness-footer-checks.json`,JSON.stringify({method:'Actual source handlers with deterministic font/image/RAF/DOM doubles, not browser rendering.',results},null,2));
+const directory=process.env.MHDRHN_QA_READINESS_EVIDENCE || 'docs/execution/evidence/immersive-navigation-2026-10-19';fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(`${directory}/readiness-footer-checks.json`,JSON.stringify({method:'Actual source handlers with deterministic font/image/RAF/DOM doubles, not browser rendering.',results},null,2));
 console.log(`${results.length} readiness and footer checks passed.`);

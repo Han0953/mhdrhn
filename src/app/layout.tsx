@@ -11,7 +11,7 @@ const brand = localFont({ src: "./fonts/Syne-Variable.ttf", variable: "--font-br
 const body = Manrope({ variable: "--font-body", subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
   title: { default: "Muhammad Rehan — Creative Engineering | mhdrhn.", template: "%s | mhdrhn." },
-  description: "Muhammad Rehan. Elektronika, kode, dan riset. Jelajahi karya IoT, pengembangan web, dan eksperimen teknologi dari Pekanbaru.",
+  description: "Website personal Muhammad Rehan dari Pekanbaru. Kenali perjalanan, karya, dan hal-hal yang dipelajarinya melalui pengalaman serta praktik.",
   authors: [{ name: "Muhammad Rehan" }],
   // Release hostname and indexing are intentionally deferred to the release gate.
   robots: { index: false, follow: true },

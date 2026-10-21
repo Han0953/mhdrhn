@@ -19,5 +19,5 @@ export function CopyProjectLink() {
       if (request.current === token) setResult({ status: "manual", url });
     }
   }
-  return <div className="copy-project"><button type="button" className="text-link" onClick={copy}>Salin tautan proyek</button><p role="status" className="meta">{result?.status === "copied" ? "Tautan tersalin." : result?.status === "manual" ? "Salin tautan berikut secara manual dengan Ctrl+C atau menu salin perangkat." : ""}</p>{result?.status === "manual" && <label>Tautan proyek<input ref={input} readOnly value={result.url} onFocus={event => event.currentTarget.select()}/></label>}</div>;
+  return <div className="copy-project"><button type="button" className="text-link" onClick={copy}>Salin tautan proyek</button><p role="status" className="meta">{result?.status === "copied" ? "Tautan tersalin." : result?.status === "manual" ? "Tautan belum berhasil disalin otomatis. Pilih tautan di bawah, lalu gunakan Ctrl+C atau menu salin perangkat." : ""}</p>{result?.status === "manual" && <label>Tautan proyek<input ref={input} readOnly value={result.url} onFocus={event => event.currentTarget.select()}/></label>}</div>;
 }

@@ -18,6 +18,6 @@ export const festivalAchievements = [{
   organizer: "Dewan Eksekutif Mahasiswa Fakultas Ekonomi dan Ilmu Sosial UIN SUSKA Riau",
   outcomes: ["Juara 3", "Finalis Top 10 Essay"], publication: "PUBLIC",
   provenance: "DATA §11.3 · konfirmasi pemilik, 19 Oktober 2026",
-  evidence: "Dikonfirmasi pemilik. Sertifikat akan ditambahkan setelah tersedia.",
+  evidence: "Sertifikat belum tersedia untuk ditampilkan.",
 }] as const;
 export const publicAchievementOutcomeCount = featuredAchievements.reduce((count, record) => count + record.outcomes.length, 0) + educationAchievements.length + festivalAchievements.reduce((count, record) => count + record.outcomes.length, 0);

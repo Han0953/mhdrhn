@@ -5,7 +5,7 @@ import { loadContent } from './load-content.mjs';
 const directory = process.env.MHDRHN_QA_TECHNOLOGY_EVIDENCE || 'docs/execution/evidence/technology-inventory-2026-10-19';
 fs.mkdirSync(directory,{recursive:true});
 const master=fs.readFileSync('agent/docs/DATA.md','utf8');
-const {technologyInventoryGroups:groups,technologyInventoryItems:items,ownerSoftware,inventoryIconNames}=loadContent('src/lib/technology-inventory.ts');
+const {technologyInventoryGroups:groups,technologyInventoryItems:items,homeTechnologyGroups:homeGroups,ownerSoftware,inventoryIconNames}=loadContent('src/lib/technology-inventory.ts');
 const {skillGroups}=loadContent('src/lib/portfolio.ts');
 const results=[];
 async function check(name,fn){await fn();results.push({name,status:'PASS'});console.log(`PASS ${name}`);}
@@ -14,7 +14,7 @@ function sourceItems(section){
   assert.ok(source,`Missing DATA 12.${section}`);
   return [...source[1].matchAll(/^- (.+)$/gm)].flatMap(match=>match[1].replace(/\s*\([^)]*\)/g,'').split(/,\s*/)).map(name=>name.trim());
 }
-await check('all DATA 12.1–8 inventory entries are present exactly once in Home, independently parsed from the document',()=>{
+await check('all DATA 12.1–8 inventory entries are present exactly once in the full inventory, independently parsed from the document',()=>{
   const aliases={'Bug Hunting pada aplikasi/game mobile':'Bug Hunting','User Experience Testing pada aplikasi mobile':'User Experience Testing'};
   for(let section=1;section<=8;section++)for(const raw of sourceItems(section)){
     const name=aliases[raw]??raw;const matches=items.filter(item=>item.name===name);
@@ -53,10 +53,17 @@ if(origin){
     assert.doesNotMatch(section,/<a\b|<button\b|tabindex=|role="(?:link|button)"|Seluruh bidang &amp; kemampuan/i);
     assert.equal((section.match(/data-inventory-group=/g)||[]).length,4);
   });
-  await check('all 68 source-backed names and decorative SVGs render in real SSR, with Learning on exactly seven records',()=>{
-    assert.equal(items.length,68);assert.equal((section.match(/data-technology=/g)||[]).length,items.length);
-    assert.equal((section.match(/<svg\b/g)||[]).length,items.length);assert.equal((section.match(/data-basis="learning"/g)||[]).length,7);
-    for(const item of items){const row=section.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);}
+  await check('Home curates 32 records across four groups, preserving source identity, icons and only Learning labels',()=>{
+    const preview=homeGroups.flatMap(g=>g.items);assert.equal(preview.length,32);assert.equal((section.match(/data-technology=/g)||[]).length,32);
+    assert.ok(homeGroups.every(g=>g.items.length>=6));assert.doesNotMatch(section,/Team Stack|data-basis="(?:team|project)"/);
+    assert.equal((section.match(/<svg\b/g)||[]).length,32);assert.equal((section.match(/data-basis="learning"/g)||[]).length,4);
+    for(const item of preview){assert.ok(items.some(full=>full.id===item.id&&full.source===item.source));const row=section.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);}
+  });
+  await check('About owns all 68 names with matching SVGs and exactly seven Learning records',async()=>{
+    const response=await fetch(origin+'/about');assert.equal(response.status,200);const about=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
+    assert.equal(items.length,68);assert.equal((about.match(/data-technology=/g)||[]).length,68);
+    for(const item of items){const row=about.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);assert.doesNotMatch(row,/data-basis="(?:team|project)"/);}
+    assert.equal((about.match(/class="technology-badge" data-basis="learning"/g)||[]).length,7);
   });
   await check('About keeps new learning fields and the unrelated Home/story content remains available',async()=>{
     const about=await fetch(origin+'/about');assert.equal(about.status,200);const text=await about.text();for(const name of ['Raspberry Pi','MicroPython','STM32','Dart'])assert.ok(text.includes(name));

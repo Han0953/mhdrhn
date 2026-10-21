@@ -20,7 +20,7 @@ check('new lab has exact approved duties, no invented period; PM remains withdra
   const labs = experienceGroups.flatMap(g=>g.items);
   const lab = labs.find(r=>r.id==='lab-automation-robotics-pvte');
   assert.equal(lab.role,'Asisten Lab Otomasi Cerdas dan Robotika'); assert.equal(lab.organization,'PVTE');
-  assert.equal(lab.period,undefined); assert.match(lab.context,/Pengelolaan laboratorium/); assert.match(lab.context,/dukungan teknis/);
+  assert.equal(lab.period,undefined); assert.match(lab.context,/pengelolaan laboratorium/i); assert.match(lab.context,/dukungan teknis/);
   assert.doesNotMatch(JSON.stringify(labs),/Project Manager|Lab Robotic/);
 });
 check('two ESF outcomes add no fabricated category, certificate URL, team or project', () => {

@@ -84,10 +84,10 @@ if (origin) {
   assert.ok(['127.0.0.1', 'localhost', '[::1]'].includes(new URL(origin).hostname));
   const response = await fetch(origin);
   const html = await response.text();
-  check('Home SSR delivers nine ordered, readable sections and one H1', () => {
+  check('Home SSR delivers ten ordered, readable sections and one H1', () => {
     assert.equal(response.status, 200);
     const sections = [...html.matchAll(/<section\b[^>]*data-home-section="([^"]+)"/g)].map(match => match[1]);
-    assert.deepEqual(sections, ['hero','introduction','technology','latest-projects','electronics-projects','experience','recognition','certificates','closing']);
+    assert.deepEqual(sections, ['hero','introduction','technology','latest-projects','electronics-projects','education','experience','recognition','certificates','closing']);
     assert.equal((html.match(/<h1\b/g) || []).length, 1);
     ['Creative Engineering.', 'Sense', 'Compute', 'Build', 'Velotow', 'ALGA NOVA', 'Trio Hengker Enjoyer', 'PVTE + HIMPTEKA'].forEach(text => assert.ok(html.includes(text), text));
   });

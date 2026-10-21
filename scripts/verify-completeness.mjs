@@ -39,7 +39,7 @@ for (const group of portfolio.experienceGroups) for (const record of group.items
     const section = record.source.replace('DATA §',''); const source = section === '6' ? master.split('# 6. ')[1].split('# 7. ')[0] : sourceSection(section);
     assert.ok(source.includes(record.role), record.role); if (record.period) assert.ok(source.includes(record.period), record.period);
     assert.ok(source.includes(record.organization.split(' · ')[0]), record.organization);
-    row(record.id,`experience/${group.id}`,record.source,'/experience',[record.role,record.organization,record.period ?? 'Periode belum dicantumkan'],record.context);
+    row(record.id,`experience/${group.id}`,record.source,'/experience',[record.role,record.organization,record.period ?? 'Periode belum tersedia',record.context],record.context);
   });
 }
 check('school records match four distinct source claims and legacy education; publication explicitly approved on 19 Oct', () => {
@@ -93,9 +93,9 @@ for (const group of capabilities.capabilityGroups) for (const item of group.item
     row(`capability/${item.id}`,`showcase/${group.id}`,item.source,'/about',[item.name,item.context,capabilities.capabilityBasisLabels[item.basis]],`Derived presentation of existing records; destination ${item.href}; not an extra skill count`);
   });
 }
-row('profile','profile','DATA §1','/about',[content.profile.name,content.profile.bio],'Temporal GPA/current semester withheld');
-row('education-umri','education','DATA §2.1','/about',['Universitas Muhammadiyah Riau','2024–sekarang','Pendidikan Vokasional Teknik Elektronika']);
-row('education-smk','education','DATA §2.2','/about',['SMKS Bina Profesi Pekanbaru','2021–2024','Teknik Komputer dan Jaringan']);
+row('profile','profile','DATA §1','/',[content.profile.name,content.profile.bio],'Current semester withheld; education scores separately confirmed by owner');
+row('education-umri','education','DATA §2.1','/about',['Universitas Muhammadiyah Riau','2024–sekarang','S1 Pendidikan Vokasional Teknik Elektronika','IPK','3.85','/4.00'],'IPK 3.85/4.00 confirmed for publication by owner, 20 October 2026');
+row('education-smk','education','DATA §2.2','/about',['SMKS Bina Profesi Pekanbaru','2021–2024','Teknik Komputer dan Jaringan','Nilai rata-rata','90','/100','Siswa Lulusan terbaik & ranking 1'],'Average 90/100 and school note confirmed for publication by owner, 20 October 2026');
 for(const [items,kind,section] of [[portfolio.interests,'interest','1.3'],[portfolio.hobbies,'hobby','1.4']]) for(const name of items) {
   assert.ok(sourceSection(section).includes(name)); row(`${kind}/${name}`,kind,`DATA §${section}`,'/about',[name]);
 }
@@ -103,7 +103,7 @@ row('contact/github','contact','DATA §14','/contact',[content.profile.github,'H
 row('contact/location','contact','DATA §14','/contact',[content.profile.location]);
 for(const [id,category,source,note] of [
   ['robotic-period','experience field','DATA §5.2','Period not supplied; role and duties approved and public'],
-  ['gpa','profile field','DATA §1 / §2.1','Current value unconfirmed'],['semester','profile field','DATA §1','Time-sensitive field unconfirmed'],
+  ['semester','profile field','DATA §1','Time-sensitive field unconfirmed'],
   ['contact/email','contact','DATA §14','No address'],['contact/linkedin','contact','DATA §14','No URL'],['contact/instagram','contact','DATA §14','No URL'],['contact/production','contact','DATA §14','No confirmed host'],
   ['certificates','asset slot','DATA §15.1','Zero supplied certificate records'],['papers','asset slot','DATA §15.2','Zero confirmed published papers'],['media','asset slot','DATA §15.4','Project evidence and Azura asset unavailable'],
 ]) row(id,category,source,null,[],note,'REVIEW');
@@ -121,7 +121,7 @@ if(origin) for (const record of records.filter(r=>r.publication==='PUBLIC')) {
     record.implementation='SSR VERIFIED';
   });
 }
-check('withdrawn values remain absent after owner-approved content updates',()=>assert.doesNotMatch(JSON.stringify({content,portfolio,awards,capabilities}),/Pranala|HyperOS|ASUS ROG|Project Manager|Lab Robotic|3\.85|Cum Laude/));
+check('withdrawn values remain absent after owner-approved content updates',()=>assert.doesNotMatch(JSON.stringify({content,portfolio,awards,capabilities}),/Pranala|HyperOS|ASUS ROG|Project Manager|Lab Robotic|Cum Laude/));
 if(origin) check('all seven achievement rows and three capability groups are SSR; Home stays a preview',()=>{
   const html = htmlCache.get('/achievements'); assert.equal((html.match(/data-achievement-id=/g)||[]).length,7);
   assert.equal((htmlCache.get('/about').match(/class="capability-group"/g)||[]).length,3);

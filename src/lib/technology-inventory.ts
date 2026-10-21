@@ -67,9 +67,25 @@ const projectTesting: readonly InventoryItem[] = [
 ];
 
 export const technologyInventoryGroups: readonly InventoryGroup[] = [
-  { id: "tech", title: "Tech", description: "Bahasa, framework, web, data & mobile.", items: [...fromSkills(["languages", "web", "mobile"], name => name !== "MIT App Inventor"), ...projectTesting] },
-  { id: "embedded", title: "Embedded & IoT", description: "Board, komunikasi, monitoring & otomasi.", items: fromSkills(["embedded", "iot"]) },
-  { id: "tools", title: "Tools & Software", description: "Aplikasi, IDE, software & layanan yang digunakan.", items: [...ownerSoftware, ...fromSkills(["mobile"], name => name === "MIT App Inventor")] },
-  { id: "capabilities", title: "Capabilities", description: "Elektronika, pengujian aplikasi & media.", items: fromSkills(["electronics", "qa", "media"]) },
+  { id: "tech", title: "Tech", description: "Bahasa dan teknologi untuk mengembangkan sistem serta aplikasi.", items: [...fromSkills(["languages", "web", "mobile"], name => name !== "MIT App Inventor"), ...projectTesting] },
+  { id: "embedded", title: "Embedded & IoT", description: "Perangkat dan teknologi untuk mengolah masukan, menjalankan kendali, dan saling terhubung.", items: fromSkills(["embedded", "iot"]) },
+  { id: "tools", title: "Tools & Software", description: "Aplikasi untuk menulis kode, merancang, dan mendokumentasikan pekerjaan.", items: [...ownerSoftware, ...fromSkills(["mobile"], name => name === "MIT App Inventor")] },
+  { id: "capabilities", title: "Capabilities", description: "Keterampilan praktis yang saya gunakan saat mengerjakan dan memeriksa hasil pekerjaan.", items: fromSkills(["electronics", "qa", "media"]) },
 ];
 export const technologyInventoryItems = technologyInventoryGroups.flatMap(group => group.items);
+
+// Home introduces the practice; About owns the complete inventory. Both reuse the same records.
+const homeSelection: Record<InventoryGroup["id"], readonly string[]> = {
+  tech: ["cpp", "javascript", "typescript", "php", "sql", "react", "next-js", "tailwind-css", "laravel", "python", "micropython"],
+  embedded: ["arduino-uno", "esp8266", "esp32", "stm32", "raspberry-pi", "mqtt", "blynk-blynk-cloud-http-api"],
+  tools: ["vs-code", "codex", "git", "arduino-ide", "android-studio", "wokwi", "canva", "microsoft-office"],
+  capabilities: ["circuit-design", "electronics-troubleshooting", "sensor-integration", "laboratory-practice", "mobile-application-software-testing", "documentation"],
+};
+export const homeTechnologyGroups: readonly InventoryGroup[] = technologyInventoryGroups.map(group => ({
+  ...group,
+  items: homeSelection[group.id].map(id => {
+    const item = group.items.find(candidate => candidate.id === id);
+    if (!item) throw new Error(`Unknown Home technology ${id}`);
+    return item;
+  }),
+}));

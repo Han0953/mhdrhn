@@ -39,7 +39,7 @@ function storyRuntime() {
   const browser=emitter({innerHeight:1000,get scrollY(){return y;},scrollTo({top}){y=top;},matchMedia(query){return query.includes('reduce')?reduced:desktop;}});
   const cards=Array.from({length:5},(_,i)=>({offsetLeft:i*1020,clientHeight:500,scrollHeight:500,contains(target){return target.card===i;}}));
   const track={scrollWidth:5000,style:style(),querySelectorAll(){return cards;}};
-  const viewport={clientWidth:1000,scrollLeft:0,getBoundingClientRect(){return {left:0,right:1000};},scrollTo({left}){this.scrollLeft=left;}};
+  const viewport={clientWidth:1000,clientHeight:700,scrollLeft:0,getBoundingClientRect(){return {left:0,right:1000};},scrollTo({left}){this.scrollLeft=left;}};
   const sticky={getBoundingClientRect(){return {height:700};}};
   const root=emitter({dataset:{view:'scroll'},style:style(),contains(){return true;},getBoundingClientRect(){return {top:1000-y,left:20};},querySelector(selector){return {'.story-sticky':sticky,'.story-overview':{getBoundingClientRect(){return {height:200};}},'.story-track':track,'.story-viewport':viewport}[selector];}});
   class Observer {constructor(fn){this.fn=fn;this.disconnected=false;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}}
@@ -50,6 +50,7 @@ function storyRuntime() {
 await check('viewport gutter and available screen height are measured; overflowing text falls back to native flow',()=>{
   const t=storyRuntime();assert.equal(t.root.style['--story-gutter'],'20px');assert.equal(t.root.style['--story-height'],'920px');
   t.cards[0].scrollHeight=600;t.browser.listeners.get('resize')();assert.equal(t.root.dataset.mode,'native');assert.equal(t.root.style.height,'');
+  t.cards[0].clientHeight=800;t.cards[0].scrollHeight=800;t.browser.listeners.get('resize')();assert.equal(t.root.dataset.mode,'native');
   t.cleanup();assert.equal(t.root.style['--story-gutter'],undefined);assert.equal(t.root.style['--story-height'],undefined);
 });
 await check('sticky native scrolling maps start, midpoint and end with bounded transforms',()=>{
@@ -106,10 +107,12 @@ const origin=process.env.MHDRHN_QA_ORIGIN;
 if(origin){
   assert.ok(['127.0.0.1','localhost'].includes(new URL(origin).hostname));
   const response=await fetch(origin);assert.equal(response.status,200);const html=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
-  await check('SSR includes 10 project identities, the complete technology inventory, five outcomes and honest certificate categories',()=>{
-    assert.equal((html.match(/data-project-slug=/g)||[]).length,10);assert.equal((html.match(/data-technology=/g)||[]).length,inventory.technologyInventoryItems.length);assert.equal((html.match(/data-home-achievement=/g)||[]).length,5);assert.equal((html.match(/data-certificate-category=/g)||[]).length,3);
+  await check('SSR includes 10 project identities, the curated technology preview, five outcomes and honest certificate categories',()=>{
+    assert.equal((html.match(/data-project-slug=/g)||[]).length,10);assert.equal((html.match(/data-technology=/g)||[]).length,inventory.homeTechnologyGroups.flatMap(g=>g.items).length);assert.equal((html.match(/data-home-achievement=/g)||[]).length,5);assert.equal((html.match(/data-certificate-category=/g)||[]).length,3);
     for(const p of [...home.latestProjects,...home.electronicsProjects])assert.ok(html.includes(`/projects/${p.slug}`));
-    for(const text of ['Metadata belum tersedia','Team Stack','Learning','bukan dokumentasi','belum menyatakan sertifikasi'])assert.ok(html.includes(text));
+    for(const text of ['Dokumen belum tersedia','Learning','belum ada dokumen yang dapat ditampilkan'])assert.ok(html.includes(text));
+    assert.doesNotMatch(html,/Team Stack/);
+    assert.ok(html.includes(home.projectSectionIntros.latest));assert.ok(html.includes(home.projectSectionIntros.electronics));
     assert.equal((html.match(/<h1\b/g)||[]).length,1);assert.doesNotMatch(html,/AWS Certified|credential ID|Sertifikat terverifikasi/);
   });
   await check('project and achievement Home internal links and hashes have real destinations; technologies are informational',async()=>{
