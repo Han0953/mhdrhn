@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { ArrowLeft, ArrowRight, Maximize2, Minimize2, X, ZoomIn } from "lucide-react";
-import type { MediaAsset } from "@/lib/media";
+import { getMediaDimensions, type MediaAsset } from "@/lib/media";
 import { MediaImage } from "./MediaImage";
 
 export function MediaGallery({ items, label, compact = false, sizes }: { items: readonly MediaAsset[]; label: string; compact?: boolean; sizes?: string }) {
@@ -41,14 +41,18 @@ export function MediaGallery({ items, label, compact = false, sizes }: { items: 
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
   }
   if (!current) return null;
+  const currentDimensions = getMediaDimensions(current);
   return <div className={`media-gallery${compact ? " media-gallery--compact" : ""}`} data-gallery={label}>
-    <div className="media-gallery-grid">{publicItems.map((media, index) => <figure key={media.id}>
+    <div className="media-gallery-grid">{publicItems.map((media, index) => {
+      const dimensions = getMediaDimensions(media);
+      const portrait = dimensions.height > dimensions.width;
+      return <figure key={media.id} data-media-orientation={portrait ? "portrait" : "landscape"}>
       <button className="media-open" type="button" onClick={event => open(index, event.currentTarget)} aria-haspopup="dialog" aria-controls={id} aria-label={`Perbesar gambar: ${media.alt}`}>
-        <span className="media-frame"><MediaImage media={media} sizes={sizes ?? "(max-width: 767px) 100vw, 80vw"}/></span>
+        <span className="media-frame" style={portrait ? { aspectRatio: dimensions.width / dimensions.height } : undefined}><MediaImage media={media} sizes={sizes ?? "(max-width: 767px) 100vw, 80vw"}/></span>
         <span className="media-enlarge" aria-hidden="true"><ZoomIn size={18}/></span>
       </button><figcaption>{media.caption}</figcaption>
-    </figure>)}</div>
-    <dialog ref={dialog} id={id} className="media-dialog" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-caption`} onKeyDown={keydown} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }} onClose={() => { setOpened(false); setExpanded(false); opener.current?.focus(); }}>
+    </figure>; })}</div>
+    <dialog ref={dialog} id={id} className="media-dialog" data-media-orientation={currentDimensions.height > currentDimensions.width ? "portrait" : "landscape"} aria-labelledby={`${id}-heading`} aria-describedby={`${id}-caption`} onKeyDown={keydown} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }} onClose={() => { setOpened(false); setExpanded(false); opener.current?.focus(); }}>
       <div className="media-dialog-content"><header className="media-dialog-top"><h2 id={`${id}-heading`}>{label}</h2><div className="dialog-actions">
         <button type="button" className="icon-button" onClick={() => setExpanded(value => !value)} aria-label={expanded ? "Sesuaikan gambar ke layar" : "Perbesar tampilan gambar"} aria-pressed={expanded}>{expanded ? <Minimize2 size={20}/> : <Maximize2 size={20}/>}</button>
         <button type="button" className="icon-button" onClick={() => dialog.current?.close()} aria-label="Tutup penampil gambar"><X/></button>

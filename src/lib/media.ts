@@ -4,6 +4,8 @@ export interface MediaAsset {
   src: string;
   width: number;
   height: number;
+  /** Clockwise display correction; source pixels and intrinsic dimensions stay unchanged. */
+  rotation?: 90;
   kind: "screenshot" | "hardware" | "certificate" | "portrait";
   alt: string;
   caption: string;
@@ -11,6 +13,9 @@ export interface MediaAsset {
   credit: string;
 }
 const asset = (id: string, src: string, width: number, height: number, kind: MediaAsset["kind"], alt: string, caption: string, publication: MediaAsset["publication"] = "PUBLIC"): MediaAsset => ({ id, src, width, height, kind, alt, caption, publication, credit: "Dokumentasi Muhammad Rehan" });
+export function getMediaDimensions(media: MediaAsset) {
+  return media.rotation === 90 ? { width: media.height, height: media.width } : { width: media.width, height: media.height };
+}
 export const mediaAssets = {
   portrait: asset("portrait", "/foto-profile.webp", 1680, 2048, "portrait", "Muhammad Rehan", "Muhammad Rehan · Pekanbaru, Riau"),
   vircuit: asset("vircuit", "/project/web/vircuit.webp", 1919, 971, "screenshot", "Halaman beranda Vircuit dengan antarmuka laboratorium virtual", "Beranda Vircuit."),
@@ -18,11 +23,11 @@ export const mediaAssets = {
   auraHardware: asset("aura-hardware", "/project/hardware/aurapod-hardware.webp", 2048, 1536, "hardware", "Prototipe fotobioreaktor AURA POD di samping laptop yang menampilkan dashboard", "Prototipe AURA POD dan tampilan dashboard pendamping."),
   pvte: asset("pvte", "/project/web/web-pvte.webp", 1919, 973, "screenshot", "Beranda website Pendidikan Vokasional Teknik Elektronika UMRI", "Beranda website PVTE UMRI."),
   lazismu: asset("lazismu", "/project/web/lazismu-kuansing.webp", 1919, 973, "screenshot", "Beranda website LAZISMU Kabupaten Kuantan Singingi", "Tampilan website LAZISMU Kuansing."),
-  mqtt: asset("incubator-mqtt", "/project/hardware/inkubator-mqtt.webp", 2048, 1536, "hardware", "Rangkaian ESP32, relay, dan layar inkubator penelitian MQTT", "Rangkaian dan layar inkubator penelitian MQTT."),
+  mqtt: { ...asset("incubator-mqtt", "/project/hardware/inkubator-mqtt.webp", 2048, 1536, "hardware", "Rangkaian ESP32, relay, dan layar inkubator penelitian MQTT", "Rangkaian dan layar inkubator penelitian MQTT."), rotation: 90 },
   blynk: asset("incubator-blynk", "/project/hardware/inkubator-blynk.webp", 2048, 1536, "hardware", "Inkubator Blynk dengan ruang penetasan, layar, dan tombol fisik", "Inkubator Blynk dengan tombol kendali lokal."),
   safety: asset("machine-safety", "/project/hardware/industrial-machine-safety-system.webp", 2048, 1536, "hardware", "Prototipe rangkaian keselamatan mesin dengan sensor dan layar peringatan", "Prototipe rangkaian Industrial Machine Safety System."),
   arm: asset("robot-arm", "/project/hardware/robot-arm.webp", 1536, 2048, "hardware", "Mekanisme lengan robot dan pengendali joystick", "Dokumentasi mekanik dan pengendali Robot Arm."),
-  tank: asset("robot-tank", "/project/hardware/robot-tank-wifi-esp8266.webp", 2048, 1536, "hardware", "Prototipe robot tank beroda rantai dengan board ESP8266", "Prototipe Robot Tank WiFi ESP8266."),
+  tank: { ...asset("robot-tank", "/project/hardware/robot-tank-wifi-esp8266.webp", 2048, 1536, "hardware", "Prototipe robot tank beroda rantai dengan board ESP8266", "Prototipe Robot Tank WiFi ESP8266."), rotation: 90 },
   car: asset("robot-car", "/project/hardware/robot-wifi-car-esp32.webp", 1536, 2048, "hardware", "Prototipe robot mobil dengan rangkaian dan kabel pada sasis beroda", "Prototipe Robot WiFi Car ESP32."),
   aiAsean: asset("ai-asean", "/certificate/ai-ready-asean.webp", 997, 708, "certificate", "Certificate of Completion AI Ready ASEAN atas nama Muhammad Rehan", "AI Ready ASEAN · ASEAN Foundation · 17 Juli 2026."),
   gemini: asset("gemini", "/certificate/google-gemini-certified.webp", 1001, 768, "certificate", "Sertifikat Siswa Tersertifikasi Gemini atas nama Muhammad Rehan", "Siswa Tersertifikasi Gemini · Google for Education."),
