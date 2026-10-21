@@ -110,7 +110,8 @@ if(origin){
   await check('SSR includes 10 project identities, the curated technology preview, five outcomes and honest certificate categories',()=>{
     assert.equal((html.match(/data-project-slug=/g)||[]).length,10);assert.equal((html.match(/data-technology=/g)||[]).length,inventory.homeTechnologyGroups.flatMap(g=>g.items).length);assert.equal((html.match(/data-home-achievement=/g)||[]).length,5);assert.equal((html.match(/data-certificate-category=/g)||[]).length,3);
     for(const p of [...home.latestProjects,...home.electronicsProjects])assert.ok(html.includes(`/projects/${p.slug}`));
-    for(const text of ['Dokumen belum tersedia','Learning','belum ada dokumen yang dapat ditampilkan'])assert.ok(html.includes(text));
+    for(const text of ['Dokumen belum tersedia','Learning','AI Ready ASEAN','Siswa Tersertifikasi Gemini'])assert.ok(html.includes(text));
+    assert.doesNotMatch(html,/belum ada dokumen yang dapat ditampilkan/);
     assert.doesNotMatch(html,/Team Stack/);
     assert.ok(html.includes(home.projectSectionIntros.latest));assert.ok(html.includes(home.projectSectionIntros.electronics));
     assert.equal((html.match(/<h1\b/g)||[]).length,1);assert.doesNotMatch(html,/AWS Certified|credential ID|Sertifikat terverifikasi/);

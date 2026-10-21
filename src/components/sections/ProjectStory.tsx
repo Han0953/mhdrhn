@@ -1,6 +1,6 @@
 import { SiteLink } from "@/components/layout/RouteTransition";
-import { Arrow, ProjectArt } from "@/components/ui/Editorial";
-import { Cpu, Radio, CircuitBoard, Wind, House } from "lucide-react";
+import { Arrow } from "@/components/ui/Editorial";
+import { ProjectCover } from "@/components/media/ProjectCover";
 import type { Project } from "@/lib/content";
 import { ProjectStoryViewport } from "./ProjectStoryViewport";
 import { projectPreviewSummaries } from "@/lib/home-content";
@@ -16,10 +16,9 @@ export function ProjectStory({ id, number, title, intro, projects, href, linkLab
     </>}>
       <div className="story-viewport" tabIndex={0} role="region" aria-label={`Lima proyek ${id === "latest" ? "terbaru" : "elektronika"}; geser atau gunakan tombol nomor`}>
         <ol className="story-track">{projects.map((project, index) => {
-          const Icon = [Radio, Wind, House, CircuitBoard, Cpu][index];
           return <li className="story-card" id={`${id}-project-${index}`} key={project.slug} data-project-slug={project.slug}>
             <div className="story-card-top"><span className="eyebrow accent">{String(index + 1).padStart(2, "0")} / 05</span></div>
-            {id === "latest" ? <ProjectArt kind={project.visual} title={project.title} variant="preview"/> : <figure className="electronics-mark" aria-hidden="true"><Icon size={64} strokeWidth={1} aria-hidden="true"/></figure>}
+            <ProjectCover project={project} preview/>
             <div className="story-copy">
             <p className="eyebrow story-category">{project.categories.join(" / ")}</p>
             <h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3>

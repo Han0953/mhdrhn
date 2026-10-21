@@ -79,7 +79,7 @@ export function ProfileCard() {
         isClone ? "border-transparent" : "border-electric/30"
       }`}>
         <Image
-          src="/Foto Profile.jpg"
+          src="/foto-profile.webp"
           alt={`Profile photo of ${personalInfo.fullName}`}
           fill
           className="object-cover"

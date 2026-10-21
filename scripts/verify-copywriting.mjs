@@ -21,8 +21,8 @@ for(const path of paths)await check(`public copy and SEO: ${path}`,async()=>{
  const description=html.match(/<meta name="description" content="([^"]+)"/);assert.ok(description,`Description: ${path}`);assert.ok(description[1].length>=35&&description[1].length<=350);
  if(path.startsWith('/projects/')){const project=content.getProjectBySlug(path.split('/').at(-1));assert.ok(plain(html).includes(project.summary));assert.ok(plain(html).includes(project.approach));assert.ok(plain(html).includes(project.limitation));}
 });
-await check('all ten experience descriptions are initially open, preserving native disclosure, identities and approved lab duties',()=>{
- const html=pages.get('/experience');assert.equal((html.match(/class="timeline-row"/g)||[]).length,10);assert.equal((html.match(/<details\b[^>]*\bopen=""/g)||[]).length,10);assert.equal((html.match(/<summary>Tentang peran<\/summary>/g)||[]).length,10);
+await check('all ten experience descriptions are initially closed, preserving native disclosure, identities and approved lab duties',()=>{
+ const html=pages.get('/experience');assert.equal((html.match(/class="timeline-row"/g)||[]).length,10);assert.equal((html.match(/<details\b[^>]*\bopen=""/g)||[]).length,0);assert.equal((html.match(/<summary>Tentang peran<\/summary>/g)||[]).length,10);
  for(const record of portfolio.experienceGroups.flatMap(g=>g.items)){assert.ok(plain(html).includes(record.context),record.id);assert.ok(record.context.length>=40,record.id);}
  assert.doesNotMatch(html,/Project Manager|Lab Robotic|pegawai tetap|karyawan tetap/);
 });
@@ -30,9 +30,9 @@ await check('22 individual project summaries replace the archive template withou
  const projects=content.getPublishedProjects();assert.equal(projects.length,22);assert.equal(new Set(projects.map(p=>p.summary)).size,22);
  for(const p of projects.filter(p=>p.format==='summary'&&p.slug!=='mhdrhn-portfolio')){assert.equal(p.technologies.length,0);assert.equal(p.year,undefined);assert.equal(p.role,undefined);assert.equal(p.status,undefined);assert.equal(p.link,undefined);}
 });
-await check('achievements retain seven rows and nine outcomes; certificate categories stay clearly empty without credentials',()=>{
+await check('achievements retain seven rows and nine outcomes; certificates reflect identified owner documents without invented credentials',()=>{
  const html=pages.get('/achievements');assert.equal((html.match(/data-achievement-id=/g)||[]).length,7);assert.equal(loadContent('src/lib/achievement-records.ts').publicAchievementOutcomeCount,9);
- assert.match(html,/belum ada dokumen yang dapat ditampilkan/);assert.doesNotMatch(html,/AWS Certified|credential ID|Sertifikat terverifikasi|record-provenance/);
+ assert.equal((html.match(/data-certificate-id=/g)||[]).length,loadContent('src/lib/media.ts').certificates.length);assert.match(html,/Dokumen belum tersedia/);assert.doesNotMatch(html,/AWS Certified|credential ID|Sertifikat terverifikasi|record-provenance/);
 });
 await check('status wording stays separate from stable query values; unknown status still returns the same twenty projects',async()=>{
  assert.equal(content.projectStatusLabels['Belum dipublikasikan'],'Belum diinformasikan');
@@ -41,7 +41,7 @@ await check('status wording stays separate from stable query values; unknown sta
 });
 function component(file,mocks={}){
  const exports={};const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020}}).outputText;
- vm.runInNewContext(code,{exports,require(id){if(id in mocks)return mocks[id];if(id==='@/components/layout/RouteTransition')return {SiteLink:'a'};return require(id);}},{timeout:1000});return exports;
+ vm.runInNewContext(code,{exports,require(id){if(id in mocks)return mocks[id];if(id==='@/components/layout/RouteTransition')return {SiteLink:'a'};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});return exports;
 }
 await check('error and not-found copy render with one heading; actual retry callback remains callable',()=>{
  const editorial=component('src/components/ui/Editorial.tsx');const ErrorPage=component('src/app/error.tsx').default,NotFound=component('src/app/not-found.tsx',{'@/components/ui/Editorial':editorial}).default;

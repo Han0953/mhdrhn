@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { SiteLink } from "@/components/layout/RouteTransition";
 import type { Project } from "@/lib/content";
 import type { ReactNode } from "react";
+import { ProjectCover } from "@/components/media/ProjectCover";
 export function Arrow() { return <ArrowUpRight size={20} aria-hidden="true" />; }
 export function PageHeading({ eyebrow, children, description }: { eyebrow: string; children: ReactNode; description?: string }) {
   const hasPunctuation = typeof children === "string" && /[.!?]$/.test(children.trim());
@@ -27,5 +28,5 @@ export function ProjectArt({ kind, title, variant = "documented" }: { kind: Proj
   </figure>;
 }
 export function ProjectSpread({ project, number, className = "", showRole = false }: { project: Project; number: number; className?: string; showRole?: boolean }) {
-  return <article className={`project-spread ${className}`}><SiteLink href={`/projects/${project.slug}`} className="art-link" aria-label={`Lihat proyek ${project.title}`}><ProjectArt kind={project.visual} title={project.title}/></SiteLink><div className="project-copy"><span className="project-number">{String(number).padStart(2, "0")}</span><p className="eyebrow">{project.categories.join(" / ")}</p><h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3><p className="meta">{[project.year, project.context].filter(Boolean).join(" · ")}</p><p>{project.summary}</p>{showRole && project.role && <p className="meta project-role">Peran Rehan · {project.role}</p>}<SiteLink className="text-link" href={`/projects/${project.slug}`}>Jelajahi proyek <Arrow/></SiteLink></div></article>;
+  return <article className={`project-spread ${className}`}><SiteLink href={`/projects/${project.slug}`} className="art-link" aria-label={`Lihat proyek ${project.title}`}><ProjectCover project={project}/></SiteLink><div className="project-copy"><span className="project-number">{String(number).padStart(2, "0")}</span><p className="eyebrow">{project.categories.join(" / ")}</p><h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3><p className="meta">{[project.year, project.context].filter(Boolean).join(" · ")}</p><p>{project.summary}</p>{showRole && project.role && <p className="meta project-role">Peran Rehan · {project.role}</p>}<SiteLink className="text-link" href={`/projects/${project.slug}`}>Jelajahi proyek <Arrow/></SiteLink></div></article>;
 }

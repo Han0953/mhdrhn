@@ -4,6 +4,8 @@ import { SiteLink } from "@/components/layout/RouteTransition";
 import { getProjectBySlug } from "@/lib/content";
 import { educationAchievements, featuredAchievements, festivalAchievements } from "@/lib/achievement-records";
 import { CertificatePreview } from "@/components/sections/CertificatePreview";
+import { getAchievementMedia } from "@/lib/media";
+import { MediaGallery } from "@/components/media/MediaGallery";
 export const metadata: Metadata = { title: "Pencapaian", description: "Pencapaian Muhammad Rehan sebagai bagian dari perjalanan belajar dan berkarya. Kenali hasil yang diraih beserta kegiatan serta latar belakangnya." };
 export default function Achievements() {
   return <div className="wrap">
@@ -14,13 +16,13 @@ export default function Achievements() {
       <p className="eyebrow accent">01 / Team recognition</p><h2 id="team-awards-heading">Karya tim.</h2>
       {featuredAchievements.map(award => <article className="award-row" key={award.id} data-achievement-id={award.id}>
         <div><p className="award-result">{award.result}</p><p className="meta">{award.additional}</p></div>
-        <div><h3>{getProjectBySlug(award.projectSlug)?.title}</h3><p>{award.event}</p><p className="meta">Kategori: {award.category}</p><p className="meta">Penghargaan tim · {award.team}</p><p className="meta">Ajang: {award.organizer}</p><div className="actions"><SiteLink href={`/projects/${award.projectSlug}`} className="text-link">Jelajahi proyek <Arrow/></SiteLink><a href={award.source} className="text-link" target="_blank" rel="noopener noreferrer">Baca liputan <Arrow/></a></div></div>
+        <div><h3>{getProjectBySlug(award.projectSlug)?.title}</h3><p>{award.event}</p><p className="meta">Kategori: {award.category}</p><p className="meta">Penghargaan tim · {award.team}</p><p className="meta">Ajang: {award.organizer}</p><MediaGallery items={getAchievementMedia(award.id)} label={`Sertifikat ${award.event}`} compact/><div className="actions"><SiteLink href={`/projects/${award.projectSlug}`} className="text-link">Jelajahi proyek <Arrow/></SiteLink><a href={award.source} className="text-link" target="_blank" rel="noopener noreferrer">Baca liputan <Arrow/></a></div></div>
         <span className="meta">{award.year}</span>
       </article>)}
     </section>
     <section className="section" id="festival-achievements" aria-labelledby="festival-awards-heading">
       <p className="eyebrow accent">02 / Festival archive</p><h2 id="festival-awards-heading">Jejak kompetisi.</h2>
-      {festivalAchievements.map(award => <article className="award-row" key={award.id} data-achievement-id={award.id}><div>{award.outcomes.map(outcome => <p key={outcome} className="award-result">{outcome}</p>)}</div><div><h3>{award.event}</h3><p>{award.organizer}</p><p className="meta">{award.evidence}</p></div><span className="meta">{award.year}</span></article>)}
+      {festivalAchievements.map(award => <article className="award-row" key={award.id} data-achievement-id={award.id}><div>{award.outcomes.map(outcome => <p key={outcome} className="award-result">{outcome}</p>)}</div><div><h3>{award.event}</h3><p>{award.organizer}</p><MediaGallery items={getAchievementMedia(award.id)} label={award.event} compact/><p className="meta">{award.evidence}</p></div><span className="meta">{award.year}</span></article>)}
     </section>
     <section className="section" id="education-achievements" aria-labelledby="education-awards-heading">
       <p className="eyebrow accent">03 / Education archive</p><h2 id="education-awards-heading">Dari ruang kelas.</h2>
