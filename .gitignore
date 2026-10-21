@@ -49,3 +49,7 @@ next-env.d.ts
 # agent folder & internal docs
 /agent/
 agent/
+/docs/
+docs/
+/CODEBASE_AUDIT.md
+/IMPLEMENTATION_PLAN.md
