@@ -1,0 +1,3 @@
+{
+  "ignoreCommand": "git log -1 --pretty=%B | grep -qiE '\\[skip ci\\]|\\[ci skip\\]|\\[skip vercel\\]|\\[vercel skip\\]' && exit 0 || exit 1"
+}
