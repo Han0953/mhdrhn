@@ -52,6 +52,7 @@ export function revealPlan(node: HTMLElement, profile: PageMotionProfile, order:
 /** useLayoutEffect prepares before paint. Navigation primes under the red curtain. */
 export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   let disposed = false, frame = 0, initialFrame = 0, released = false;
+  let lastScroll = window.scrollY, downTravel = 0, portraitUnlocked = false;
   const seen = new WeakSet<HTMLElement>();
   const groups = new Map<HTMLElement, Group>();
   const cover = document.querySelector<HTMLElement>(".route-transition-viewport");
@@ -63,11 +64,14 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   // IO includes edge-adjacent intersections. Never reject its one-shot entry using
   // a second, narrower viewport: that entry may be the only event before scrolling out.
   const inViewport = (group: Group) => group.intersecting || visible(group.root);
+  const scrollPortrait = (group: Group) => profile === "about" && group.items.some(item => item.kind === "portrait");
+  const portraitFrame = (group: Group) => group.root.closest<HTMLElement>(".portrait");
   function stage(item: RevealItem) {
     item.node.style.setProperty("--reveal-from",item.from);
     item.node.dataset.reveal = "queued";
   }
   function settleGroup(group: Group) {
+    if (scrollPortrait(group)) { const figure = portraitFrame(group); if (figure) delete figure.dataset.awaitScroll; }
     group.player?.finish(); group.played = true;
     group.items.forEach(({node}) => { if (!group.player) { node.style.removeProperty("--reveal-from"); delete node.dataset.reveal; } });
     observer?.unobserve(group.root);
@@ -80,8 +84,12 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   }
   function play(group: Group, wave = 0, lead = 0) {
     if (disposed || group.played || !group.root.isConnected || !inViewport(group)) return;
+    if (scrollPortrait(group) && !portraitUnlocked && !prefersReducedMotion()) return;
     if (prefersReducedMotion() || document.hidden) { settleGroup(group); return; }
     if (!released && activeCover()) return;
+    if (scrollPortrait(group)) {
+      const figure = portraitFrame(group); if (figure) delete figure.dataset.awaitScroll;
+    }
     group.items.forEach(item => { item.delay += wave; });
     prepareGroup(group); group.played = true; group.root.dataset.sequence = "playing";
     observer?.unobserve(group.root); group.player?.play(lead);
@@ -129,14 +137,25 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
         stage(plan);
       });
     });
-    groups.forEach(group => { if (!group.played && group.items.length) observer?.observe(group.root); });
+    groups.forEach(group => {
+      if (!group.played && group.items.length) {
+        if (scrollPortrait(group) && !prefersReducedMotion()) {
+          const figure = portraitFrame(group); if (figure) figure.dataset.awaitScroll = "true";
+        }
+        observer?.observe(group.root);
+      }
+    });
     root.dataset.motionProfile = profile;
   }
   function prepare() {
+    if (profile === "about" && (prefersReducedMotion() || typeof IntersectionObserver === "undefined")) {
+      root.querySelectorAll<HTMLElement>(".portrait").forEach(figure => { delete figure.dataset.awaitScroll; });
+    }
     collect(); groups.forEach(group => { if (!group.played && inViewport(group)) prepareGroup(group); });
     root.dataset.motionReady = "true";
   }
   function start(lead = 0) {
+    if (!released) { lastScroll = window.scrollY; downTravel = 0; }
     released = true; prepare(); let order = 0;
     groups.forEach(group => { if (!group.played && inViewport(group)) play(group, Math.min(order++ * .05,.25),lead); });
   }
@@ -144,16 +163,33 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   function refresh() {
     if (!frame) frame = requestAnimationFrame(() => { frame = 0; collect(); if (released || !activeCover()) start(); });
   }
+  function onScroll() {
+    const current = window.scrollY, delta = current - lastScroll;
+    lastScroll = current;
+    // Ignore route restoration while the red curtain owns the viewport.
+    if (!released || activeCover()) { downTravel = 0; return; }
+    downTravel = delta > 0 ? downTravel + delta : 0;
+    if (portraitUnlocked || downTravel < 12) return;
+    portraitUnlocked = true;
+    window.removeEventListener("scroll", onScroll);
+    groups.forEach(group => { if (scrollPortrait(group)) play(group); });
+  }
   const mutation = new MutationObserver(refresh); mutation.observe(root,{childList:true,subtree:true});
   const focus = (event: FocusEvent) => { for (const group of groups.values()) if (group.items.some(item => item.node.contains(event.target as Node))) settleGroup(group); };
-  const preference = () => { if (prefersReducedMotion() || document.hidden) settle(); else refresh(); };
+  const preference = () => {
+    if (prefersReducedMotion()) settle();
+    else if (document.hidden) groups.forEach(group => { if (!scrollPortrait(group) || portraitUnlocked) settleGroup(group); });
+    else refresh();
+  };
   const unsubscribe = subscribeMotion(preference);
   const unregister = registerEntrance({root,prepare,start,settle});
+  if (profile === "about") window.addEventListener("scroll", onScroll, { passive: true });
   root.addEventListener("focusin",focus); root.addEventListener("toggle",refresh,true); document.addEventListener("visibilitychange",preference);
   prepare(); initialFrame = requestAnimationFrame(() => { if (!activeCover()) start(); });
   return () => {
     disposed = true; cancelAnimationFrame(frame); cancelAnimationFrame(initialFrame); settle();
     observer?.disconnect(); mutation.disconnect(); unsubscribe(); unregister();
+    if (profile === "about") window.removeEventListener("scroll", onScroll);
     root.removeEventListener("focusin",focus); root.removeEventListener("toggle",refresh,true); document.removeEventListener("visibilitychange",preference);
     groups.forEach(group => { delete group.root.dataset.sequence; delete group.root.dataset.engine; }); groups.clear();
     delete root.dataset.motionReady; delete root.dataset.motionProfile;

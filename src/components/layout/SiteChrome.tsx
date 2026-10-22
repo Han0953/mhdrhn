@@ -26,7 +26,7 @@ function ChromeHeader({ pathname, menuOpen, onMenu, onNavigate, popup = false }:
   pathname: string; menuOpen: boolean; onMenu: () => void; onNavigate?: () => void; popup?: boolean;
 }) {
   const active = (href: string) => href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
-  return <header className={popup ? "site-header popup-header" : "site-header"}><div className="header-inner wrap">
+  return <header className={popup ? "site-header popup-header" : "site-header"} data-menu-open={menuOpen}><div className="header-inner wrap">
     {!popup && <PageMotion profile="chrome"/>}
     <SiteLink className="wordmark" href="/" aria-label="mhdrhn. — Home" onNavigate={onNavigate}>mhdrhn<span className="accent">.</span></SiteLink>
     {!popup && <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>}

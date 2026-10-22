@@ -105,6 +105,13 @@ if (origin) {
     assert.match(html, /id="[^"]+-theme-options"[^>]*aria-hidden="true"[^>]*inert=""/);
     const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
     assert.equal(new Set(ids).size, ids.length, 'header variants must keep IDs unique');
+    assert.doesNotMatch(html, /route-feedback|route-recovery|Masih menyiapkan halaman/);
+  });
+  const cssLinks = [...new Set([...html.matchAll(/href="([^"]+\.css)"/g)].map(match => match[1]))];
+  const compiledStyles = (await Promise.all(cssLinks.map(async href => (await fetch(new URL(href, origin))).text()))).join('\n');
+  check('production CSS keeps the standard mobile blur property after prefix optimization', () => {
+    assert.match(compiledStyles, /(?<!-)backdrop-filter:blur\(16px\)/);
+    assert.match(compiledStyles, /\.site-header\[data-menu-open=(?:"true"|true)\][^}]*?(?<!-)backdrop-filter:none/);
   });
 }
 const evidence = process.env.MHDRHN_QA_REFINEMENT_EVIDENCE || 'docs/execution/evidence/refinement-2026-10-19/automated-checks.json';

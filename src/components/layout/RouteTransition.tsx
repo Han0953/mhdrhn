@@ -94,8 +94,6 @@ export function RouteTransition({ children, projects = noProjects }: { children:
       <div className="route-wipe" ref={layer}>
         <span className="route-title" aria-hidden="true"/>
         <span className="sr-only" role="status"/>
-        <div className="route-feedback">Masih menyiapkan halaman…</div>
-        <div className="route-recovery">Halaman membutuhkan waktu lebih lama. Tekan Escape untuk kembali ke halaman yang tersedia.</div>
       </div>
     </div>
   </TransitionContext>;
