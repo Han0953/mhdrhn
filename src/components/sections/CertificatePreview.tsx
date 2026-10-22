@@ -2,14 +2,14 @@ import { certificates } from "@/lib/media";
 import { MediaGallery } from "@/components/media/MediaGallery";
 import { SiteLink } from "@/components/layout/RouteTransition";
 import { Arrow } from "@/components/ui/Editorial";
-import { ChevronDown } from "lucide-react";
+import { AnimatedDetails } from "@/components/motion/AnimatedDetails";
 
 export function CertificatePreview({ preview = false }: { preview?: boolean }) {
   const records = certificates.filter(certificate => certificate.media.publication === "PUBLIC");
   if (preview) return <ol className="certificate-title-list">{records.map(certificate => <li key={certificate.id} data-certificate-id={certificate.id}>
-    <details><summary><h3>{certificate.title}<ChevronDown size={20} aria-hidden="true"/></h3></summary>
+    <AnimatedDetails className="certificate-disclosure" summary={<h3>{certificate.title}</h3>}>
       <div className="certificate-description"><p>{certificate.description}</p><SiteLink className="text-link" href={`/achievements#certificate-${certificate.id}`}>Lihat sertifikat <Arrow/></SiteLink></div>
-    </details>
+    </AnimatedDetails>
   </li>)}</ol>;
   return <div className="certificate-preview">
     <p className="section-note">Sertifikat menjadi dokumentasi atas kesempatan belajar dan kegiatan yang saya ikuti.</p>

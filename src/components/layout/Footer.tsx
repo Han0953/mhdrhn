@@ -3,8 +3,10 @@ import { Arrow } from "@/components/ui/Editorial";
 import { profile } from "@/lib/content";
 import { navigation } from "@/lib/navigation";
 import { BackToTop } from "@/components/ui/BackToTop";
+import { PageMotion } from "@/components/motion/PageMotion";
 export function Footer() {
   return <footer className="site-footer"><div className="wrap">
+    <PageMotion profile="footer"/>
     <div className="footer-top"><div><p className="eyebrow">Ingin membahas karya atau kolaborasi?</p><SiteLink className="footer-cta" href="/contact">Mari terhubung <Arrow/></SiteLink></div><p className="meta">Proyek, pengalaman,<br/>dan hal yang saya pelajari.</p></div>
     <nav className="footer-nav" aria-label="Navigasi footer">{navigation.map(item => <SiteLink key={item.href} href={item.href}>{item.label}</SiteLink>)}</nav>
     <BackToTop/>

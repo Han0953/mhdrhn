@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageMotion } from "@/components/motion/PageMotion";
 import { notFound } from "next/navigation";
 import { SiteLink } from "@/components/layout/RouteTransition";
 import { CopyProjectLink } from "@/components/ui/CopyProjectLink";
@@ -24,7 +25,7 @@ export default async function ProjectDetail({ params }: Props) {
   const related = getRelatedProjects(project);
   const awards = achievements.filter(award => award.projectSlug === project.slug);
   const media = getProjectMedia(project.slug);
-  return <div className="wrap"><nav className="breadcrumb" aria-label="Jejak navigasi"><SiteLink href="/">Home</SiteLink><span aria-hidden="true"> / </span><SiteLink href="/projects">Projects</SiteLink><span aria-hidden="true"> / </span><span aria-current="page">{project.title}</span></nav><PageHeading eyebrow={project.categories.join(" / ")} description={project.subtitle}>{project.title}</PageHeading>
+  return <div className="wrap"><PageMotion profile="detail"/><nav className="breadcrumb" aria-label="Jejak navigasi"><SiteLink href="/">Home</SiteLink><span aria-hidden="true"> / </span><SiteLink href="/projects">Projects</SiteLink><span aria-hidden="true"> / </span><span aria-current="page">{project.title}</span></nav><PageHeading eyebrow={project.categories.join(" / ")} description={project.subtitle}>{project.title}</PageHeading>
     {media.length ? <MediaGallery items={media} label={`Dokumentasi ${project.title}`}/> : <ProjectCover project={project}/>}
     <dl className="project-facts"><div><dt>Lingkup proyek</dt><dd>{project.context}</dd></div>{project.year && <div><dt>Tahun</dt><dd>{project.year}</dd></div>}{project.role && <div><dt>Peran Rehan</dt><dd>{project.role}</dd></div>}{project.status && <div><dt>Status</dt><dd>{project.status}</dd></div>}</dl>
     <section className="detail-section"><p className="eyebrow accent">{project.format === "summary" ? "Tentang proyek" : "01 / Tentang proyek"}</p><div className="reading"><h2>{project.subtitle}</h2><p>{project.summary}</p><p>{project.approach}</p></div></section>

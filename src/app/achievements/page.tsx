@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageMotion } from "@/components/motion/PageMotion";
 import { PageHeading, Arrow } from "@/components/ui/Editorial";
 import { SiteLink } from "@/components/layout/RouteTransition";
 import { getProjectBySlug } from "@/lib/content";
@@ -9,6 +10,7 @@ import { MediaGallery } from "@/components/media/MediaGallery";
 export const metadata: Metadata = { title: "Pencapaian", description: "Pencapaian Muhammad Rehan sebagai bagian dari perjalanan belajar dan berkarya. Kenali hasil yang diraih beserta kegiatan serta latar belakangnya." };
 export default function Achievements() {
   return <div className="wrap">
+    <PageMotion profile="achievements"/>
     <PageHeading eyebrow="Achievements" description="Saya melihat pencapaian sebagai bagian dari proses belajar dan berkarya. Pengakuan yang diterima juga menjadi kesempatan untuk menghargai usaha serta dukungan orang-orang yang terlibat.">Pencapaian<br/>saya</PageHeading>
     <p className="section-note">Telusuri pencapaian beserta kegiatan dan latar belakangnya.</p>
     <nav className="section-jumps" aria-label="Arsip pencapaian"><a href="#featured-achievements">Karya tim</a><a href="#festival-achievements">Jejak kompetisi</a><a href="#education-achievements">Pencapaian pendidikan</a><a href="#certificates">Sertifikat</a></nav>

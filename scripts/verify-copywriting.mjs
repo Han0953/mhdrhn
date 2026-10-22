@@ -38,7 +38,7 @@ await check('achievements retain seven rows and nine outcomes; certificates refl
  for(const section of [archive,preview]){assert.equal((section.match(/data-certificate-id=/g)||[]).length,certificates.length);assert.doesNotMatch(section,/data-certificate-category|certificate-group|Dokumen belum tersedia|AWS Certified|credential ID|Sertifikat terverifikasi|record-provenance/);}
  assert.doesNotMatch(preview,/<img\b|<dialog\b|media-gallery|Diterbitkan|Nomor sertifikat/);
  assert.equal((archive.replace(/<dialog\b[\s\S]*?<\/dialog>/g,'').match(/<img\b/g)||[]).length,certificates.length);
- assert.equal((preview.match(/<details>/g)||[]).length,certificates.length);assert.doesNotMatch(preview,/<details\b[^>]*\bopen\b/);
+ assert.equal((preview.match(/<details\b[^>]*>/g)||[]).length,certificates.length);assert.equal((preview.match(/data-motion-owner="disclosure"/g)||[]).length,certificates.length);assert.doesNotMatch(preview,/<details\b[^>]*\bopen\b/);
  for(const certificate of certificates){assert.ok(certificate.description.length>40);assert.ok(plain(preview).includes(certificate.title));assert.ok(plain(preview).includes(certificate.description));assert.ok(plain(archive).includes(certificate.description));assert.ok(preview.includes(`/achievements#certificate-${certificate.id}`));assert.ok(archive.includes(`id="certificate-${certificate.id}"`));assert.ok(archive.includes(encodeURIComponent(certificate.media.src)));}
 });
 await check('status wording stays separate from stable query values; unknown status still returns the same twenty projects',async()=>{
@@ -48,7 +48,7 @@ await check('status wording stays separate from stable query values; unknown sta
 });
 function component(file,mocks={}){
  const exports={};const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020}}).outputText;
- vm.runInNewContext(code,{exports,require(id){if(id in mocks)return mocks[id];if(id==='@/components/layout/RouteTransition')return {SiteLink:'a',RouteReady:()=>null};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});return exports;
+ vm.runInNewContext(code,{exports,require(id){if(id in mocks)return mocks[id];if(id==='@/components/motion/PageMotion')return {PageMotion:()=>null};if(id==='@/components/layout/RouteTransition')return {SiteLink:'a',RouteReady:()=>null};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});return exports;
 }
 await check('error and not-found copy render with one heading; actual retry callback remains callable',()=>{
  const editorial=component('src/components/ui/Editorial.tsx');let refreshed=0;const ErrorPage=component('src/app/error.tsx',{'next/navigation':{useRouter:()=>({refresh(){refreshed++;}})},react:{useTransition:()=>[false,fn=>fn()]}}).default,NotFound=component('src/app/not-found.tsx',{'@/components/ui/Editorial':editorial}).default;

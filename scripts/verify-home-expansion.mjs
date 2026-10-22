@@ -38,15 +38,16 @@ function storyRuntime() {
   let y=0, rafId=0;const frames=new Map(),observers=[];
   const reduced=emitter({matches:false}), desktop=emitter({matches:true});
   const browser=emitter({innerHeight:1000,get scrollY(){return y;},scrollTo({top}){y=top;},matchMedia(query){return query.includes('reduce')?reduced:desktop;}});
-  const cards=Array.from({length:5},(_,i)=>({offsetLeft:20+i*980,offsetWidth:960,clientHeight:500,scrollHeight:500,contains(target){return target.card===i;}}));
+  const cards=Array.from({length:5},(_,i)=>({offsetLeft:20+i*980,offsetWidth:960,clientHeight:500,scrollHeight:500,media:{style:style()},querySelector(){return this.media;},contains(target){return target.card===i;}}));
   const track={scrollWidth:5000,style:style(),querySelectorAll(){return cards;}};
   const viewport={clientWidth:1000,clientHeight:700,scrollLeft:0,getBoundingClientRect(){return {left:0,right:1000};},scrollTo({left}){this.scrollLeft=left;}};
   const sticky={getBoundingClientRect(){return {height:700};}};
   const root=emitter({dataset:{view:'scroll'},style:style(),contains(){return true;},getBoundingClientRect(){return {top:1000-y,left:20};},querySelector(selector){return {'.story-sticky':sticky,'.story-overview':{getBoundingClientRect(){return {height:200};}},'.story-track':track,'.story-viewport':viewport}[selector];}});
   class Observer {constructor(fn){this.fn=fn;this.disconnected=false;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}}
-  const {mountProjectStory}=compile('src/lib/project-story-motion.ts',{window:browser,document:{documentElement:{},fonts:{ready:Promise.resolve()}},getComputedStyle(){return {getPropertyValue(){return '80px';}};},ResizeObserver:Observer,MutationObserver:Observer,requestAnimationFrame(fn){frames.set(++rafId,fn);return rafId;},cancelAnimationFrame(id){frames.delete(id);}},motionDependencies(reduced));
+  const document=emitter({documentElement:{},fonts:{ready:Promise.resolve()}});
+  const {mountProjectStory}=compile('src/lib/project-story-motion.ts',{window:browser,document,getComputedStyle(){return {getPropertyValue(){return '80px';}};},ResizeObserver:Observer,MutationObserver:Observer,IntersectionObserver:Observer,requestAnimationFrame(fn){frames.set(++rafId,fn);return rafId;},cancelAnimationFrame(id){frames.delete(id);}},motionDependencies(reduced));
   const cleanup=mountProjectStory(root);
-  return {root,track,cards,viewport,browser,reduced,desktop,observers,frames,cleanup,setY(value){y=value;},get y(){return y;},flush(){const pending=[...frames.values()];frames.clear();pending.forEach(fn=>fn());}};
+  return {root,track,cards,viewport,document,browser,reduced,desktop,observers,frames,cleanup,setY(value){y=value;},get y(){return y;},flush(){const pending=[...frames.values()];frames.clear();pending.forEach(fn=>fn());}};
 }
 await check('viewport gutter and available screen height are measured; overflowing text falls back to native flow',()=>{
   const t=storyRuntime();assert.equal(t.root.style['--story-gutter'],'20px');assert.equal(t.root.style['--story-height'],'920px');
@@ -89,6 +90,14 @@ await check('last-card geometry retains the trailing gutter even when scrollWidt
 });
 await check('twenty mount/unmount cycles release observers, listeners, RAF and pending fonts callbacks',async()=>{
   for(let i=0;i<20;i++){const t=storyRuntime();t.browser.listeners.get('scroll')();t.browser.listeners.get('resize')();t.cleanup();await Promise.resolve();assert.equal(t.frames.size,0);assert.equal(t.root.listeners.size+t.browser.listeners.size+t.reduced.listeners.size+t.desktop.listeners.size,0);assert.ok(t.observers.every(o=>o.disconnected));assert.equal(t.root.style.height,'');}
+});
+await check('media emphasis follows the same bounded scroll progress without changing the track owner',()=>{
+ const t=storyRuntime();t.setY(1120);t.browser.listeners.get('scroll')();t.flush();assert.equal(t.track.style.transform,'translate3d(0px,0,0)');assert.ok(Number(t.cards[0].media.style['--story-emphasis'])>.99);assert.equal(t.cards[4].media.style['--story-emphasis'],'0');
+ t.setY(5040);t.browser.listeners.get('scroll')();t.flush();assert.ok(Number(t.cards[4].media.style['--story-emphasis'])>.99);assert.equal(t.cards[0].media.style['--story-emphasis'],'0');
+ t.reduced.matches=true;t.reduced.listeners.get('change')();assert.ok(t.cards.every(c=>c.media.style['--story-emphasis']===undefined));t.cleanup();
+});
+await check('hidden and offscreen showcases schedule no scroll frame, resume on visibility and clean wrapper variables',()=>{
+ const t=storyRuntime();t.observers[2].fn([{isIntersecting:false}]);t.browser.listeners.get('scroll')();assert.equal(t.frames.size,0);t.observers[2].fn([{isIntersecting:true}]);t.flush();t.document.hidden=true;t.browser.listeners.get('scroll')();assert.equal(t.frames.size,0);t.document.hidden=false;t.document.listeners.get('visibilitychange')();assert.equal(t.frames.size,1);t.flush();t.cleanup();assert.equal(t.document.listeners.size,0);assert.ok(t.cards.every(c=>c.media.style['--story-emphasis']===undefined));
 });
 
 // Actual RotatingRoles hook lifecycle with deterministic timers, not a parallel implementation.

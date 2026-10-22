@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/sections/HeroSection";
+import { PageMotion } from "@/components/motion/PageMotion";
 import { TechnologyLogoGrid } from "@/components/sections/TechnologyLogoGrid";
 import { ProjectStory } from "@/components/sections/ProjectStory";
 import { CertificatePreview } from "@/components/sections/CertificatePreview";
@@ -11,6 +12,7 @@ import { electronicsProjects, homeAchievements, projectSectionIntros, latestProj
 
 export default function Home() {
   return <div className="wrap home-page">
+    <PageMotion profile="home"/>
     <HeroSection/>
     <section className="section home-introduction" data-home-section="introduction" aria-labelledby="intro-heading">
       <p className="eyebrow accent">02 / Introduction</p>

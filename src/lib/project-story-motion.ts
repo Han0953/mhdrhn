@@ -7,16 +7,19 @@ export function mountProjectStory(root: HTMLElement) {
   const viewport = root.querySelector<HTMLElement>(".story-viewport")!;
   const track = root.querySelector<HTMLElement>(".story-track")!;
   const cards = Array.from(track.querySelectorAll<HTMLElement>(".story-card"));
+  const media = cards.map(card => card.querySelector<HTMLElement>(".story-media-motion"));
+  let centers: number[] = [], viewportWidth = 0, inView = true;
   const desktop = window.matchMedia("(min-width: 1024px)");
   let travel = 0, pinned = false, frame = 0, destroyed = false, pinTop = 0;
   const top = () => Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-height"));
   function draw() {
-    if (!pinned || destroyed) return;
+    if (!pinned || destroyed || !inView || document.hidden) return;
     const offset = Math.min(travel, Math.max(0, pinTop - root.getBoundingClientRect().top));
     track.style.transform = `translate3d(${-offset}px,0,0)`;
     root.style.setProperty("--story-progress", String(travel ? offset / travel : 0));
+    media.forEach((node, index) => node?.style.setProperty("--story-emphasis", String(Math.max(0, 1 - Math.abs(centers[index] - offset - viewportWidth / 2) / (viewportWidth * .7)))));
   }
-  function requestDraw() { if (!frame) frame = requestAnimationFrame(() => { frame = 0; draw(); }); }
+  function requestDraw() { if (!frame && inView && !document.hidden) frame = requestAnimationFrame(() => { frame = 0; draw(); }); }
   function measure() {
     if (destroyed) return;
     const list = root.dataset.view === "list";
@@ -39,11 +42,13 @@ export function mountProjectStory(root: HTMLElement) {
     // Flex overflow can omit the trailing padding. Measure the final card and retain its gutter.
     const lastCard = cards.at(-1);
     travel = lastCard ? Math.max(0, Math.ceil(lastCard.offsetLeft + lastCard.offsetWidth + gutter - viewport.clientWidth)) : 0;
+    centers = cards.map(card => card.offsetLeft + card.offsetWidth / 2);
+    viewportWidth = viewport.clientWidth;
     if (travel <= 0) { pinned = false; root.dataset.mode = "native"; }
     const endPause = Math.min(160, (window.innerHeight - top()) * .15);
     root.style.height = pinned ? `${sticky.getBoundingClientRect().height + travel + endPause}px` : "";
     if (pinned) { viewport.scrollLeft = 0; draw(); }
-    else { track.style.transform = ""; root.style.removeProperty("--story-progress"); }
+    else { track.style.transform = ""; root.style.removeProperty("--story-progress"); media.forEach(node => node?.style.removeProperty("--story-emphasis")); }
   }
   function goTo(index: number) {
     const card = cards[Math.max(0, Math.min(cards.length - 1, index))];
@@ -77,16 +82,22 @@ export function mountProjectStory(root: HTMLElement) {
   window.addEventListener("scroll", requestDraw, { passive: true });
   window.addEventListener("resize", measure);
   const unsubscribe = subscribeMotion(measure);
+  const visibility = () => { if (!document.hidden) requestDraw(); };
+  document.addEventListener("visibilitychange", visibility);
+  const visible = typeof IntersectionObserver === "undefined" ? undefined : new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; if (inView) requestDraw(); });
+  visible?.observe(root);
   desktop.addEventListener("change", measure);
   root.addEventListener("focusin", onFocus); root.addEventListener("click", onClick);
   void document.fonts.ready.then(measure);
   measure();
   return () => {
     destroyed = true; cancelAnimationFrame(frame); resize.disconnect(); view.disconnect();
+    visible?.disconnect(); document.removeEventListener("visibilitychange", visibility);
     window.removeEventListener("scroll", requestDraw); window.removeEventListener("resize", measure);
     unsubscribe(); desktop.removeEventListener("change", measure);
     root.removeEventListener("focusin", onFocus); root.removeEventListener("click", onClick);
     delete root.dataset.mode; root.style.height = ""; track.style.transform = "";
+    media.forEach(node => node?.style.removeProperty("--story-emphasis"));
     for (const property of ["--story-progress", "--story-gutter", "--story-height", "--story-overview-height", "--story-top"]) root.style.removeProperty(property);
   };
 }
