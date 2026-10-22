@@ -10,7 +10,7 @@ async function check(name,fn){await fn();results.push({name,status:'PASS'});cons
 const home=loadContent('src/lib/home-content.ts');
 const exports={};
 const code=ts.transpileModule(fs.readFileSync('src/components/ui/Editorial.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020}}).outputText;
-vm.runInNewContext(code,{exports,require(id){if(id==='@/components/layout/RouteTransition')return {SiteLink:'a'};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});
+vm.runInNewContext(code,{exports,require(id){if(id==='@/components/motion/DisplayLines')return {DisplayLines:({children})=>children};if(id==='@/components/layout/RouteTransition')return {SiteLink:'a'};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});
 await check('all four actual ProjectArt preview variants contain graphics and no caption, SVG text, brand or field-note copy',()=>{
  for(const kind of ['circuit','aura','portal','research']){const html=renderToStaticMarkup(exports.ProjectArt({kind,title:'Preview fixture',variant:'preview'}));assert.match(html,/<svg/);assert.match(html,/aria-hidden="true"/);assert.doesNotMatch(html,/<text\b|<figcaption|art-top|Preview fixture|FIELD NOTES|mhdrhn\.|Ilustrasi konsep/);}
 });

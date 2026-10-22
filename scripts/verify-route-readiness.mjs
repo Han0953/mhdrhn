@@ -44,9 +44,9 @@ await check('a hung font or image budget explicitly chooses shell fallback and r
 await check('abort while decode is pending rejects stale readiness and releases the budget timer',async()=>{
  const d=deferred(),img=image({complete:true});img.decode=()=>d.promise;const t=runtime([img]);t.controller.abort();assert.equal(await t.pending,false);assert.equal(t.timers.size,0);d.resolve();t.fonts.resolve();await t.flush();assert.equal(t.frames.size,0);
 });
-for(const reduced of [false,true])await check(`footer back-to-top focuses main and uses ${reduced?'instant reduced motion':'smooth native scroll'}`,()=>{
- let scrolled,focused;const jsx=(type,props)=>({type,props});const {BackToTop}=load('src/components/ui/BackToTop.tsx',{window:{matchMedia(){return {matches:reduced};},scrollTo(value){scrolled=value;}},document:{querySelector(){return {focus(value){focused=value;}};}}},{...motionDependencies({matches:reduced}),'react/jsx-runtime':{jsx,jsxs:jsx},'lucide-react':{ArrowUp:'ArrowUp'}});
- BackToTop().props.onClick();assert.equal(scrolled.top,0);assert.equal(scrolled.behavior,reduced?'instant':'smooth');assert.equal(focused.preventScroll,true);
+for(const reduced of [false,true])await check(`footer back-to-top focuses main and forwards ${reduced?'instant reduced motion':'smooth scrolling'} to the shared adapter`,()=>{
+ let scrolled,focused;const jsx=(type,props)=>({type,props});const {BackToTop}=load('src/components/ui/BackToTop.tsx',{window:{matchMedia(){return {matches:reduced};}},document:{querySelector(){return {focus(value){focused=value;}};}}},{...motionDependencies({matches:reduced}),'@/lib/motion/smooth-scroll':{scrollToPosition(top,immediate){scrolled={top,immediate};}},'react/jsx-runtime':{jsx,jsxs:jsx},'lucide-react':{ArrowUp:'ArrowUp'}});
+ BackToTop().props.onClick();assert.equal(scrolled.top,0);assert.equal(scrolled.immediate,reduced);assert.equal(focused.preventScroll,true);
 });
 const directory=process.env.MHDRHN_QA_READINESS_EVIDENCE || 'docs/execution/evidence/immersive-navigation-2026-10-19';fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(`${directory}/readiness-footer-checks.json`,JSON.stringify({method:'Actual source handlers with deterministic font/image/RAF/DOM doubles, not browser rendering.',results},null,2));
 console.log(`${results.length} readiness and footer checks passed.`);

@@ -33,7 +33,7 @@ export function MediaGallery({ items, label, compact = false, sizes }: { items: 
     if (!opened || prefersReducedMotion() || document.hidden || !imageFrame.current?.animate) return;
     let animation: Animation | undefined;
     const stop = () => animation?.cancel();
-    try { animation = imageFrame.current.animate([{ opacity: .72 }, { opacity: 1 }], { duration: 120, easing: "ease-out" }); } catch { /* Original photo remains visible. */ }
+    try { animation = imageFrame.current.animate([{ opacity: .72 }, { opacity: 1 }], { duration: 260, easing: "cubic-bezier(.22,1,.36,1)" }); } catch { /* Original photo remains visible. */ }
     const onPreference = () => { if (prefersReducedMotion() || document.hidden) stop(); };
     const unsubscribe = subscribeMotion(onPreference);
     document.addEventListener("visibilitychange", onPreference);

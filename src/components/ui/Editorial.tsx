@@ -1,3 +1,4 @@
+import { DisplayLines } from "@/components/motion/DisplayLines";
 import { ArrowUpRight } from "lucide-react";
 import { SiteLink } from "@/components/layout/RouteTransition";
 import type { Project } from "@/lib/content";
@@ -6,7 +7,7 @@ import { ProjectCover } from "@/components/media/ProjectCover";
 export function Arrow() { return <ArrowUpRight size={20} aria-hidden="true" />; }
 export function PageHeading({ eyebrow, children, description }: { eyebrow: string; children: ReactNode; description?: string }) {
   const hasPunctuation = typeof children === "string" && /[.!?]$/.test(children.trim());
-  return <header className="page-heading"><p className="eyebrow accent">{eyebrow}</p><h1 tabIndex={-1}>{children}{!hasPunctuation && <span className="accent">.</span>}</h1>{description && <p className="page-description">{description}</p>}</header>;
+  return <header className="page-heading"><p className="eyebrow accent">{eyebrow}</p><h1 tabIndex={-1}><DisplayLines>{children}{!hasPunctuation && <span className="accent">.</span>}</DisplayLines></h1>{description && <p className="page-description">{description}</p>}</header>;
 }
 export function ProjectArt({ kind, title, variant = "documented" }: { kind: Project["visual"]; title: string; variant?: "documented" | "preview" }) {
   const preview = variant === "preview";

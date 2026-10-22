@@ -1,72 +1,38 @@
-import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {loadMotion} from './motion-test-support.mjs';
+import vm from 'node:vm';
+import ts from 'typescript';
+import assert from 'node:assert/strict';
 const results=[];
-async function check(name,fn){await fn();results.push({name,status:'PASS'});console.log(`PASS ${name}`);}
-function emitter(target={}){const events=new Map();return Object.assign(target,{events,addEventListener(k,f){if(!events.has(k))events.set(k,new Set());events.get(k).add(f);},removeEventListener(k,f){events.get(k)?.delete(f);},emit(k,e){for(const f of events.get(k)||[])f(e);},count(){return [...events.values()].reduce((n,s)=>n+s.size,0);}});}
-const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-function fixture({profile='about',reduced=false,io=true,loader}={}){
- const timers=new Map(),frames=new Map(),observers=[],animations=[];let serial=0;
- const media=emitter({matches:reduced}),cover={dataset:{}};
- const document=emitter({hidden:false,activeElement:null,documentElement:{dataset:{}},querySelector(){return cover;}});
- const window=emitter({innerWidth:390,matchMedia:()=>media,localStorage:{getItem:()=>null}});
- const nodes=[];
- function node(kind='h2') {const n={kind,dataset:{},isConnected:true,rects:true,blocked:false,child:{},matches(selector){return selector.split(',').some(s=>s===kind);},getClientRects(){return this.rects?[{}]:[];},closest(){return this.blocked?{}:null;},contains(child){return child===this||child===this.child;},querySelectorAll(){return [this];},animate(keyframes,options){const a={keyframes,options,cancelled:false,cancel(){this.cancelled=true;}};animations.push(a);return a;}};nodes.push(n);return n;}
- const root=emitter({querySelectorAll:()=>nodes});
- class IO {constructor(fn){this.fn=fn;this.observed=new Set();observers.push(this);}observe(n){this.observed.add(n);}unobserve(n){this.observed.delete(n);}disconnect(){this.disconnected=true;this.observed.clear();}}
- class MO {constructor(fn){this.fn=fn;observers.push(this);}observe(){}disconnect(){this.disconnected=true;}}
- const globals={window,document,IntersectionObserver:io?IO:undefined,MutationObserver:MO,setTimeout(fn,delay){const id=++serial;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);},requestAnimationFrame(fn){const id=++serial;frames.set(id,fn);return id;},cancelAnimationFrame(id){frames.delete(id);}};
- const choreography=loadMotion('src/lib/motion/choreography.ts',globals);
- node();
- const cleanup=choreography.mountPageMotion(root,profile,loader);
- return {root,nodes,node,window,document,media,cover,timers,frames,observers,animations,cleanup,choreography,
-   async visible(n=nodes[0]){observers[0].fn([{isIntersecting:true,target:n}]);await flush();},
-   async release(){delete cover.dataset.active;observers.at(-1).fn();await flush();},
-   tick(){const pending=[...timers.values()];timers.clear();pending.forEach(t=>t.fn());},
-   mutation(){observers[io?1:0].fn();const pending=[...frames.values()];frames.clear();pending.forEach(f=>f());},
- };
+function load(file,deps={},globals={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports,...globals,require:id=>{if(!(id in deps))throw Error(id);return deps[id];}});return exports;}
+async function check(name,fn){await fn();results.push({name,status:'PASS'});console.log('PASS '+name);}
+class Style{values=new Map();setProperty(k,v){this.values.set(k,v);}removeProperty(k){this.values.delete(k);}getPropertyValue(k){return this.values.get(k)||'';}}
+function fixture({coverActive=true,reduced=false,io=true,rect={left:20,right:300,top:100,bottom:250}}={}){
+ const events=new Map(),rootEvents=new Map(),frames=new Map(),engines=[],ios=[],mutations=[];let id=0,listener;
+ const cover={dataset:{active:String(coverActive)}},document={hidden:false,querySelector:()=>cover};
+ class Element{constructor(tag,classes=''){this.tagName=tag;this.className=classes;this.style=new Style();this.dataset={};this.isConnected=true;}matches(s){return s.split(',').some(x=>x.trim()===this.tagName||x.trim().startsWith('.')&&this.className.split(' ').includes(x.trim().slice(1)));}closest(s){if(s.includes('.page-heading'))return owner;return null;}getClientRects(){return[{}];}getBoundingClientRect(){return rect;}querySelectorAll(){return[];}contains(n){return n===this;}compareDocumentPosition(){return 4;}}
+ const owner=new Element('div','page-heading'),heading=new Element('h1'),copy=new Element('p'),nodes=[heading,copy];
+ const root=new Element('div');root.querySelectorAll=()=>nodes;root.contains=n=>n===root||nodes.includes(n);root.addEventListener=(k,v)=>rootEvents.set(k,v);root.removeEventListener=k=>rootEvents.delete(k);
+ document.addEventListener=(k,v)=>events.set(k,v);document.removeEventListener=k=>events.delete(k);
+ class IO{observed=new Set();constructor(cb,options){this.cb=cb;this.options=options;ios.push(this);}observe(n){this.observed.add(n);}unobserve(n){this.observed.delete(n);}disconnect(){this.observed.clear();}}
+ class MO{constructor(cb){this.cb=cb;mutations.push(this);}observe(){}disconnect(){this.off=true;}}
+ const entrance=load('src/lib/motion/entrance.ts');
+ const deps={'./preferences':{prefersReducedMotion:()=>reduced,subscribeMotion(fn){listener=fn;return()=>listener=undefined;}},'./entrance':entrance,'./engines':{prepareReveal(items,engine,done){const snapshot=[...items];const e={items:snapshot,engine,plays:0,finished:false,play(){this.plays++;},finish(){this.finished=true;snapshot.forEach(i=>{delete i.node.dataset.reveal;i.node.style.removeProperty('--reveal-from');});done();}};engines.push(e);return e;}}};
+ const mod=load('src/lib/motion/choreography.ts',deps,{window:{innerWidth:390,innerHeight:844},document,Node:{DOCUMENT_POSITION_FOLLOWING:4},IntersectionObserver:io?IO:undefined,MutationObserver:MO,requestAnimationFrame(fn){frames.set(++id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id)});
+ const cleanup=mod.mountPageMotion(root,'about');
+ return{root,owner,heading,copy,nodes,cover,document,engines,ios,mutations,frames,events,rootEvents,entrance,cleanup,Element,setRect(value){rect=value;},flush(){const tasks=[...frames.values()];frames.clear();tasks.forEach(fn=>fn());},reduce(v){reduced=v;listener();},intersect(value=true){ios[0]?.cb([{isIntersecting:value,target:owner}]);},get subscribed(){return !!listener;}};
 }
-await check('each visible beat runs once, with a small mobile displacement and no opacity-zero start',async()=>{
- const t=fixture();await t.visible();assert.equal(t.animations.length,1);assert.equal(t.animations[0].keyframes[0].opacity,.72);assert.match(t.animations[0].keyframes[0].transform,/12px/);await t.visible();assert.equal(t.animations.length,1);t.tick();assert.equal(t.nodes[0].dataset.motionBeat,undefined);assert.equal(t.animations[0].cancelled,true);t.cleanup();
-});
-await check('a covered route queues the beat and waits for cover release before touching content',async()=>{
- const t=fixture();t.cover.dataset.active='true';t.nodes[0].blocked=true;await t.visible();assert.equal(t.animations.length,0);t.nodes[0].blocked=false;await t.release();assert.equal(t.animations.length,1);t.cleanup();
-});
-await check('Minimal, hidden documents and missing IntersectionObserver leave visible content static',async()=>{
- const t=fixture({reduced:true});await t.visible();assert.equal(t.animations.length,0);t.cleanup();
- const h=fixture();h.document.hidden=true;await h.visible();assert.equal(h.animations.length,0);h.document.hidden=false;h.document.emit('visibilitychange');await flush();assert.equal(h.animations.length,1);h.cleanup();
- const n=fixture({io:false});assert.equal(n.animations.length,0);n.cleanup();
-});
-await check('switching preference or hiding the tab cancels active animation and clears watchdogs',async()=>{
- for(const hidden of [false,true]){const t=fixture();await t.visible();if(hidden){t.document.hidden=true;t.document.emit('visibilitychange');}else{t.media.matches=true;t.media.emit('change');}assert.equal(t.animations[0].cancelled,true);assert.equal(t.timers.size,0);assert.equal(t.nodes[0].dataset.motionBeat,undefined);t.cleanup();}
-});
-await check('keyboard focus settles a moving group immediately and an already focused heading never moves',async()=>{
- const t=fixture();await t.visible();t.root.emit('focusin',{target:t.nodes[0].child});assert.equal(t.animations[0].cancelled,true);t.cleanup();
- const f=fixture();f.document.activeElement=f.nodes[0];await f.visible();assert.equal(f.animations.length,0);f.cleanup();
-});
-await check('new query-result DOM gets a local short beat without replaying existing headings',async()=>{
- const t=fixture({profile:'projects'});await t.visible();const node=t.node('.catalog-results');t.mutation();await t.visible(node);assert.equal(t.animations.length,2);assert.equal(t.animations.at(-1).options.duration,140);await t.visible(t.nodes[0]);assert.equal(t.animations.length,2);t.cleanup();
-});
-await check('detached and closed-disclosure targets are not animated',async()=>{
- const t=fixture();t.nodes[0].isConnected=false;await t.visible();assert.equal(t.animations.length,0);t.nodes[0].isConnected=true;t.nodes[0].blocked=true;await t.visible();assert.equal(t.animations.length,0);t.cleanup();
-});
-await check('Home lazily shares one GSAP loader across beats, without loading it on other pages',async()=>{
- let loads=0,plays=0;const loader=async()=>{loads++;return()=>{plays++;return()=>{};};};
- const t=fixture({profile:'home',loader});await t.visible();const node=t.node('h3');t.mutation();await t.visible(node);assert.equal(loads,1);assert.equal(plays,2);t.cleanup();
- const a=fixture({loader});await a.visible();assert.equal(loads,1);a.cleanup();
-});
-await check('Home import failure falls back to native movement instead of hiding server HTML',async()=>{
- const t=fixture({profile:'home',loader:async()=>{throw Error('offline chunk');}});await t.visible();assert.equal(t.animations.length,1);t.cleanup();
-});
-await check('a late engine import cannot start work after unmount, preference change or hidden-tab cancellation',async()=>{
- for(const cancel of ['unmount','preference','hidden']){let resolve,plays=0;const t=fixture({profile:'home',loader:()=>new Promise(r=>{resolve=r;})});await t.visible();if(cancel==='unmount')t.cleanup();else if(cancel==='hidden'){t.document.hidden=true;t.document.emit('visibilitychange');}else{t.media.matches=true;t.media.emit('change');}resolve(()=>{plays++;return()=>{};});await flush();assert.equal(plays,0);if(cancel!=='unmount')t.cleanup();}
-});
-await check('missing or throwing WAAPI and sequence failure do not leave an active beat',async()=>{
- for(const mode of ['missing','throwing']){const t=fixture();t.nodes[0].animate=mode==='missing'?undefined:()=>{throw Error('WAAPI');};await t.visible();assert.equal(t.nodes[0].dataset.motionBeat,undefined);assert.equal(t.timers.size,0);t.cleanup();}
- const t=fixture({profile:'home',loader:async()=>()=>{throw Error('engine');}});await t.visible();assert.equal(t.nodes[0].dataset.motionBeat,undefined);t.cleanup();
-});
-await check('twenty page lifetimes release observers, pending RAF, subscriptions, animations and timers',async()=>{
- for(let i=0;i<20;i++){const t=fixture();await t.visible();t.observers[1].fn();t.cleanup();assert.equal(t.frames.size+t.timers.size+t.root.count()+t.window.count()+t.document.count()+t.media.count(),0);assert.ok(t.observers.every(o=>o.disconnected));assert.ok(t.animations.every(a=>a.cancelled));}
-});
-const directory=process.env.MHDRHN_QA_CHOREOGRAPHY_EVIDENCE||'docs/execution/evidence/p2-cd-2026-10-22';fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(`${directory}/page-choreography-checks.json`,JSON.stringify({method:'Real TypeScript page controller and native sequence with explicit DOM/IO/engine/timer doubles. Not a frame benchmark or browser rendering test.',results},null,2));
-console.log(`${results.length} page choreography checks passed.`);
+await check('first viewport is staged synchronously while curtain is active; no engine plays early',()=>{const t=fixture();assert.equal(t.heading.dataset.reveal,'queued');assert.ok(t.heading.style.getPropertyValue('--reveal-from').includes('24px'));assert.equal(t.root.dataset.motionReady,'true');assert.equal(t.engines.length,1);assert.equal(t.engines[0].plays,0);t.intersect();t.flush();assert.equal(t.engines[0].plays,0);t.cleanup();});
+await check('readiness prepares then starts registered route content before overlay release',()=>{const t=fixture();t.entrance.prepareRouteEntrance(t.root);assert.equal(t.root.dataset.entrance,'prepared');assert.equal(t.engines[0].plays,0);t.entrance.startRouteEntrance(t.root);assert.equal(t.engines[0].plays,1);assert.equal(t.root.dataset.entrance,'playing');assert.equal(t.cover.dataset.active,'true');t.cleanup();});
+await check('native navigation starts once from its prepared frame without waiting for a curtain',()=>{const t=fixture({coverActive:false});assert.equal(t.engines[0].plays,0);t.flush();assert.equal(t.engines[0].plays,1);t.intersect();assert.equal(t.engines[0].plays,1);t.cleanup();});
+await check('heading and following copy have ordered delays and distinct physical trajectories',()=>{const t=fixture(),items=t.engines[0].items;assert.ok(items[1].delay>items[0].delay);assert.ok(items[0].duration>items[1].duration);assert.notEqual(items[0].from,items[1].from);t.cleanup();});
+await check('Minimal and missing IntersectionObserver never hide readable content',()=>{for(const options of [{reduced:true},{io:false}]){const t=fixture(options);assert.equal(t.heading.dataset.reveal,undefined);t.cleanup();}});
+await check('live reduced preference and hidden tab finish paused or playing sequences',()=>{const t=fixture();t.reduce(true);assert.equal(t.engines[0].finished,true);assert.equal(t.heading.dataset.reveal,undefined);t.document.hidden=true;t.events.get('visibilitychange')();t.cleanup();});
+await check('focus settles content immediately rather than leaving a keyboard destination hidden',()=>{const t=fixture();t.rootEvents.get('focusin')({target:t.heading});assert.equal(t.engines[0].finished,true);t.cleanup();});
+await check('detached query results release old paused animation owners',()=>{const t=fixture();t.owner.isConnected=false;t.heading.isConnected=false;t.copy.isConnected=false;t.mutations[0].cb();t.flush();assert.equal(t.engines[0].finished,true);t.cleanup();});
+await check('twenty lifetimes release observers, listeners, registry and pending frame work',()=>{for(let i=0;i<20;i++){const t=fixture();t.cleanup();assert.equal(t.frames.size,0);assert.equal(t.events.size,0);assert.equal(t.rootEvents.size,0);assert.equal(t.subscribed,false);assert.equal(t.ios[0].observed.size,0);assert.ok(t.mutations.every(m=>m.off));assert.equal(t.heading.dataset.reveal,undefined);t.entrance.startRouteEntrance(t.root);assert.equal(t.engines[0].plays,0);}});
+await check('a section entering the bottom edge starts from its intersection event, without a refresh or second threshold',()=>{const t=fixture({coverActive:false,rect:{left:20,right:300,top:900,bottom:1000}});assert.equal(t.engines.length,0);t.setRect({left:20,right:300,top:842,bottom:920});t.intersect();assert.equal(t.engines.length,1);assert.equal(t.engines[0].plays,1);t.cleanup();});
+await check('an edge intersection consumed under the curtain is replayed when route readiness releases it',()=>{const t=fixture({rect:{left:20,right:300,top:844,bottom:925}});t.intersect();assert.equal(t.engines.length,0);t.entrance.startRouteEntrance(t.root);assert.equal(t.engines[0].plays,1);t.cleanup();});
+await check('leaving the intersection before release does not play an offscreen section',()=>{const t=fixture({rect:{left:20,right:300,top:844,bottom:925}});t.intersect();t.intersect(false);t.setRect({left:20,right:300,top:1000,bottom:1100});t.entrance.startRouteEntrance(t.root);assert.equal(t.engines.length,0);t.cleanup();});
+await check('new content arriving after preparation rebuilds the paused timeline and restores every leaf',()=>{const t=fixture();const late=new t.Element('p');t.nodes.push(late);t.mutations[0].cb();t.flush();t.entrance.startRouteEntrance(t.root);const active=t.engines.at(-1);assert.equal(active.items.length,3);assert.equal(active.plays,1);active.finish();assert.equal(late.dataset.reveal,undefined);assert.ok(t.engines.slice(0,-1).every(e=>e.finished));t.cleanup();});
+await check('oversized groups have no minimum intersection ratio that exceeds their viewport coverage',()=>{const t=fixture({coverActive:false,rect:{left:20,right:300,top:900,bottom:100900}});assert.equal(t.ios[0].options.threshold,0);t.setRect({left:20,right:300,top:844,bottom:100844});t.intersect();assert.equal(t.engines[0].plays,1);t.cleanup();});
+const dir=process.env.MHDRHN_QA_CHOREOGRAPHY_EVIDENCE||'docs/execution/evidence/scroll-reveal-fix-2026-10-22';fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(dir+'/page-choreography-checks.json',JSON.stringify({method:'Real page controller and entrance registry with explicit DOM/IO/engine snapshot doubles; includes viewport-edge and paused timeline regressions.',results},null,2));console.log(results.length+' page choreography checks passed.');

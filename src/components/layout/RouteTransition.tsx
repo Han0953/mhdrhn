@@ -8,6 +8,7 @@ import { createRouteWipe } from "@/lib/route-motion";
 import { createRouteSession, type RouteOptions } from "@/lib/route-session";
 import { awaitRouteAssets } from "@/lib/route-readiness";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
+import { prepareRouteEntrance, startRouteEntrance, settleRouteEntrance } from "@/lib/motion/entrance";
 
 const TransitionContext = createContext<(href: NavigationHref, options?: RouteOptions) => boolean>(() => false);
 const ReadyContext = createContext<(path: string, error?: boolean) => void>(() => {});
@@ -36,10 +37,12 @@ export function RouteTransition({ children, projects = noProjects }: { children:
       if (content.current) { content.current.inert = active; content.current.setAttribute("aria-busy", String(active)); }
       if (active) viewport.current?.focus({ preventScroll: true });
       else {
+        if (completed) startRouteEntrance(document.querySelector("main"));
+        else settleRouteEntrance(document.querySelector("main"));
         const request = transaction?.complete();
         if (!request) return;
         if (completed && !request.history) {
-          const target = document.querySelector<HTMLElement>("main h1, main");
+          const target = document.querySelector<HTMLElement>("main");
           if (target) { if (!target.hasAttribute("tabindex")) target.tabIndex = -1; target.focus({ preventScroll: true }); }
         } else {
           const source = request.focus;
@@ -59,11 +62,16 @@ export function RouteTransition({ children, projects = noProjects }: { children:
         document.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach(dialog => dialog.close());
         if (layer.current) { layer.current.dataset.kind = kind; layer.current.dataset.target = request.path; layer.current.dataset.transaction = String(request.generation); }
       },
-      assets: signal => awaitRouteAssets(document.querySelector("main"), signal),
+      assets: async signal => {
+        const main = document.querySelector("main");
+        const ready = await awaitRouteAssets(main, signal);
+        if (ready && !signal.aborted) { prepareRouteEntrance(main); startRouteEntrance(main); }
+        return ready;
+      },
     });
     session.current = transaction;
     const onPreference = () => { if (prefersReducedMotion()) transaction?.skip(); };
-    const onEscape = (event: KeyboardEvent) => { if (event.key === "Escape") transaction?.cancel(); };
+    const onEscape = (event: KeyboardEvent) => { if (event.key === "Escape") { settleRouteEntrance(document.querySelector("main")); transaction?.cancel(); } };
     const onHidden = () => { if (document.hidden) transaction?.skip(); };
     const onHistory = () => transaction?.history(previous.current);
     const unsubscribe = subscribeMotion(onPreference);

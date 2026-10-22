@@ -1,9 +1,9 @@
 /** Milliseconds and CSS easing shared by the current motion owners. */
 export const motionTokens = {
-  duration: { press: 90, micro: 140, panelOpen: 240, panelClose: 180, reveal: 420, hero: 620, routeCover: 220, routeReveal: 220, editorial: 280, signal: 280, roleEnter: 650, roleExit: 500 },
-  easing: { response: "cubic-bezier(.22,1,.36,1)", transfer: "cubic-bezier(.76,0,.24,1)" },
-  stagger: { heading: 60, item: 35, maximum: 180 },
-  distance: { heading: 20, mobileHeading: 12, media: 12, mobileMedia: 6 },
+  duration: { press: 110, micro: 220, panelOpen: 480, panelClose: 380, modalOpen: 520, modalClose: 420, reveal: 1050, hero: 1800, routeCover: 420, routeReveal: 480, editorial: 950, signal: 420, roleEnter: 850, roleExit: 500, copy: 760, card: 900, media: 1200 },
+  easing: { response: "cubic-bezier(.22,1,.36,1)", transfer: "cubic-bezier(.76,0,.24,1)", editorial: "cubic-bezier(.16,1,.3,1)", mechanical: "cubic-bezier(.65,0,.2,1)", settle: "cubic-bezier(.2,.8,.2,1)" },
+  stagger: { heading: 130, item: 65, maximum: 360 },
+  distance: { heading: 40, mobileHeading: 26, media: 24, mobileMedia: 12 },
   cadence: { role: 3000 },
 } as const;
 

@@ -5,23 +5,28 @@ import { motionTokens } from "./tokens";
 export function mountDialog(dialog: HTMLDialogElement, side = false) {
   let animation: Animation | undefined, timer: ReturnType<typeof setTimeout> | undefined;
   let generation = 0, closing = false;
+  const contentAnimations: Animation[] = [];
   function stop() {
     generation++;
     if (animation) { animation.onfinish = null; animation.oncancel = null; animation.cancel(); }
     animation = undefined; clearTimeout(timer); timer = undefined;
+    contentAnimations.splice(0).forEach(item => item.cancel());
   }
   function closeNow() { stop(); closing = false; delete dialog.dataset.motionState; if (dialog.open) dialog.close(); }
   function move(exit: boolean) {
     const token = ++generation;
-    const transform = side ? "translateX(16px)" : "translateY(8px)";
+    const transform = side ? "translateX(40px)" : "translateY(20px)";
     const done = () => { if (token !== generation) return; if (exit) closeNow(); else { stop(); delete dialog.dataset.motionState; } };
     if (prefersReducedMotion() || document.hidden || typeof dialog.animate !== "function") { done(); return; }
     dialog.dataset.motionState = exit ? "closing" : "opening";
     const frames = [{ opacity: 0, transform }, { opacity: 1, transform: "none" }];
-    const duration = exit ? motionTokens.duration.panelClose : motionTokens.duration.panelOpen;
+    const duration = exit ? motionTokens.duration.modalClose : motionTokens.duration.modalOpen;
     try {
       animation = dialog.animate(exit ? frames.reverse() : frames, { duration, easing: motionTokens.easing.response });
       animation.onfinish = done; animation.oncancel = done;
+      if (!exit) Array.from(dialog.querySelectorAll?.<HTMLElement>(".dialog-top>*,nav a,.chat-log>div,.chat-description,.quick-questions>button,.chat-input-row,.media-dialog-top,.media-dialog-footer") ?? []).slice(0, 18).forEach((child, index) => {
+        if (typeof child.animate === "function") contentAnimations.push(child.animate([{ opacity: 0, transform: side ? "translateX(24px)" : "translateY(16px) scale(.97)" }, { opacity: 1, transform: "none" }], { duration: duration * .45, delay: Math.min(index * 45, duration * .5), easing: motionTokens.easing.editorial, fill: "backwards" }));
+      });
       timer = setTimeout(done, duration + 120);
     } catch { done(); }
   }

@@ -108,13 +108,13 @@ check('generation invalidates stale callbacks; disposal is idempotent and late c
 check('disclosure starts closed; opening settles to intrinsic height with no retained clipping', () => {
   const t = fixture(); assert.equal(t.details.open, false); assert.equal(t.click().defaultPrevented, true);
   assert.equal(t.details.open, true); assert.equal(t.details.dataset.motionState, 'opening');
-  assert.equal(t.animations[0].options.duration, 240); t.finish();
+  assert.equal(t.animations[0].options.duration, 480); t.finish();
   assert.equal(t.content.style.height, undefined); assert.equal(t.content.style.overflow, undefined); assert.equal(t.content.inert, false); assert.equal(t.timers.size, 0); t.cleanup();
 });
 check('closing returns focus to summary and prevents focus entering collapsing content', () => {
   const t = fixture(); t.click(); t.finish(); t.document.activeElement = t.child; t.click();
   assert.equal(t.content.inert, true); assert.equal(t.document.activeElement, t.summary); assert.equal(t.details.open, true);
-  assert.equal(t.animations.at(-1).options.duration, 180); t.finish(); assert.equal(t.details.open, false); assert.equal(t.content.inert, false); t.cleanup();
+  assert.equal(t.animations.at(-1).options.duration, 380); t.finish(); assert.equal(t.details.open, false); assert.equal(t.content.inert, false); t.cleanup();
 });
 check('twenty rapid reversals preserve visual height and reject stale animation finishes', () => {
   const t = fixture(); t.click(); const stale = t.animations[0].onfinish; t.visual(47);
@@ -145,7 +145,7 @@ check('native external toggles (including browser find) take precedence while id
   t.click(); t.details.open = false; t.details.emit('toggle'); assert.equal(t.timers.size, 0); assert.equal(t.content.inert, false); t.cleanup();
 });
 check('watchdog recovers a missing WAAPI finish without retaining fixed height', () => {
-  const t = fixture(); t.click(); const task = [...t.timers.values()][0]; assert.equal(task.delay, 360); task.fn();
+  const t = fixture(); t.click(); const task = [...t.timers.values()][0]; assert.equal(task.delay, 600); task.fn();
   assert.equal(t.details.open, true); assert.equal(t.content.style.height, undefined); assert.equal(t.timers.size, 0); t.cleanup();
 });
 check('twenty mount/unmount cycles release animations, RAF, observers, timers and subscriptions', () => {
@@ -162,7 +162,7 @@ function panel({waapi=true,throws=false}={}) {
   return {...e,dialog,animations,controller:e.dialogMotion.mountDialog(dialog,true),finish(){animations.at(-1)?.onfinish?.();}};
 }
 check('menu panel uses native modal, bounded entrance and exit, releasing native close at completion',()=>{
- const t=panel();t.controller.open();assert.equal(t.dialog.open,true);assert.equal(t.animations[0].frames[0].transform,'translateX(16px)');t.finish();assert.equal(t.dialog.dataset.motionState,undefined);t.controller.close();assert.equal(t.dialog.open,true);assert.equal(t.dialog.dataset.motionState,'closing');t.finish();assert.equal(t.dialog.open,false);assert.equal(t.timers.size,0);t.controller.dispose();
+ const t=panel();t.controller.open();assert.equal(t.dialog.open,true);assert.equal(t.animations[0].frames[0].transform,'translateX(40px)');t.finish();assert.equal(t.dialog.dataset.motionState,undefined);t.controller.close();assert.equal(t.dialog.open,true);assert.equal(t.dialog.dataset.motionState,'closing');t.finish();assert.equal(t.dialog.open,false);assert.equal(t.timers.size,0);t.controller.dispose();
 });
 check('twenty panel reversals and stale exit finishes cannot close a reopened modal',()=>{
  const t=panel();t.controller.open();t.finish();t.controller.close();const old=t.animations.at(-1).onfinish;for(let i=0;i<20;i++){t.controller.open();t.controller.close();}t.controller.open();old();assert.equal(t.dialog.open,true);t.finish();assert.equal(t.timers.size,0);t.controller.dispose();

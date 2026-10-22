@@ -1,4 +1,5 @@
 import { prefersReducedMotion, subscribeMotion } from "./motion/preferences";
+import { scrollToPosition } from "./motion/smooth-scroll";
 
 /** Native scroll enhancement. No wheel interception, root scroll lock or external animation library. */
 export function mountProjectStory(root: HTMLElement) {
@@ -8,6 +9,7 @@ export function mountProjectStory(root: HTMLElement) {
   const track = root.querySelector<HTMLElement>(".story-track")!;
   const cards = Array.from(track.querySelectorAll<HTMLElement>(".story-card"));
   const media = cards.map(card => card.querySelector<HTMLElement>(".story-media-motion"));
+  const controls = Array.from(root.querySelectorAll?.<HTMLElement>("[data-story-target]") ?? []);
   let centers: number[] = [], viewportWidth = 0, inView = true;
   const desktop = window.matchMedia("(min-width: 1024px)");
   let travel = 0, pinned = false, frame = 0, destroyed = false, pinTop = 0;
@@ -18,6 +20,11 @@ export function mountProjectStory(root: HTMLElement) {
     track.style.transform = `translate3d(${-offset}px,0,0)`;
     root.style.setProperty("--story-progress", String(travel ? offset / travel : 0));
     media.forEach((node, index) => node?.style.setProperty("--story-emphasis", String(Math.max(0, 1 - Math.abs(centers[index] - offset - viewportWidth / 2) / (viewportWidth * .7)))));
+    const active = Math.round((travel ? offset / travel : 0) * Math.max(0, cards.length - 1));
+    controls.forEach((button, index) => {
+      if (index === active) { if (button.getAttribute("aria-current") !== "step") button.setAttribute("aria-current", "step"); }
+      else button.removeAttribute("aria-current");
+    });
   }
   function requestDraw() { if (!frame && inView && !document.hidden) frame = requestAnimationFrame(() => { frame = 0; draw(); }); }
   function measure() {
@@ -48,13 +55,13 @@ export function mountProjectStory(root: HTMLElement) {
     const endPause = Math.min(160, (window.innerHeight - top()) * .15);
     root.style.height = pinned ? `${sticky.getBoundingClientRect().height + travel + endPause}px` : "";
     if (pinned) { viewport.scrollLeft = 0; draw(); }
-    else { track.style.transform = ""; root.style.removeProperty("--story-progress"); media.forEach(node => node?.style.removeProperty("--story-emphasis")); }
+    else { track.style.transform = ""; root.style.removeProperty("--story-progress"); media.forEach(node => node?.style.removeProperty("--story-emphasis")); controls.forEach(button => button.removeAttribute("aria-current")); }
   }
   function goTo(index: number) {
     const card = cards[Math.max(0, Math.min(cards.length - 1, index))];
     if (!card || root.dataset.view === "list") return;
     const offset = Math.min(travel, card.offsetLeft - cards[0].offsetLeft);
-    if (pinned) window.scrollTo({ top: window.scrollY + root.getBoundingClientRect().top - pinTop + offset, behavior: "instant" });
+    if (pinned) scrollToPosition(window.scrollY + root.getBoundingClientRect().top - pinTop + offset,true);
     else viewport.scrollTo({ left: card.offsetLeft - cards[0].offsetLeft, behavior: "instant" });
   }
   function onFocus(event: FocusEvent) {
@@ -98,6 +105,7 @@ export function mountProjectStory(root: HTMLElement) {
     root.removeEventListener("focusin", onFocus); root.removeEventListener("click", onClick);
     delete root.dataset.mode; root.style.height = ""; track.style.transform = "";
     media.forEach(node => node?.style.removeProperty("--story-emphasis"));
+    controls.forEach(button => button.removeAttribute("aria-current"));
     for (const property of ["--story-progress", "--story-gutter", "--story-height", "--story-overview-height", "--story-top"]) root.style.removeProperty(property);
   };
 }

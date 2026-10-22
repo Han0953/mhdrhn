@@ -48,7 +48,7 @@ await check('status wording stays separate from stable query values; unknown sta
 });
 function component(file,mocks={}){
  const exports={};const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020}}).outputText;
- vm.runInNewContext(code,{exports,require(id){if(id in mocks)return mocks[id];if(id==='@/components/motion/PageMotion')return {PageMotion:()=>null};if(id==='@/components/layout/RouteTransition')return {SiteLink:'a',RouteReady:()=>null};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});return exports;
+ vm.runInNewContext(code,{exports,require(id){if(id in mocks)return mocks[id];if(id==='@/components/motion/DisplayLines')return component('src/components/motion/DisplayLines.tsx');if(id==='@/components/motion/PageMotion')return {PageMotion:()=>null};if(id==='@/components/layout/RouteTransition')return {SiteLink:'a',RouteReady:()=>null};if(id==='@/components/media/ProjectCover')return {ProjectCover:'figure'};return require(id);}},{timeout:1000});return exports;
 }
 await check('error and not-found copy render with one heading; actual retry callback remains callable',()=>{
  const editorial=component('src/components/ui/Editorial.tsx');let refreshed=0;const ErrorPage=component('src/app/error.tsx',{'next/navigation':{useRouter:()=>({refresh(){refreshed++;}})},react:{useTransition:()=>[false,fn=>fn()]}}).default,NotFound=component('src/app/not-found.tsx',{'@/components/ui/Editorial':editorial}).default;

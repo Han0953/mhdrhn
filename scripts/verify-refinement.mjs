@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import {loadMotion} from './motion-test-support.mjs';
 
 const results = [];
 function check(name, test) { test(); results.push({ name, status: 'PASS' }); console.log(`PASS ${name}`); }
 function load(path, globals = {}) {
   const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  const sandbox = { exports: {}, ...globals };
+  const sandbox = { exports: {}, ...globals, require(id){if(id==='./motion/tokens')return loadMotion('src/lib/motion/tokens.ts');throw Error(id);} };
   vm.runInNewContext(code, sandbox, { timeout: 1000 });
   return sandbox.exports;
 }
@@ -62,10 +63,10 @@ check('a queued callback from a superseded exit cannot clear the new cover',()=>
  wipe.play(-1,false,'Home');stale();assert.equal(layer.dataset.phase,'entering');assert.equal(title.textContent,'Home');wipe.clear();
 });
 check('missing animation finish watchdog enters holding instead of revealing unloaded content',()=>{
- const id=wipe.play(1);[...timers.values()].find(t=>t.delay===340).callback();assert.equal(layer.dataset.phase,'holding');wipe.ready(id);[...timers.values()].find(t=>t.delay===340).callback();assert.equal(layer.dataset.phase,'idle');assert.equal(timers.size,0);
+ const id=wipe.play(1);[...timers.values()].find(t=>t.delay===540).callback();assert.equal(layer.dataset.phase,'holding');wipe.ready(id);[...timers.values()].find(t=>t.delay===600).callback();assert.equal(layer.dataset.phase,'idle');assert.equal(timers.size,0);
 });
-check('history has mirrored 160ms entry and normal readiness semantics',()=>{
- const id=wipe.play(-1,true,'Home');assert.equal(layer.dataset.navigation,'history');assert.equal(animations.at(-1).options.duration,160);animations.at(-1).onfinish();wipe.ready(id);animations.at(-1).onfinish();
+check('history has mirrored 320ms entry and normal readiness semantics',()=>{
+ const id=wipe.play(-1,true,'Home');assert.equal(layer.dataset.navigation,'history');assert.equal(animations.at(-1).options.duration,320);animations.at(-1).onfinish();wipe.ready(id);animations.at(-1).onfinish();
 });
 check('reduced motion uses a static cover, waits for ready, and live preference cancels movement',()=>{
  reduced=true;const count=animations.length,id=wipe.play(1);assert.equal(animations.length,count);assert.equal(layer.dataset.phase,'holding');wipe.ready(id);assert.equal(layer.dataset.phase,'idle');

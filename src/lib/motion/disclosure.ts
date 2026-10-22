@@ -10,6 +10,7 @@ export function mountDisclosure(details: HTMLDetailsElement) {
   const lifetime = createMotionLifetime();
   let target = details.open;
   let animation: Animation | undefined;
+  let copy: Animation | undefined;
   let watchdog: ReturnType<typeof setTimeout> | undefined;
   let frame = 0;
   let naturalHeight = target ? body.getBoundingClientRect().height : 0;
@@ -17,6 +18,7 @@ export function mountDisclosure(details: HTMLDetailsElement) {
   function cancel() {
     if (animation) { animation.onfinish = null; animation.oncancel = null; animation.cancel(); }
     animation = undefined;
+    copy?.cancel(); copy = undefined;
     clearTimeout(watchdog); watchdog = undefined;
   }
   function settle() {
@@ -48,6 +50,7 @@ export function mountDisclosure(details: HTMLDetailsElement) {
       animation = content.animate([{ height: `${start}px` }, { height: `${end}px` }], { duration, easing: motionTokens.easing.response });
       animation.onfinish = finish;
       animation.oncancel = finish;
+      if (typeof body.animate === "function") copy = body.animate(open ? [{ opacity: .35, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }] : [{ opacity: 1, transform: "none" }, { opacity: .25, transform: "translateY(-4px)" }], { duration: duration * .8, easing: motionTokens.easing.editorial });
       // Recover a missing animation event, never use this timer as data readiness.
       watchdog = setTimeout(finish, duration + 120);
     } catch { settle(); }

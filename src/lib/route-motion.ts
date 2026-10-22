@@ -1,3 +1,4 @@
+import { motionTokens } from "./motion/tokens";
 import type { NavigationDirection } from "./navigation";
 
 /** Navigation owns its lifetime. This controller only covers, waits, and reveals. */
@@ -52,7 +53,7 @@ export function createRouteWipe(getLayer: () => HTMLElement | null, prefersReduc
     if (phase !== "holding" || !readyToReveal) return;
     phase = "leaving";
     const layer = getLayer(); if (layer) layer.dataset.phase = phase;
-    animate("translateX(0)", `translateX(${-direction * 101}%)`, 220, () => clear(true));
+    animate("translateX(0)", `translateX(${-direction * 101}%)`, motionTokens.duration.routeReveal, () => clear(true));
   }
   function play(nextDirection: NavigationDirection, history = false, label = "", onCovered?: (id: number) => void) {
     clear(); const layer = getLayer();
@@ -68,7 +69,7 @@ export function createRouteWipe(getLayer: () => HTMLElement | null, prefersReduc
     onActive(true, false);
     feedback = setTimeout(() => { if (current === token) layer.dataset.pending = "true"; }, 1500);
     stall = setTimeout(() => { if (current === token) layer.dataset.stalled = "true"; }, 8000);
-    animate(`translateX(${direction * 101}%)`, "translateX(0)", history ? 160 : 220, () => {
+    animate(`translateX(${direction * 101}%)`, "translateX(0)", history ? 320 : motionTokens.duration.routeCover, () => {
       if (current !== token) return;
       phase = "holding"; layer.dataset.phase = phase;
       const handoff = covered; covered = undefined; handoff?.(token);

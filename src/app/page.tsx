@@ -1,3 +1,4 @@
+import { DisplayLines } from "@/components/motion/DisplayLines";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { PageMotion } from "@/components/motion/PageMotion";
 import { TechnologyLogoGrid } from "@/components/sections/TechnologyLogoGrid";
@@ -16,7 +17,7 @@ export default function Home() {
     <HeroSection/>
     <section className="section home-introduction" data-home-section="introduction" aria-labelledby="intro-heading">
       <p className="eyebrow accent">02 / Introduction</p>
-      <EditorialEntrance><h2 id="intro-heading">Elektronika,<br/>software,<br/><span className="accent">dan riset.</span></h2></EditorialEntrance>
+      <EditorialEntrance><h2 id="intro-heading"><DisplayLines>Elektronika,<br/>software,<br/><span className="accent">dan riset.</span></DisplayLines></h2></EditorialEntrance>
       <div className="intro-aside"><p>{profile.bio}</p><ul className="home-domain-list" aria-label="Bidang eksplorasi">{focusAreas.map(area => <li key={area.title}>{area.title}</li>)}</ul><SiteLink href="/about" className="text-link">Kenali Rehan <Arrow/></SiteLink></div>
     </section>
     <section className="section home-technologies" data-home-section="technology" aria-labelledby="technology-heading">
@@ -46,7 +47,7 @@ export default function Home() {
     </section>
     <section className="section home-closing" data-home-section="closing" aria-labelledby="closing-heading">
       <p className="eyebrow">10 / The next conversation</p>
-      <EditorialEntrance><h2 id="closing-heading">Ada gagasan<br/>yang ingin<br/>dibahas?</h2></EditorialEntrance>
+      <EditorialEntrance><h2 id="closing-heading"><DisplayLines>Ada gagasan<br/>yang ingin<br/>dibahas?</DisplayLines></h2></EditorialEntrance>
       <div className="closing-bottom"><p>Jika ada karya yang menarik perhatianmu atau topik yang ingin dibicarakan, temukan profil saya di halaman Contact.</p><div className="actions"><SiteLink href="/contact" className="button-primary">Mari terhubung <Arrow/></SiteLink><SiteLink href="/projects" className="text-link">Lihat karya lainnya <Arrow/></SiteLink></div></div>
     </section>
   </div>;

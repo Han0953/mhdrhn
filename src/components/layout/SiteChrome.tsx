@@ -1,5 +1,8 @@
 "use client";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
+import { motion } from "framer-motion";
+import { PageMotion } from "@/components/motion/PageMotion";
+import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
 import { usePathname } from "next/navigation";
 import { Menu, X, MessageCircle, Send, RotateCcw, ArrowUpRight, Maximize2, Minimize2, Minus } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -31,6 +34,7 @@ function replyTo(question: string): Reply {
 }
 
 export function SiteChrome() {
+  const reduced = useSyncExternalStore(subscribeMotion,prefersReducedMotion,() => true);
   const pathname = usePathname();
   const menu = useRef<HTMLDialogElement>(null);
   const chat = useRef<HTMLDialogElement>(null);
@@ -85,6 +89,7 @@ export function SiteChrome() {
 
   return <>
     <header className="site-header"><div className="header-inner wrap">
+      <PageMotion profile="chrome"/>
       <SiteLink className="wordmark" href="/" aria-label="mhdrhn. — Home">mhdrhn<span className="accent">.</span></SiteLink>
       <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>
       <div className="header-controls"><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={openMenu} aria-label="Buka menu" aria-expanded={menuOpen} aria-controls="site-menu"><Menu size={21} aria-hidden="true"/></button></div>
@@ -94,7 +99,7 @@ export function SiteChrome() {
       <nav aria-label="Menu navigasi">{navigation.map((item, index) => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined} onNavigate={closeMenu}><span className="meta">0{index + 1}</span>{item.label}<ArrowUpRight size={24} aria-hidden="true"/></SiteLink>)}</nav>
       <p className="meta menu-note">Electronics · Code · Research</p>
     </dialog>
-    <button className="azura-launcher" type="button" onClick={openChat} aria-label="Buka Azura — demo lokal" title="Azura · Demo lokal" aria-expanded={chatOpen} aria-controls="azura-dialog"><MessageCircle size={21} aria-hidden="true"/></button>
+    <motion.button className="azura-launcher" type="button" initial={false} whileHover={reduced ? undefined : {scale:1.1,rotate:-6}} whileTap={reduced ? undefined : {scale:.88,rotate:0}} transition={{type:"spring",stiffness:360,damping:18}} onClick={openChat} aria-label="Buka Azura — demo lokal" title="Azura · Demo lokal" aria-expanded={chatOpen} aria-controls="azura-dialog"><MessageCircle size={21} aria-hidden="true"/></motion.button>
     <dialog ref={chat} id="azura-dialog" className="azura-dialog" data-size={chatWide ? "wide" : "normal"} aria-labelledby="azura-heading" aria-describedby="azura-description" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeChat(); }} onClose={() => { setChatOpen(false); if (resetChatSize.current) setChatWide(false); resetChatSize.current = false; }}>
       <div className="dialog-top"><div><p className="eyebrow accent">Demo lokal</p><h2 id="azura-heading">Azura.</h2></div><div className="dialog-actions">
         <button className="icon-button" type="button" onClick={() => setChatWide(value => !value)} aria-label={chatWide ? "Kecilkan panel Azura" : "Lebarkan panel Azura"} title={chatWide ? "Kecilkan panel" : "Lebarkan panel"} aria-pressed={chatWide}>{chatWide ? <Minimize2 size={19} aria-hidden="true"/> : <Maximize2 size={19} aria-hidden="true"/>}</button>
