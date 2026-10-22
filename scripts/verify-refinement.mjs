@@ -102,7 +102,9 @@ if (origin) {
   });
   check('theme trigger is available in SSR while closed options are inert', () => {
     assert.match(html, /aria-label="Pilihan tema"[^>]*aria-expanded="false"/);
-    assert.match(html, /id="theme-options"[^>]*aria-hidden="true"[^>]*inert=""/);
+    assert.match(html, /id="[^"]+-theme-options"[^>]*aria-hidden="true"[^>]*inert=""/);
+    const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
+    assert.equal(new Set(ids).size, ids.length, 'header variants must keep IDs unique');
   });
 }
 const evidence = process.env.MHDRHN_QA_REFINEMENT_EVIDENCE || 'docs/execution/evidence/refinement-2026-10-19/automated-checks.json';

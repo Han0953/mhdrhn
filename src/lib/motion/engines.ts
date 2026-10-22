@@ -1,7 +1,7 @@
 import { animate } from "framer-motion";
 import { gsap } from "gsap";
 
-export type RevealKind = "title" | "copy" | "card" | "media" | "icon" | "label" | "action";
+export type RevealKind = "title" | "copy" | "card" | "media" | "portrait" | "icon" | "label" | "action";
 export type RevealItem = { node: HTMLElement; kind: RevealKind; delay: number; from: string; duration: number };
 export interface RevealPlayer { play: (lead?: number) => void; finish: () => void }
 const restingTransform = "perspective(900px) translate3d(0px,0px,0) rotate(0deg) rotateX(0deg) scale(1)";
@@ -39,12 +39,13 @@ export function prepareReveal(entries: RevealItem[], engine: "gsap" | "motion", 
     node.style.opacity = "0";
     node.style.transform = from;
     if (kind === "media") node.style.clipPath = "inset(6% 0% 12% 0%)";
+    if (kind === "portrait") node.style.clipPath = "inset(100% 0% 0% 0%)";
   });
   if (engine === "gsap") {
     try {
       timeline = gsap.timeline({ paused: true, onComplete: finish });
       items.forEach(({ node, kind, duration, delay }) => timeline!.to(node, {
-        opacity: 1, transform: restingTransform, ...(kind === "media" ? {clipPath:"inset(0% 0% 0% 0%)"} : {}), duration,
+        opacity: 1, transform: restingTransform, ...(["media","portrait"].includes(kind) ? {clipPath:"inset(0% 0% 0% 0%)"} : {}), duration,
         ease: kind === "icon" ? "back.out(1.5)" : kind === "title" ? "power2.inOut" : "power3.out",
       }, delay));
     } catch { finish(); }
@@ -63,7 +64,7 @@ export function prepareReveal(entries: RevealItem[], engine: "gsap" | "motion", 
         let left = items.length;
         try { items.forEach(({ node, from, duration, delay, kind }) => {
         const control = animate(node, {
-          opacity: [0, 1], transform: [from, restingTransform], ...(kind === "media" ? {clipPath:["inset(6% 0% 12% 0%)","inset(0% 0% 0% 0%)"]} : {}),
+          opacity: [0, 1], transform: [from, restingTransform], ...(["media","portrait"].includes(kind) ? {clipPath:[kind === "portrait" ? "inset(100% 0% 0% 0%)" : "inset(6% 0% 12% 0%)","inset(0% 0% 0% 0%)"]} : {}),
         }, { type: "spring", visualDuration: duration * .8, bounce: kind === "icon" ? .22 : kind === "card" ? .12 : .035, delay,
           onComplete: () => { if (--left === 0) finish(); } });
         controls.push(control);

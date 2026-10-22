@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
-import { motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { PageMotion } from "@/components/motion/PageMotion";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
 import { usePathname } from "next/navigation";
@@ -11,14 +11,27 @@ import { navigation } from "@/lib/navigation";
 import { mountDialog } from "@/lib/motion/dialog";
 
 interface Reply { text: string; href: string; label: string }
-interface Exchange { id: number; question: string; reply: Reply }
+interface Exchange { id: number; question: string; reply: Reply; ready: boolean }
 function containDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
   if (event.key !== "Tab") return;
-  const targets = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input:not(:disabled), [tabindex="0"]')).filter(element => element.getClientRects().length > 0);
+  const targets = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input:not(:disabled), [tabindex="0"]')).filter(element => element.getClientRects().length > 0 && !element.closest("[inert]") && getComputedStyle(element).visibility !== "hidden");
   const first = targets[0];
   const last = targets.at(-1);
   if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+}
+
+/** Same header in the modal top layer: visible and operable, with native focus isolation. */
+function ChromeHeader({ pathname, menuOpen, onMenu, onNavigate, popup = false }: {
+  pathname: string; menuOpen: boolean; onMenu: () => void; onNavigate?: () => void; popup?: boolean;
+}) {
+  const active = (href: string) => href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  return <header className={popup ? "site-header popup-header" : "site-header"}><div className="header-inner wrap">
+    {!popup && <PageMotion profile="chrome"/>}
+    <SiteLink className="wordmark" href="/" aria-label="mhdrhn. — Home" onNavigate={onNavigate}>mhdrhn<span className="accent">.</span></SiteLink>
+    {!popup && <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>}
+    <div className="header-controls"><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen && popup ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu">{menuOpen && popup ? <X size={21} aria-hidden="true"/> : <Menu size={21} aria-hidden="true"/>}</button></div>
+  </div></header>;
 }
 function replyTo(question: string): Reply {
   const text = question.toLocaleLowerCase("id");
@@ -46,9 +59,22 @@ export function SiteChrome() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const nextId = useRef(0);
+  const pendingReply = useRef<{ timer: ReturnType<typeof setTimeout>; id: number } | null>(null);
   const resetChatSize = useRef(false);
   const menuMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
   const chatMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
+  const typing = messages.some(message => !message.ready);
+  const finishReply = useCallback(() => {
+    const pending = pendingReply.current;
+    if (!pending) return;
+    clearTimeout(pending.timer);
+    pendingReply.current = null;
+    setMessages(previous => previous.map(message => message.id === pending.id ? { ...message, ready: true } : message));
+  }, []);
+  useEffect(() => {
+    const unsubscribe = subscribeMotion(() => { if (prefersReducedMotion()) finishReply(); });
+    return () => { unsubscribe(); if (pendingReply.current) clearTimeout(pendingReply.current.timer); };
+  }, [finishReply]);
 
   useEffect(() => {
     if (menu.current) menuMotion.current = mountDialog(menu.current, true);
@@ -69,16 +95,21 @@ export function SiteChrome() {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = original; };
   }, [menuOpen, chatOpen]);
-  useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [messages]);
+  useEffect(() => {
+    log.current?.scrollTo({ top: log.current.scrollHeight, behavior: reduced ? "instant" : "smooth" });
+  }, [messages, reduced]);
 
   function openMenu() { chat.current?.close(); if (menuMotion.current) menuMotion.current.open(); else menu.current?.showModal(); setMenuOpen(true); }
   function openChat() { resetChatSize.current = false; menu.current?.close(); if (chatMotion.current) chatMotion.current.open(); else chat.current?.showModal(); setChatOpen(true); }
   function send(question: string) {
+    if (pendingReply.current) return;
     const value = question.trim();
     if (!value) { setError("Tulis pertanyaan terlebih dahulu."); return; }
     if (value.length > 500) { setError("Batasi pertanyaan hingga 500 karakter."); return; }
     if (messages.length >= 20) { setError("Percakapan ini sudah memuat 20 pertanyaan. Mulai ulang percakapan untuk bertanya lagi."); return; }
-    setMessages(previous => [...previous, { id: nextId.current++, question: value, reply: replyTo(value) }]);
+    const id = nextId.current++;
+    setMessages(previous => [...previous, { id, question: value, reply: replyTo(value), ready: reduced }]);
+    if (!reduced) pendingReply.current = { id, timer: setTimeout(finishReply, 640) };
     setDraft(""); setError("");
   }
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); send(draft); }
@@ -88,31 +119,38 @@ export function SiteChrome() {
   function active(href: string) { return href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`); }
 
   return <>
-    <header className="site-header"><div className="header-inner wrap">
-      <PageMotion profile="chrome"/>
-      <SiteLink className="wordmark" href="/" aria-label="mhdrhn. — Home">mhdrhn<span className="accent">.</span></SiteLink>
-      <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>
-      <div className="header-controls"><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={openMenu} aria-label="Buka menu" aria-expanded={menuOpen} aria-controls="site-menu"><Menu size={21} aria-hidden="true"/></button></div>
-    </div></header>
-    <dialog ref={menu} id="site-menu" className="menu-dialog" aria-labelledby="menu-heading" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeMenu(); }} onClose={() => setMenuOpen(false)} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}>
-      <div className="dialog-top"><h2 id="menu-heading">Jelajahi.</h2><button className="icon-button" type="button" aria-label="Tutup menu" onClick={closeMenu}><X aria-hidden="true"/></button></div>
+    <ChromeHeader pathname={pathname} menuOpen={menuOpen} onMenu={openMenu}/>
+    <dialog ref={menu} id="site-menu" className="chrome-dialog menu-dialog" aria-labelledby="menu-heading" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeMenu(); }} onClose={() => setMenuOpen(false)} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}>
+      <ChromeHeader pathname={pathname} menuOpen={true} onMenu={closeMenu} onNavigate={closeMenu} popup/>
+      <div className="menu-panel" data-dialog-panel="menu">
+      <div className="dialog-top"><h2 id="menu-heading">Jelajahi.</h2></div>
       <nav aria-label="Menu navigasi">{navigation.map((item, index) => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined} onNavigate={closeMenu}><span className="meta">0{index + 1}</span>{item.label}<ArrowUpRight size={24} aria-hidden="true"/></SiteLink>)}</nav>
       <p className="meta menu-note">Electronics · Code · Research</p>
+      </div>
     </dialog>
     <motion.button className="azura-launcher" type="button" initial={false} whileHover={reduced ? undefined : {scale:1.1,rotate:-6}} whileTap={reduced ? undefined : {scale:.88,rotate:0}} transition={{type:"spring",stiffness:360,damping:18}} onClick={openChat} aria-label="Buka Azura — demo lokal" title="Azura · Demo lokal" aria-expanded={chatOpen} aria-controls="azura-dialog"><MessageCircle size={21} aria-hidden="true"/></motion.button>
-    <dialog ref={chat} id="azura-dialog" className="azura-dialog" data-size={chatWide ? "wide" : "normal"} aria-labelledby="azura-heading" aria-describedby="azura-description" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeChat(); }} onClose={() => { setChatOpen(false); if (resetChatSize.current) setChatWide(false); resetChatSize.current = false; }}>
+    <dialog ref={chat} id="azura-dialog" className="chrome-dialog azura-dialog" data-size={chatWide ? "wide" : "normal"} aria-labelledby="azura-heading" aria-describedby="azura-description" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeChat(); }} onClose={() => { finishReply(); setChatOpen(false); if (resetChatSize.current) setChatWide(false); resetChatSize.current = false; }}>
+      <ChromeHeader pathname={pathname} menuOpen={false} onMenu={openMenu} onNavigate={closeChat} popup/>
+      <div className="azura-panel" data-dialog-panel="azura">
       <div className="dialog-top"><div><p className="eyebrow accent">Demo lokal</p><h2 id="azura-heading">Azura.</h2></div><div className="dialog-actions">
         <button className="icon-button" type="button" onClick={() => setChatWide(value => !value)} aria-label={chatWide ? "Kecilkan panel Azura" : "Lebarkan panel Azura"} title={chatWide ? "Kecilkan panel" : "Lebarkan panel"} aria-pressed={chatWide}>{chatWide ? <Minimize2 size={19} aria-hidden="true"/> : <Maximize2 size={19} aria-hidden="true"/>}</button>
         <button className="icon-button" type="button" onClick={minimizeChat} aria-label="Minimalkan Azura" title="Minimalkan"><Minus size={19} aria-hidden="true"/></button>
         <button className="icon-button" type="button" onClick={closeChat} aria-label="Tutup Azura" title="Tutup"><X size={20} aria-hidden="true"/></button>
       </div></div>
       <p id="azura-description" className="meta chat-description">Aku menggunakan jawaban contoh untuk membantumu menjelajahi portofolio ini. Percakapan tetap di halaman ini dan tidak dikirim ke layanan AI.</p>
-      <div className="chat-log" ref={log} role="log" aria-label="Percakapan dengan Azura" aria-live="polite" aria-relevant="additions">
+      <div className="chat-log" ref={log} role="log" aria-label="Percakapan dengan Azura" aria-live="polite" aria-relevant="additions text" aria-busy={typing}>
         <div className="chat-reply"><p>Aku Azura. Aku bisa membantumu menemukan proyek, pengalaman, dan informasi tentang Rehan. Mau mulai dari mana?</p></div>
-        {messages.map(message => <div className="chat-exchange" key={message.id}><div className="chat-question"><span className="sr-only">Kamu: </span>{message.question}</div><div className="chat-reply"><p><span className="sr-only">Azura: </span>{message.reply.text}</p><SiteLink href={message.reply.href} className="text-link" onNavigate={closeChat}>{message.reply.label}<ArrowUpRight size={16} aria-hidden="true"/></SiteLink></div></div>)}
+        {messages.map(message => <div className="chat-exchange" key={message.id}>
+          <motion.div className="chat-question" initial={reduced ? false : { opacity: 0, y: 14, x: 8 }} animate={{ opacity: 1, y: 0, x: 0 }} transition={{ duration: reduced ? 0 : .38, ease: [.22, 1, .36, 1] }}><span className="sr-only">Kamu: </span>{message.question}</motion.div>
+          <AnimatePresence initial={false} mode="wait">
+            {message.ready ? <motion.div key="reply" className="chat-reply" initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduced ? 0 : .46, ease: [.22, 1, .36, 1] }} onAnimationComplete={() => { if (log.current && chat.current?.open) log.current.scrollTo({ top: log.current.scrollHeight, behavior: reduced ? "instant" : "smooth" }); }}><p><span className="sr-only">Azura: </span>{message.reply.text}</p><SiteLink href={message.reply.href} className="text-link" onNavigate={closeChat}>{message.reply.label}<ArrowUpRight size={16} aria-hidden="true"/></SiteLink></motion.div>
+            : <motion.div key="typing" className="chat-typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduced ? 0 : .18 }}><span className="sr-only">Azura sedang mengetik</span><span aria-hidden="true">{[0, 1, 2].map(dot => <motion.i key={dot} animate={reduced ? undefined : { y: [0, -4, 0], opacity: [.4, 1, .4] }} transition={{ duration: .9, repeat: Infinity, delay: dot * .12 }}/>)}</span></motion.div>}
+          </AnimatePresence>
+        </div>)}
       </div>
-      <div className="quick-questions" role="group" aria-label="Pertanyaan cepat">{["Tentang Rehan", "Proyek Vircuit", "Kompetensi", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(question)} disabled={messages.length >= 20}>{question}</button>)}</div>
-      <form onSubmit={submit} className="chat-form"><label htmlFor="azura-input">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error chat-limit" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={messages.length >= 20}><Send size={20} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p><div className="chat-form-footer"><span id="chat-limit" className="meta">{draft.length}/500 · {messages.length}/20 pertanyaan</span><button type="button" className="reset-chat" onClick={() => { setMessages([]); setDraft(""); setError(""); }}><RotateCcw size={14} aria-hidden="true"/> Mulai ulang</button></div></form>
+      <div className="quick-questions" role="group" aria-label="Pertanyaan cepat">{["Tentang Rehan", "Proyek Vircuit", "Kompetensi", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(question)} disabled={typing || messages.length >= 20}>{question}</button>)}</div>
+      <form onSubmit={submit} className="chat-form"><label htmlFor="azura-input">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error chat-limit" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={typing || messages.length >= 20}><Send size={20} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p><div className="chat-form-footer"><span id="chat-limit" className="meta">{draft.length}/500 · {messages.length}/20 pertanyaan</span><button type="button" className="reset-chat" onClick={() => { if (pendingReply.current) clearTimeout(pendingReply.current.timer); pendingReply.current = null; setMessages([]); setDraft(""); setError(""); }}><RotateCcw size={14} aria-hidden="true"/> Mulai ulang</button></div></form>
+      </div>
     </dialog>
   </>;
 }

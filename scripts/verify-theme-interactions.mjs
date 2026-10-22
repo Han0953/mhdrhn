@@ -36,6 +36,7 @@ const document = { activeElement: outside, ...listen('document') };
 const window = { matchMedia: () => ({ matches: true }), ...listen('window') };
 const changed = (a, b) => !a || a.length !== b.length || a.some((item, i) => !Object.is(item, b[i]));
 const react = {
+  useId: () => 'test-theme',
   useState(initial) {
     const index = cursor++;
     slots[index] ??= { value: initial };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { getMotionPreference, setMotionPreference, subscribeMotion } from "@/lib/motion/preferences";
 
@@ -19,6 +19,7 @@ const options = [
 ] as const;
 
 export function ThemeToggle() {
+  const id = useId();
   const { theme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const motion = useSyncExternalStore(subscribeMotion, getMotionPreference, () => "system");
@@ -79,7 +80,7 @@ export function ThemeToggle() {
         if (reason.current === "hover" && !root.current?.contains(document.activeElement)) setOpen(false);
       }, 160);
     }}>
-    <button ref={trigger} className="icon-button theme-trigger" type="button" aria-label="Pilihan tema" title={`Pilihan tema · ${selected.label}`} aria-expanded={open} aria-controls="theme-options" onPointerDown={focusWithoutScroll}
+    <button ref={trigger} className="icon-button theme-trigger" type="button" aria-label="Pilihan tema" title={`Pilihan tema · ${selected.label}`} aria-expanded={open} aria-controls={`${id}-theme-options`} onPointerDown={focusWithoutScroll}
       onClick={event => {
         cancelLeave();
         if (open && reason.current === "hover") { reason.current = "control"; return; }
@@ -89,16 +90,16 @@ export function ThemeToggle() {
       }}>
       <CurrentIcon size={19} aria-hidden="true"/>
     </button>
-    <div id="theme-options" className="theme-options" data-open={open} role="group" aria-label="Preferensi tampilan" aria-hidden={!open} inert={!open}
+    <div id={`${id}-theme-options`} className="theme-options" data-open={open} role="group" aria-label="Preferensi tampilan" aria-hidden={!open} inert={!open}
       onKeyDown={event => {
         if (event.key === "Home") { event.preventDefault(); focusOption(); }
         if (event.key === "End") { event.preventDefault(); focusOption(true); }
       }}>
-      <span className="preference-label" id="theme-label">Tema</span>
-      <div className="theme-choice-row" role="group" aria-labelledby="theme-label">{options.map(({ value, label, Icon }) => <button key={value} type="button" className="icon-button" aria-label={label} title={label} aria-pressed={mounted && theme === value} onPointerDown={focusWithoutScroll}
+      <span className="preference-label" id={`${id}-theme-label`}>Tema</span>
+      <div className="theme-choice-row" role="group" aria-labelledby={`${id}-theme-label`}>{options.map(({ value, label, Icon }) => <button key={value} type="button" className="icon-button" aria-label={label} title={label} aria-pressed={mounted && theme === value} onPointerDown={focusWithoutScroll}
         onClick={() => { setTheme(value); close(true); }}><Icon size={19} aria-hidden="true"/></button>)}</div>
-      <span className="preference-label" id="motion-label">Gerak</span>
-      <div className="motion-choice-row" role="group" aria-labelledby="motion-label">
+      <span className="preference-label" id={`${id}-motion-label`}>Gerak</span>
+      <div className="motion-choice-row" role="group" aria-labelledby={`${id}-motion-label`}>
         <button type="button" aria-label="Ikuti pengaturan gerak sistem" aria-pressed={motion === "system"} onPointerDown={focusWithoutScroll} onClick={() => { setMotionPreference("system"); close(true); }}>Sistem</button>
         <button type="button" aria-label="Kurangi gerakan" aria-pressed={motion === "minimal"} onPointerDown={focusWithoutScroll} onClick={() => { setMotionPreference("minimal"); close(true); }}>Minimal</button>
       </div>
