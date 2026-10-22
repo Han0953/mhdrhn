@@ -11,6 +11,7 @@ let theme = 'system';
 let motion = 'system';
 let serial = 0;
 let dirty = false;
+let serverRendering = false;
 const scheduled = new Map();
 const effects = [];
 const listeners = { document: new Map(), window: new Map() };
@@ -46,7 +47,7 @@ const react = {
     }];
   },
   useRef(initial) { const index = cursor++; slots[index] ??= { current: initial }; return slots[index]; },
-  useSyncExternalStore(_subscribe, snapshot) { return snapshot(); },
+  useSyncExternalStore(_subscribe, snapshot, serverSnapshot) { return serverRendering ? serverSnapshot() : snapshot(); },
   useCallback(callback, deps) {
     const index = cursor++;
     if (changed(slots[index]?.deps, deps)) slots[index] = { deps, callback };
@@ -92,8 +93,9 @@ const motionButtons = () => popup().props.children[3].props.children;
 const event = key => ({ key, target: trigger, preventDefault() {}, stopPropagation() {} });
 function check(name, test) { test(); results.push({ name, status: 'PASS' }); console.log(`PASS ${name}`); }
 render();
-check('one trigger, current System icon, closed inert options', () => {
-  assert.equal(button().props.children.type, 'Monitor');
+check('one trigger, SSR-stable light/dark icons, closed inert options', () => {
+  assert.equal(button().props.children.props.className, 'theme-current-icon');
+  assert.deepEqual(Array.from(button().props.children.props.children, icon => icon.props.className), ['theme-icon-light','theme-icon-dark']);
   assert.equal(button().props['aria-expanded'], false);
   assert.equal(popup().props.inert, true);
 });
@@ -114,9 +116,16 @@ check('tap and keyboard activation toggle options without hover', () => {
 });
 check('selecting Dark calls next-themes, marks selection and returns focus', () => {
   themeButtons()[1].props.onClick(); render();
-  assert.equal(theme, 'dark'); assert.equal(button().props.children.type, 'Moon');
+  assert.equal(theme, 'dark');
   assert.equal(themeButtons()[1].props['aria-pressed'], true);
   assert.equal(button().props['aria-expanded'], false); assert.equal(document.activeElement, trigger);
+});
+check('SSR and hydrated trigger markup match for a saved dark theme without a System-icon flash', () => {
+  const hydratedIcons = JSON.stringify(button().props.children);
+  serverRendering = true; render();
+  assert.equal(JSON.stringify(button().props.children), hydratedIcons);
+  assert.ok(!hydratedIcons.includes('Monitor'));
+  serverRendering = false; render();
 });
 check('ArrowDown opens; Escape closes and restores the trigger', () => {
   tree.props.onKeyDown(event('ArrowDown')); render(); assert.equal(popup().props.inert, false);

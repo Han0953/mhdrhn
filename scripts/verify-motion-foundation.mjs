@@ -162,7 +162,7 @@ function panel({waapi=true,throws=false}={}) {
   return {...e,dialog,animations,controller:e.dialogMotion.mountDialog(dialog,true),finish(){animations.at(-1)?.onfinish?.();}};
 }
 check('menu panel uses native modal, bounded entrance and exit, releasing native close at completion',()=>{
- const t=panel();t.controller.open();assert.equal(t.dialog.open,true);assert.equal(t.animations[0].frames[0].transform,'translateX(40px)');t.finish();assert.equal(t.dialog.dataset.motionState,undefined);t.controller.close();assert.equal(t.dialog.open,true);assert.equal(t.dialog.dataset.motionState,'closing');t.finish();assert.equal(t.dialog.open,false);assert.equal(t.timers.size,0);t.controller.dispose();
+ const t=panel();t.controller.open();assert.equal(t.dialog.open,true);assert.equal(t.animations[0].frames[0].transform,'translateX(100%)');t.finish();assert.equal(t.dialog.dataset.motionState,undefined);t.controller.close();assert.equal(t.dialog.open,true);assert.equal(t.dialog.dataset.motionState,'closing');t.finish();assert.equal(t.dialog.open,false);assert.equal(t.timers.size,0);t.controller.dispose();
 });
 check('twenty panel reversals and stale exit finishes cannot close a reopened modal',()=>{
  const t=panel();t.controller.open();t.finish();t.controller.close();const old=t.animations.at(-1).onfinish;for(let i=0;i<20;i++){t.controller.open();t.controller.close();}t.controller.open();old();assert.equal(t.dialog.open,true);t.finish();assert.equal(t.timers.size,0);t.controller.dispose();

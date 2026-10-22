@@ -26,7 +26,7 @@ export function RouteTransition({ children, projects = noProjects }: { children:
   const pathname = usePathname();
   const layer = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
-  const viewport = useRef<HTMLDivElement>(null);
+  const viewport = useRef<HTMLDialogElement>(null);
   const previous = useRef(pathname);
   const session = useRef<ReturnType<typeof createRouteSession> | null>(null);
   const begin = useCallback((href: NavigationHref, options?: RouteOptions) => session.current?.intent(href, options) ?? false, []);
@@ -34,6 +34,9 @@ export function RouteTransition({ children, projects = noProjects }: { children:
 
   useEffect(() => {
     const controller = createRouteWipe(() => layer.current, prefersReducedMotion, (active, completed) => {
+      // A native top-layer curtain covers an open navigation dialog without closing it first.
+      if (active && !viewport.current?.open) viewport.current?.showModal();
+      if (!active) viewport.current?.close();
       if (content.current) { content.current.inert = active; content.current.setAttribute("aria-busy", String(active)); }
       if (active) viewport.current?.focus({ preventScroll: true });
       else {
@@ -55,11 +58,16 @@ export function RouteTransition({ children, projects = noProjects }: { children:
     const transaction = createRouteSession({
       wipe: controller, location: () => window.location.href, projects,
       enabled: () => !prefersReducedMotion() && !document.hidden && typeof layer.current?.animate === "function",
-      navigate: (href, options) => options.replace ? router.replace(href, { scroll: options.scroll }) : router.push(href, { scroll: options.scroll }),
+      navigate: (href, options) => {
+        // Called only once the curtain is fully opaque.
+        document.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach(dialog => { if (dialog !== viewport.current) dialog.close(); });
+        viewport.current?.focus({ preventScroll: true });
+        if (options.replace) router.replace(href, { scroll: options.scroll });
+        else router.push(href, { scroll: options.scroll });
+      },
       fallback: href => window.location.assign(href), prefetch: href => router.prefetch(href),
       captureFocus: () => document.activeElement instanceof HTMLElement ? document.activeElement : null,
       begin: (kind, request) => {
-        document.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach(dialog => dialog.close());
         if (layer.current) { layer.current.dataset.kind = kind; layer.current.dataset.target = request.path; layer.current.dataset.transaction = String(request.generation); }
       },
       assets: async signal => {
@@ -71,7 +79,7 @@ export function RouteTransition({ children, projects = noProjects }: { children:
     });
     session.current = transaction;
     const onPreference = () => { if (prefersReducedMotion()) transaction?.skip(); };
-    const onEscape = (event: KeyboardEvent) => { if (event.key === "Escape") { settleRouteEntrance(document.querySelector("main")); transaction?.cancel(); } };
+    const onEscape = (event: KeyboardEvent) => { if (event.key === "Escape") { if (viewport.current?.open) event.preventDefault(); settleRouteEntrance(document.querySelector("main")); transaction?.cancel(); } };
     const onHidden = () => { if (document.hidden) transaction?.skip(); };
     const onHistory = () => transaction?.history(previous.current);
     const unsubscribe = subscribeMotion(onPreference);
@@ -89,13 +97,13 @@ export function RouteTransition({ children, projects = noProjects }: { children:
   useEffect(() => { previous.current = pathname; }, [pathname]);
 
   return <TransitionContext value={begin}><ReadyContext value={ready}><div ref={content}>{children}</div></ReadyContext>
-    <div className="route-transition-viewport" ref={viewport} tabIndex={-1} role="dialog" aria-modal="true" aria-hidden="true" aria-label="Transisi halaman"
+    <dialog className="route-transition-viewport" ref={viewport} tabIndex={-1} aria-modal="true" aria-hidden="true" aria-label="Transisi halaman" onCancel={event => { event.preventDefault(); session.current?.cancel(); }}
       onKeyDown={event => { if (event.key === "Tab") { event.preventDefault(); viewport.current?.focus({ preventScroll: true }); } }}>
       <div className="route-wipe" ref={layer}>
         <span className="route-title" aria-hidden="true"/>
         <span className="sr-only" role="status"/>
       </div>
-    </div>
+    </dialog>
   </TransitionContext>;
 }
 

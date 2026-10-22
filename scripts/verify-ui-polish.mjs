@@ -47,6 +47,41 @@ check('dialog animates its panel while the top-layer mobile header stays station
   reduced=true;controller.open();assert.equal(animations.length,2);controller.close();assert.equal(dialog.open,false);
   controller.dispose();assert.equal(c.timers.size,0);assert.equal(listeners.size,0);assert.equal(docEvents.size,0);assert.equal(preference,null);
 });
+check('side panel stays opaque, travels its full width and morphs three hamburger lines without restarting close',()=>{
+  const c=clock(),animations=[],listeners=new Map();
+  const target=name=>({animate(frames,options){const a={name,frames,options,cancel(){this.cancelled=true;}};animations.push(a);return a;}});
+  const panel=target('panel'),lines=[target('top'),target('middle'),target('bottom')];
+  const dialog={open:false,dataset:{},querySelector:()=>panel,querySelectorAll:selector=>selector==='.menu-glyph>span'?lines:[],showModal(){this.open=true;},close(){this.open=false;listeners.get('close')?.();},addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)};
+  const{mountDialog}=load('src/lib/motion/dialog.ts',{'./preferences':{prefersReducedMotion:()=>false,subscribeMotion:()=>()=>{}},'./tokens':{motionTokens:{duration:{modalOpen:520,modalClose:420},easing:{response:'ease',editorial:'ease'}}}},{...c,document:{hidden:false,addEventListener(){},removeEventListener(){}}});
+  const controller=mountDialog(dialog,true);controller.open();
+  assert.equal(animations[0].frames.some(frame=>'opacity'in frame),false);
+  assert.equal(animations[0].frames[0].transform,'translateX(100%)');
+  assert.equal(animations[0].options.duration,620);assert.equal(animations[0].options.fill,'both');
+  assert.equal(animations[1].frames[0].transform,'translateY(-5px) rotate(0deg)');
+  assert.equal(animations[1].frames[1].transform,'translateY(0px) rotate(45deg)');
+  assert.equal(animations[2].frames[1].opacity,0);
+  assert.equal(animations[3].frames[1].transform,'translateY(0px) rotate(-45deg)');
+  animations[0].onfinish();controller.close();assert.equal(dialog.open,true);
+  assert.equal(animations[4].frames[1].transform,'translateX(100%)');assert.equal(animations[4].options.duration,460);
+  assert.equal(animations[5].frames[1].transform,'translateY(-5px) rotate(0deg)');
+  assert.equal(animations[6].frames[1].opacity,1);
+  const count=animations.length;for(let i=0;i<20;i++)controller.close();assert.equal(animations.length,count);
+  animations[4].onfinish();assert.equal(dialog.open,false);controller.dispose();
+  assert.equal(c.timers.size,0);assert.ok(animations.every(a=>a.cancelled));
+});
+check('menu text keeps its stagger after the panel settles and cleanup cancels trailing animation',()=>{
+  const c=clock(),animations=[],listeners=new Map();
+  const target=()=>({animate(frames,options){const a={frames,options,cancel(){this.cancelled=true;}};animations.push(a);return a;}});
+  const panel=target(),text=Array.from({length:9},target);
+  const dialog={open:false,dataset:{},querySelector:()=>panel,querySelectorAll:s=>s==='.menu-glyph>span'?[]:text,showModal(){this.open=true;},close(){this.open=false;listeners.get('close')?.();},addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)};
+  const{mountDialog}=load('src/lib/motion/dialog.ts',{'./preferences':{prefersReducedMotion:()=>false,subscribeMotion:()=>()=>{}},'./tokens':{motionTokens:{duration:{modalOpen:520,modalClose:420},easing:{response:'ease',transfer:'ease',editorial:'ease'}}}},{...c,document:{hidden:false,addEventListener(){},removeEventListener(){}}});
+  const controller=mountDialog(dialog,true);controller.open();
+  assert.equal(animations[1].options.delay,279);assert.equal(animations.at(-1).options.delay,599);
+  assert.equal(animations.at(-1).options.duration,360);animations[0].onfinish();
+  assert.equal(dialog.dataset.motionState,undefined);assert.equal(dialog.open,true);
+  assert.ok(animations.slice(1).every(a=>!a.cancelled));
+  c.tick(1079);assert.ok(animations.every(a=>a.cancelled));assert.equal(c.timers.size,0);controller.dispose();
+});
 function chromeFixture(){
   const c=clock(),slots=[],effects=[],subscriptions=new Set(),scrolls=[];let cursor=0,dirty=false,tree,reduced=false,pathname='/about';
   const changed=(a,b)=>!a||a.length!==b.length||a.some((x,i)=>!Object.is(x,b[i]));

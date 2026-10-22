@@ -109,7 +109,7 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
     if (disposed) return;
     for (const [node,group] of groups) if (!node.isConnected) { settleGroup(group); groups.delete(node); }
     root.querySelectorAll<HTMLElement>(revealSelector).forEach(node => {
-      if (seen.has(node) || node.closest("dialog,.sr-only,.role-stage,[hidden],.signal-diagram")) return;
+      if (seen.has(node) || node.closest("dialog,.sr-only,.role-stage,[hidden],.signal-diagram,[data-motion-static]")) return;
       if (node.closest("details:not([open])") && !node.matches("summary") && !node.closest("summary")) return;
       if (node.closest("summary") && !node.matches("summary")) return;
       if (node.matches("p") && node.closest(".rotating-roles")) return;

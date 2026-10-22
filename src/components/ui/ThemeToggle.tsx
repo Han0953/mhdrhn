@@ -29,7 +29,6 @@ export function ThemeToggle() {
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reason = useRef<"hover" | "control">("control");
   const selected = options.find(option => option.value === (mounted ? theme : "system")) ?? options[2];
-  const CurrentIcon = selected.Icon;
 
   const cancelLeave = useCallback(() => {
     if (leaveTimer.current !== null) clearTimeout(leaveTimer.current);
@@ -88,7 +87,8 @@ export function ThemeToggle() {
         setOpen(!open);
         if (event.detail === 0) reason.current = "control";
       }}>
-      <CurrentIcon size={19} aria-hidden="true"/>
+      {/* Both icons are SSR-stable; next-themes sets the root class before paint. */}
+      <span className="theme-current-icon" aria-hidden="true"><Sun size={19} className="theme-icon-light"/><Moon size={19} className="theme-icon-dark"/></span>
     </button>
     <div id={`${id}-theme-options`} className="theme-options" data-open={open} role="group" aria-label="Preferensi tampilan" aria-hidden={!open} inert={!open}
       onKeyDown={event => {
