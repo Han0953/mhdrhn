@@ -7,6 +7,7 @@ fs.mkdirSync(directory,{recursive:true});
 const master=fs.readFileSync('agent/docs/DATA.md','utf8');
 const {technologyInventoryGroups:groups,technologyInventoryItems:items,homeTechnologyGroups:homeGroups,ownerSoftware,inventoryIconNames}=loadContent('src/lib/technology-inventory.ts');
 const {skillGroups}=loadContent('src/lib/portfolio.ts');
+const {brandFilesForTechnology}=loadContent('src/lib/technology-brands.ts');
 const results=[];
 async function check(name,fn){await fn();results.push({name,status:'PASS'});console.log(`PASS ${name}`);}
 function sourceItems(section){
@@ -15,17 +16,20 @@ function sourceItems(section){
   return [...source[1].matchAll(/^- (.+)$/gm)].flatMap(match=>match[1].replace(/\s*\([^)]*\)/g,'').split(/,\s*/)).map(name=>name.trim());
 }
 await check('all DATA 12.1–8 inventory entries are present exactly once in the full inventory, independently parsed from the document',()=>{
-  const aliases={'Bug Hunting pada aplikasi/game mobile':'Bug Hunting','User Experience Testing pada aplikasi mobile':'User Experience Testing'};
+  const aliases={'Bug Hunting pada aplikasi/game mobile':'Bug Hunting','User Experience Testing pada aplikasi mobile':'User Experience Testing','Blynk / Blynk Cloud HTTP API':'Blynk'};
   for(let section=1;section<=8;section++)for(const raw of sourceItems(section)){
     const name=aliases[raw]??raw;const matches=items.filter(item=>item.name===name);
     assert.equal(matches.length,1,`DATA 12.${section}: ${name}`);assert.equal(matches[0].source,`DATA §12.${section}`);
   }
 });
-await check('current owner selection replaces Codex while preserving the historical DATA software record',()=>{
+await check('About retains Codex in the complete software inventory while Home selects Antigravity instead',()=>{
   const recorded=['VS Code','Antigravity IDE','Codex','Canva','Microsoft Office','Arduino IDE','Android Studio','Git','Wokwi','AutoCAD','Cirkit Designer IDE','Open Code','Claude Code'];
-  const expected=recorded.filter(name=>name!=='Codex');
+  const expected=recorded;
   assert.deepEqual(Array.from(ownerSoftware,item=>item.name),expected);assert.deepEqual(sourceItems(9),recorded);
-  const tools=groups.find(g=>g.id==='tools');assert.equal(tools.items.length,13);
+  const tools=groups.find(g=>g.id==='tools');assert.equal(tools.items.length,14);
+  const homeTools=homeGroups.find(g=>g.id==='tools');
+  assert.ok(homeTools.items.some(item=>item.id==='antigravity-ide'));
+  assert.ok(!homeTools.items.some(item=>item.id==='codex'));
   expected.concat('MIT App Inventor').forEach(name=>assert.ok(tools.items.some(item=>item.name===name),name));
   for(const name of ['Monaco Editor','React Flow / XYFlow','Vitest','Playwright','Laravel Pint'])assert.ok(!tools.items.some(item=>item.name===name),name);
 });
@@ -41,7 +45,7 @@ await check('every item has one stable ID, name, known icon, source, and no navi
 });
 await check('hardware and IoT inventories are complete while project code tools retain accurate provenance',()=>{
   const embedded=groups.find(g=>g.id==='embedded');assert.equal(embedded.items.length,11);
-  for(const name of ['Arduino Uno','Arduino Nano','ESP8266','ESP32','STM32','Raspberry Pi','MQTT','Blynk / Blynk Cloud HTTP API','Remote Monitoring','Smart Automation','Sensor Monitoring'])assert.ok(embedded.items.some(item=>item.name===name),name);
+  for(const name of ['Arduino Uno','Arduino Nano','ESP8266','ESP32','STM32','Raspberry Pi','MQTT','Blynk','Remote Monitoring','Smart Automation','Sensor Monitoring'])assert.ok(embedded.items.some(item=>item.name===name),name);
   for(const name of ['TypeScript','Monaco Editor','React Flow / XYFlow','Vitest','Playwright'])assert.equal(items.find(item=>item.name===name).basis,'team');
   assert.equal(items.find(item=>item.name==='Laravel Pint').basis,'project');
 });
@@ -57,13 +61,13 @@ if(origin){
   await check('Home curates 34 records across four groups, preserving source identity, icons and only Learning labels',()=>{
     const preview=homeGroups.flatMap(g=>g.items);assert.equal(preview.length,34);assert.equal((section.match(/data-technology=/g)||[]).length,34);
     assert.ok(homeGroups.every(g=>g.items.length>=6));assert.doesNotMatch(section,/Team Stack|data-basis="(?:team|project)"/);
-    assert.equal((section.match(/<svg\b/g)||[]).length,34);assert.equal((section.match(/data-basis="learning"/g)||[]).length,4);
-    for(const item of preview){assert.ok(items.some(full=>full.id===item.id&&full.source===item.source));const row=section.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);}
+    assert.equal((section.match(/class="technology-mark"/g)||[]).length,34);assert.equal((section.match(/data-basis="learning"/g)||[]).length,4);
+    for(const item of preview){assert.ok(items.some(full=>full.id===item.id&&full.source===item.source));const row=section.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);if(brandFilesForTechnology(item.id).length){assert.match(row,/class="technology-brand-set"[^>]*aria-hidden="true"/);for(const file of brandFilesForTechnology(item.id))assert.ok(row.includes(`data-brand-asset="${file}"`),item.name);}else assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);}
   });
-  await check('About owns all 69 names with matching SVGs and exactly seven Learning records',async()=>{
+  await check('About owns all 70 names with matching brand or generic marks and exactly seven Learning records',async()=>{
     const response=await fetch(origin+'/about');assert.equal(response.status,200);const about=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
-    assert.equal(items.length,69);assert.equal((about.match(/data-technology=/g)||[]).length,69);
-    for(const item of items){const row=about.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);assert.doesNotMatch(row,/data-basis="(?:team|project)"/);}
+    assert.equal(items.length,70);assert.equal((about.match(/data-technology=/g)||[]).length,70);
+    for(const item of items){const row=about.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);if(brandFilesForTechnology(item.id).length){assert.match(row,/class="technology-brand-set"[^>]*aria-hidden="true"/);for(const file of brandFilesForTechnology(item.id))assert.ok(row.includes(`data-brand-asset="${file}"`),item.name);}else assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);assert.doesNotMatch(row,/data-basis="(?:team|project)"/);}
     assert.equal((about.match(/class="technology-badge" data-basis="learning"/g)||[]).length,7);
   });
   await check('About keeps new learning fields and the unrelated Home/story content remains available',async()=>{

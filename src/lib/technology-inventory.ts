@@ -37,7 +37,7 @@ function fromSkills(ids: readonly string[], accept: (name: string) => boolean = 
       if (!icon) throw new Error(`Missing inventory icon for ${skill.name}`);
       // A project stack is not a claim of sole authorship or formal proficiency.
       const basis = capabilityBasis.get(skill.name === "React Flow / XYFlow" ? "React Flow" : skill.name);
-      return { id: itemId(skill.name), name: skill.name, icon, source: `DATA §12.${index + 1}`, learning: skill.learning, ...(basis === "team" || basis === "project" ? { basis } : {}) };
+      return { id: itemId(skill.name), name: skill.name === "Blynk / Blynk Cloud HTTP API" ? "Blynk" : skill.name, icon, source: `DATA §12.${index + 1}`, learning: skill.learning, ...(basis === "team" || basis === "project" ? { basis } : {}) };
     });
   });
 }
@@ -46,6 +46,7 @@ function fromSkills(ids: readonly string[], accept: (name: string) => boolean = 
 export const ownerSoftware: readonly InventoryItem[] = [
   { id: "vs-code", name: "VS Code", icon: "ide", source: "DATA §12.9" },
   { id: "antigravity-ide", name: "Antigravity IDE", icon: "orbit", source: "DATA §12.9" },
+  { id: "codex", name: "Codex", icon: "terminal", source: "DATA §12.9" },
   { id: "canva", name: "Canva", icon: "palette", source: "DATA §12.9" },
   { id: "microsoft-office", name: "Microsoft Office", icon: "office", source: "DATA §12.9" },
   { id: "arduino-ide", name: "Arduino IDE", icon: "arduino", source: "DATA §12.9" },

@@ -108,7 +108,8 @@ html.dark .theme-icon-dark { display:block; }
 .route-transition-viewport::backdrop { background:transparent; }
 .route-transition-viewport[data-active="true"] { visibility:visible; pointer-events:auto; }
 .route-wipe { position:absolute; inset:0; background:var(--brand); color:#fff; transform:translateX(-101%); display:grid; place-items:center; padding:24px; text-align:center; }
-.route-title { font-family:var(--font-display),sans-serif; font-size:clamp(44px,9vw,128px); font-weight:700; line-height:1.28; padding:.12em .1em; overflow-wrap:anywhere; }
+/* Keep Syne's descending alternates and their ink inside the transition title. */
+.route-title { font-family:var(--font-display),sans-serif; font-size:clamp(44px,9vw,128px); font-weight:700; font-feature-settings:"ss04" 1; line-height:1.4; padding:.24em .12em; max-width:100%; min-width:0; overflow:visible; overflow-wrap:anywhere; }
 .icon-button,.footer-back-top { transition:transform var(--motion-micro,140ms) ease-out,background-color var(--motion-micro,140ms) ease-out; }
 .icon-button:active,.footer-back-top:active { transform:translateY(1px); }
 @media(prefers-reduced-motion:reduce) { .icon-button:active,.footer-back-top:active { transform:none; } }
@@ -677,6 +678,14 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
 .technology-item { min-height:88px; min-width:0; display:flex; align-items:flex-start; gap:12px; padding:16px 12px; border:1px solid var(--rule); }
 .technology-mark { display:flex; align-items:center; flex-shrink:0; width:28px; height:32px; }
 .technology-mark>svg { width:28px; height:28px; }
+.technology-brand-set { display:flex; align-items:center; justify-content:center; gap:4px; width:100%; height:28px; }
+.technology-brand { display:block; flex-shrink:0; width:28px; height:28px; background-color:var(--ink); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center; -webkit-mask-size:contain; mask-size:contain; }
+.technology-brand-bitmap { display:block; flex-shrink:0; width:28px; height:28px; object-fit:contain; filter:grayscale(1) contrast(100); mix-blend-mode:multiply; }
+.technology-brand-set:has(.technology-brand-bitmap) { background:var(--canvas); }
+html.dark .technology-brand-bitmap { filter:grayscale(1) contrast(100) invert(1); mix-blend-mode:screen; }
+.technology-brand-set[data-count="2"] .technology-brand { width:16px; height:24px; }
+.technology-mark:has(.technology-brand-set[data-count="2"]) { width:36px; }
+@media(forced-colors:active) { .technology-brand { background-color:CanvasText; forced-color-adjust:none; } }
 .technology-label { min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:4px; font-size:13px; font-weight:600; line-height:1.65; overflow-wrap:anywhere; }
 .technology-badge { display:block; font-size:10px; font-weight:500; color:var(--muted); border-bottom:1px solid var(--control); }
 .story-root { position:relative; min-width:0; }

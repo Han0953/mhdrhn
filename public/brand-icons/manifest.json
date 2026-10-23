@@ -1,0 +1,382 @@
+{
+  "retrievedOn": "2026-10-23",
+  "method": "Original upstream files, unchanged; vector alpha masks and bitmap CSS compositing provide monochrome presentation. No runtime remote requests.",
+  "assets": [
+    {
+      "id": "cplusplus",
+      "file": "cplusplus.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/cplusplus.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 764,
+      "sha256": "adf33f5026f3f70d54f1068cb5d1a790c37b2105cbe728edd170251759d13f18"
+    },
+    {
+      "id": "javascript",
+      "file": "javascript.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/javascript.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 974,
+      "sha256": "c9be35a7a861ebe80ae4ee706d05004b99ee59fc63db69da6dcc10776718434b"
+    },
+    {
+      "id": "typescript",
+      "file": "typescript.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/typescript.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 1294,
+      "sha256": "7f023e8d1e767370306ec9437d2de5d5af97491d6208dd7799a3808a7c10a36a"
+    },
+    {
+      "id": "php",
+      "file": "php.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/php.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 1127,
+      "sha256": "cd1beaa0dde7e765b5d2cbae786c1f6db967f72073eb7b9f9bbc63da55b9d0f6"
+    },
+    {
+      "id": "python",
+      "file": "python.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/python.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 1518,
+      "sha256": "ad9468e1c4903f73ae7eebfbe980f0f727a10db695be3d914e7d8bd25356a862"
+    },
+    {
+      "id": "micropython",
+      "file": "micropython.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/micropython.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 230,
+      "sha256": "aa5f964740f61b2f4fe874734f14e02bc2b44be1640719b7aead08bf13789a93"
+    },
+    {
+      "id": "dart",
+      "file": "dart.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/dart.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 506,
+      "sha256": "e02868488ff4ac8e8b22440c6b021e6539f9df21271e0ffb8a7bf92ada0126bb"
+    },
+    {
+      "id": "html5",
+      "file": "html5.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/html5.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 327,
+      "sha256": "dfd65fdd7e4f997c6b163e48793de5ad18c4c99e191807a61752ea702f123d1d"
+    },
+    {
+      "id": "react",
+      "file": "react.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/react.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 2926,
+      "sha256": "ab9136a1a4a8be72ac6743e1bdd1912d878bd68d57787ea7a6c6838e3b23c01c"
+    },
+    {
+      "id": "nextjs",
+      "file": "nextjs.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/nextdotjs.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 322,
+      "sha256": "593e14da3ddb65be4c8fa6a178f2f48a01a8bd39ea384f679cd7182b520da502"
+    },
+    {
+      "id": "vite",
+      "file": "vite.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/vite.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 447,
+      "sha256": "642bb261d6476ddf326b8ed7757543b3443a93a77fef1e434021fc201defa21c"
+    },
+    {
+      "id": "tailwindcss",
+      "file": "tailwindcss.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/tailwindcss.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 602,
+      "sha256": "5d4ede3c95da824f543c6eefbe7c78b45ecce6796f6633de196dd712a7841140"
+    },
+    {
+      "id": "laravel",
+      "file": "laravel.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/laravel.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 1860,
+      "sha256": "9d0bb8aa3a9fc069dcc3d92c398a90be3a75fd1b0167b91f56939a18109e9796"
+    },
+    {
+      "id": "mysql",
+      "file": "mysql.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/mysql.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 3625,
+      "sha256": "67c144cc3e44ad14062a3f20ebe29c5e7eeb2c2c9c0f43cf48d87fe6291a8b2d"
+    },
+    {
+      "id": "postgresql",
+      "file": "postgresql.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/postgresql.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 5205,
+      "sha256": "c8ccadbd88c9312c2ad3734c4861b31d3485ce179ee91d64793143f83cfa745c"
+    },
+    {
+      "id": "supabase",
+      "file": "supabase.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/supabase.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 303,
+      "sha256": "61bf16d93be418f723ae1e137e57afdad4f185352fbc6dea9482af1e0a89ccf7"
+    },
+    {
+      "id": "gsap",
+      "file": "gsap.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/gsap.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 4728,
+      "sha256": "3a5839e0dbee31a3291d7c16454dec2601467a0f502cfded0e477dc811f5ae6a"
+    },
+    {
+      "id": "threejs",
+      "file": "threejs.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/threedotjs.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 897,
+      "sha256": "813981f4cc6a24d82d9aba0af0ac5f3678b249dc035b519d8dc3759fa5b360ec"
+    },
+    {
+      "id": "flutter",
+      "file": "flutter.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/flutter.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 221,
+      "sha256": "3f268e6fd52e538478ec299cef53cfd85a1c3454b5eb4c7997dd2e21e6b7d741"
+    },
+    {
+      "id": "firebase",
+      "file": "firebase.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/firebase.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 1927,
+      "sha256": "3f46d84a41479d7789cc36b82c2b6852e6bbbfd30ebee5b7a3aef7d49758295a"
+    },
+    {
+      "id": "arduino",
+      "file": "arduino.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/arduino.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 964,
+      "sha256": "e3e0b836d682159a1d0660e3081527fca03bf767202dff3bdebea3593fd7e77a"
+    },
+    {
+      "id": "mqtt",
+      "file": "mqtt.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/mqtt.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 566,
+      "sha256": "076483b7c540780a2d4feabf691dc1612b2e896d736fd153483bff0adfbe11bd"
+    },
+    {
+      "id": "espressif",
+      "file": "espressif.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/espressif.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 1105,
+      "sha256": "d0c66fc70620542d6fd16c5369d99cebd110abdcc24b7233c2d3dd14d256d420"
+    },
+    {
+      "id": "stmicroelectronics",
+      "file": "stmicroelectronics.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/stmicroelectronics.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 1239,
+      "sha256": "f7bf49d9b19edc681243ef636efb1359bfcfc833439299d83de53b5cff921bd8"
+    },
+    {
+      "id": "androidstudio",
+      "file": "androidstudio.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/androidstudio.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 2914,
+      "sha256": "465dda2b9f94726978d67e98922ecce2425e0ea3d839949c6657c62f3265024d"
+    },
+    {
+      "id": "git",
+      "file": "git.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/git.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 426,
+      "sha256": "95724d436215d483de82288610c3c144854138f49945424697fcdf8be66e17d6"
+    },
+    {
+      "id": "autocad",
+      "file": "autocad.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/autocad.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 468,
+      "sha256": "dee9d0d2f266609cefa58e0df43c9831e426a6d66df5cd17ecaa6e8c7d398b30"
+    },
+    {
+      "id": "vitest",
+      "file": "vitest.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/90bd1f3e7b77851fd0c56474f6fa43b816babdab/icons/vitest.svg",
+      "collection": "Simple Icons",
+      "revision": "90bd1f3e7b77851fd0c56474f6fa43b816babdab",
+      "license": "CC0-1.0 collection; underlying brand rights apply",
+      "bytes": 314,
+      "sha256": "216ef31fa83484d7c42fa9caae00a857d3756cb6158516dd395799f2b6631d5c"
+    },
+    {
+      "id": "css3",
+      "file": "css3.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/6a37858047b0e8d9c9c0e68f4a071fc410652e89/icons/css3/css3-plain.svg",
+      "collection": "Devicon",
+      "revision": "6a37858047b0e8d9c9c0e68f4a071fc410652e89",
+      "license": "MIT collection; underlying brand rights apply",
+      "bytes": 465,
+      "sha256": "8a9931190c761e07ff9ed032cfa8cf5483e47455ef930da6096f5765bb48e515"
+    },
+    {
+      "id": "canva",
+      "file": "canva.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/6a37858047b0e8d9c9c0e68f4a071fc410652e89/icons/canva/canva-original.svg",
+      "collection": "Devicon",
+      "revision": "6a37858047b0e8d9c9c0e68f4a071fc410652e89",
+      "license": "MIT collection; underlying brand rights apply",
+      "bytes": 3558,
+      "sha256": "56cd98419761b907cc959d3dae1c5dc74bbb47ec66071ae2ea4aeede0df3d916"
+    },
+    {
+      "id": "playwright",
+      "file": "playwright.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/6a37858047b0e8d9c9c0e68f4a071fc410652e89/icons/playwright/playwright-plain.svg",
+      "collection": "Devicon",
+      "revision": "6a37858047b0e8d9c9c0e68f4a071fc410652e89",
+      "license": "MIT collection; underlying brand rights apply",
+      "bytes": 1802,
+      "sha256": "2d7ec3edf5dd794fc5e0983413edf192228933c360f02225a01c50b64f901fad"
+    },
+    {
+      "id": "framermotion",
+      "file": "framermotion.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/6a37858047b0e8d9c9c0e68f4a071fc410652e89/icons/framermotion/framermotion-original.svg",
+      "collection": "Devicon",
+      "revision": "6a37858047b0e8d9c9c0e68f4a071fc410652e89",
+      "license": "MIT collection; underlying brand rights apply",
+      "bytes": 182,
+      "sha256": "a248c2c0c1d0c14a9f92f059198c200dc636c2fa932d30c1fd72dd5d1fd3ca38"
+    },
+    {
+      "id": "opencode",
+      "file": "opencode.svg",
+      "url": "https://raw.githubusercontent.com/lobehub/lobe-icons/680f1d7f95b5ae6a494fe43539da8a992f17b53d/packages/static-svg/icons/opencode.svg",
+      "collection": "Lobe Icons",
+      "revision": "680f1d7f95b5ae6a494fe43539da8a992f17b53d",
+      "license": "MIT collection; underlying brand rights apply",
+      "bytes": 235,
+      "sha256": "7cfa6e9d6726f7c9fa26c7d9aef0dfec52d20a137380454340f30f12ccbfd302"
+    },
+    {
+      "id": "claudecode",
+      "file": "claudecode.svg",
+      "url": "https://raw.githubusercontent.com/lobehub/lobe-icons/680f1d7f95b5ae6a494fe43539da8a992f17b53d/packages/static-svg/icons/claudecode.svg",
+      "collection": "Lobe Icons",
+      "revision": "680f1d7f95b5ae6a494fe43539da8a992f17b53d",
+      "license": "MIT collection; underlying brand rights apply",
+      "bytes": 429,
+      "sha256": "d7eb2d876b49e51cc16291a42b681d7cf4906e60e0150776dbfb353ec4ca3746"
+    },
+    {
+      "id": "antigravity",
+      "file": "antigravity.svg",
+      "url": "https://antigravity.google/assets/image/brand/antigravity-icon__one-color.svg",
+      "collection": "Official Antigravity press assets",
+      "license": "Google brand guidelines",
+      "bytes": 435,
+      "sha256": "5b5d0cfd07cb79ba5d299d80b754e7c91d782dc1199811688dec67a0a11ba240"
+    },
+    {
+      "id": "wokwi",
+      "file": "wokwi.svg",
+      "url": "https://wokwi.com/favicon.svg",
+      "collection": "Official Wokwi website",
+      "license": "Wokwi brand rights",
+      "bytes": 4972,
+      "sha256": "e68214bb8d50b6c06136772ec17a19732ea46bfab283bdddea2505325e8a43e7"
+    },
+    {
+      "id": "blynk",
+      "file": "blynk.svg",
+      "url": "https://cdn.prod.website-files.com/6272e11601c9e296becde07b/68b4aa5387e457b5e3fe57a6_B-Logotype.svg",
+      "collection": "Official Blynk website stylesheet nav-logo-new-black",
+      "license": "Blynk brand rights",
+      "bytes": 3827,
+      "sha256": "3668a2421dd3f4dadfd211f7c595c7c5413d455a45b599374c885f7ec66822d8"
+    },
+    {
+      "id": "cirkit-designer",
+      "file": "cirkit-designer.png",
+      "url": "https://www.cirkitdesigner.com/dist/ico/favicon-32x32.png",
+      "collection": "Official Cirkit Designer website",
+      "license": "Cirkit Design brand rights",
+      "bytes": 1123,
+      "sha256": "ee0365529b3a42c0bdbe07dc7e1c7d66835af515125687f1484ea2333300dbd5"
+    }
+  ]
+}
