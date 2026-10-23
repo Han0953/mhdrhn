@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { PageMotion } from "@/components/motion/PageMotion";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
 import { usePathname } from "next/navigation";
-import { X, MessageCircle, Send, RotateCcw, ArrowUpRight, Maximize2, Minimize2, Minus } from "lucide-react";
+import { X, MessageCircle, Send, RotateCcw, ArrowUpRight, Maximize2, Minimize2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SiteLink } from "./RouteTransition";
 import { navigation } from "@/lib/navigation";
@@ -137,7 +137,6 @@ export function SiteChrome() {
   // A new route keeps the menu in place until the route curtain covers it.
   function navigateMenu(href: string) { if (href === pathname) closeMenu(); }
   function closeChat() { resetChatSize.current = true; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
-  function minimizeChat() { resetChatSize.current = false; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
   function resetChat() {
     if (pendingReply.current) clearTimeout(pendingReply.current.timer);
     pendingReply.current = null; chatHistory.reset(); setDraft(""); setError(""); setResetVersion(value => value + 1);
@@ -159,15 +158,14 @@ export function SiteChrome() {
       <div className="azura-panel" data-dialog-panel="azura">
       <div className="dialog-top"><div><p className="eyebrow accent">Asisten portofolio</p><h2 id="azura-heading">Azura.</h2></div><div className="dialog-actions">
         <button className="icon-button" type="button" onClick={() => setChatWide(value => !value)} aria-label={chatWide ? "Kecilkan panel Azura" : "Lebarkan panel Azura"} title={chatWide ? "Kecilkan panel" : "Lebarkan panel"} aria-pressed={chatWide}>{chatWide ? <Minimize2 size={19} aria-hidden="true"/> : <Maximize2 size={19} aria-hidden="true"/>}</button>
-        <button className="icon-button" type="button" onClick={minimizeChat} aria-label="Minimalkan Azura" title="Minimalkan"><Minus size={19} aria-hidden="true"/></button>
         <button className="icon-button" type="button" onClick={closeChat} aria-label="Tutup Azura" title="Tutup"><X size={20} aria-hidden="true"/></button>
       </div></div>
       <p id="azura-description" className="meta chat-description">Tanyakan tentang Rehan dan karyanya.</p>
       <div className="chat-log" ref={log} role="log" aria-label="Percakapan dengan Azura" aria-live="polite" aria-relevant="additions text" aria-busy={typing}>
-        <AnimatePresence initial={false} mode="wait"><motion.div key={resetVersion} className="chat-transcript" initial={reduced ? false : {opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:reduced ? 0 : .2}}>
+        <AnimatePresence mode="wait"><motion.div key={resetVersion} className="chat-transcript" initial={reduced || resetVersion === 0 ? false : {opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:reduced ? 0 : .2}}>
         <div className="chat-reply"><p>Aku Azura. Mau tahu tentang Rehan, proyek, atau pengalamannya?</p></div>
         {messages.map(message => <div className="chat-exchange" key={message.id}>
-          <motion.div className="chat-question" initial={reduced ? false : { opacity: 0, y: 14, x: 8 }} animate={{ opacity: 1, y: 0, x: 0 }} transition={{ duration: reduced ? 0 : .38, ease: [.22, 1, .36, 1] }}><span className="sr-only">Kamu: </span>{message.question}</motion.div>
+          <motion.div className="chat-question" initial={reduced || message.ready ? false : { opacity: 0, y: 28, x: 16, scale: .86 }} animate={{ opacity: 1, y: 0, x: 0, scale: 1 }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 340, damping: 26, mass: .8, opacity: { duration: .18 } }}><span className="sr-only">Kamu: </span>{message.question}</motion.div>
           <AnimatePresence initial={false} mode="wait">
             {message.ready ? <motion.div key="reply" className="chat-reply" initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduced ? 0 : .46, ease: [.22, 1, .36, 1] }} onAnimationComplete={() => { if (log.current && chat.current?.open) log.current.scrollTo({ top: log.current.scrollHeight, behavior: reduced ? "instant" : "smooth" }); }}><p><span className="sr-only">Azura: </span>{message.reply.text}</p><SiteLink href={message.reply.href} className="text-link" onNavigate={closeChat}>{message.reply.label}<ArrowUpRight size={16} aria-hidden="true"/></SiteLink></motion.div>
             : <motion.div key="typing" className="chat-typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduced ? 0 : .18 }}><span className="sr-only">Azura sedang mengetik</span><span aria-hidden="true">{[0, 1, 2].map(dot => <motion.i key={dot} animate={reduced ? undefined : { y: [0, -4, 0], opacity: [.4, 1, .4] }} transition={{ duration: .9, repeat: Infinity, delay: dot * .12 }}/>)}</span></motion.div>}
@@ -176,7 +174,7 @@ export function SiteChrome() {
         </motion.div></AnimatePresence>
       </div>
       <div className="quick-questions" role="group" aria-label="Pertanyaan cepat">{["Tentang Rehan", "Proyek Vircuit", "Kompetensi", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(question)} disabled={typing || messages.length >= 20}>{question}</button>)}</div>
-      <form onSubmit={submit} className="chat-form"><label htmlFor="azura-input" className="sr-only">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error chat-limit" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={typing || messages.length >= 20}><Send size={18} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p><div className="chat-form-footer"><span id="chat-limit" className="meta">{draft.length}/500 · {messages.length}/20</span><button type="button" className="reset-chat" onClick={resetChat}><motion.span initial={false} animate={{rotate:resetVersion * -360}} transition={{duration:reduced ? 0 : .4}}><RotateCcw size={14} aria-hidden="true"/></motion.span> Reset chat</button></div><p className="chat-retention">Percakapan disimpan di perangkat ini selama 1 jam.</p></form>
+      <form onSubmit={submit} className="chat-form" autoComplete="off"><label htmlFor="azura-input" className="sr-only">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" name="azura-message" autoComplete="off" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={typing || messages.length >= 20}><Send size={18} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p><div className="chat-form-footer"><button type="button" className="reset-chat" onClick={resetChat}><motion.span initial={false} animate={{rotate:resetVersion * -360}} transition={{duration:reduced ? 0 : .4}}><RotateCcw size={14} aria-hidden="true"/></motion.span> Reset chat</button></div><p className="chat-retention">Percakapan disimpan di perangkat ini selama 1 jam.</p></form>
       </div>
     </dialog>
   </>;
