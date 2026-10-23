@@ -1,4 +1,9 @@
 "use client";
+import {logicalPath} from "@/i18n/config";
+import {LanguageSwitcher} from "@/i18n/LanguageSwitcher";
+import { useTranslation } from "@/i18n/LocaleProvider";
+import { translateTree } from "@/i18n/translate";
+
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PageMotion } from "@/components/motion/PageMotion";
@@ -25,22 +30,23 @@ function containDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
 function ChromeHeader({ pathname, menuOpen, onMenu, onNavigate, onKeyDown, popup = false }: {
   pathname: string; menuOpen: boolean; onMenu: () => void; onNavigate?: () => void; onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void; popup?: boolean;
 }) {
+  const {locale,t}=useTranslation();
   const active = (href: string) => href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
-  return <header className={popup ? "site-header popup-header" : "site-header"} data-menu-open={menuOpen} onKeyDown={onKeyDown}><div className="header-inner wrap">
+  return translateTree(<header className={popup ? "site-header popup-header" : "site-header"} data-menu-open={menuOpen} onKeyDown={onKeyDown}><div className="header-inner wrap">
     {!popup && <PageMotion profile="chrome"/>}
     <SiteLink className="wordmark" href="/" aria-label="Rehan — Home" onNavigate={onNavigate}><span className="accent">{"<"}</span>Rehan/<span className="accent">{">"}</span></SiteLink>
     {!popup && <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>}
-    <div className="header-controls" data-motion-static><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu"><span className="menu-glyph" data-open={menuOpen} aria-hidden="true"><span/><span/><span/></span></button></div>
-  </div></header>;
+    <div className="header-controls" data-motion-static><LanguageSwitcher/><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu"><span className="menu-glyph" data-open={menuOpen} aria-hidden="true"><span/><span/><span/></span></button></div>
+  </div></header>,t,locale);
 }
 function replyTo(question: string): Reply {
   const text = question.toLocaleLowerCase("id");
   if (/vircuit/.test(text)) return { text: "Vircuit adalah laboratorium virtual untuk belajar elektronika, mikrokontroler, dan IoT. Proyek tim Trio Hengker Enjoyer ini meraih Juara 3 Web Development FESTRA UNRI 2026.", href: "/projects/vircuit", label: "Jelajahi Vircuit" };
   if (/aura/.test(text)) return { text: "AURA POD merupakan inovasi fotobioreaktor mikroalga dari tim ALGA NOVA dengan dukungan elektronika dan IoT. Tim meraih Juara 1 dan Most Favorite BPDC SiCheCo UNSRI 2026.", href: "/projects/aura-pod", label: "Jelajahi AURA POD" };
-  if (/kontak|hubung|contact|email|kolaborasi/.test(text)) return { text: "Profil GitHub Rehan tersedia di halaman Contact. Dari sana, kamu bisa membuka repositori dan melihat aktivitas pengembangannya.", href: "/contact", label: "Buka Contact" };
-  if (/riset|research|iot|lab|inkubator/.test(text)) return { text: "Halaman Lab merangkum penelitian dan praktik yang Rehan ikuti. Kamu bisa melihat topik yang dikerjakan, perkembangannya, dan dokumentasi yang tersedia.", href: "/lab", label: "Buka Lab & Research" };
-  if (/siapa|profil|tentang|rehan/.test(text)) return { text: "Rehan adalah mahasiswa S1 Pendidikan Vokasional Teknik Elektronika di Universitas Muhammadiyah Riau. Minatnya mencakup elektronika, embedded systems, IoT, dan pengembangan software.", href: "/about", label: "Tentang Rehan" };
-  if (/skill|kompetensi|kemampuan/.test(text)) return { text: "Di halaman About, kamu bisa mengenal kemampuan yang Rehan kembangkan dan teknologi yang digunakan. Label Learning menunjukkan yang masih dipelajari.", href: "/about#skills-heading", label: "Jelajahi kompetensi" };
+  if (/kontak|hubung|contact|email|kolaborasi|collaborat/.test(text)) return { text: "Profil GitHub Rehan tersedia di halaman Contact. Dari sana, kamu bisa membuka repositori dan melihat aktivitas pengembangannya.", href: "/contact", label: "Buka Contact" };
+  if (/riset|research|iot|lab|inkubator|incubator/.test(text)) return { text: "Halaman Lab merangkum penelitian dan praktik yang Rehan ikuti. Kamu bisa melihat topik yang dikerjakan, perkembangannya, dan dokumentasi yang tersedia.", href: "/lab", label: "Buka Lab & Research" };
+  if (/siapa|profil|tentang|rehan|about|who/.test(text)) return { text: "Rehan adalah mahasiswa S1 Pendidikan Vokasional Teknik Elektronika di Universitas Muhammadiyah Riau. Minatnya mencakup elektronika, embedded systems, IoT, dan pengembangan software.", href: "/about", label: "Tentang Rehan" };
+  if (/skill|kompetensi|kemampuan|technolog/.test(text)) return { text: "Di halaman About, kamu bisa mengenal kemampuan yang Rehan kembangkan dan teknologi yang digunakan. Label Learning menunjukkan yang masih dipelajari.", href: "/about#skills-heading", label: "Jelajahi kompetensi" };
   if (/pengalaman|experience/.test(text)) return { text: "Halaman Experience merangkum peran yang pernah Rehan jalani beserta latar kegiatannya. Pilih kategori untuk menelusuri pengalaman yang ingin kamu kenal lebih jauh.", href: "/experience", label: "Lihat pengalaman" };
   if (/proyek|project|karya/.test(text)) return { text: "Di Projects, kamu bisa menjelajahi karya Rehan dan membaca informasi yang tersedia pada setiap proyek. Gunakan pencarian atau kategori untuk menemukan yang ingin kamu lihat.", href: "/projects", label: "Jelajahi karya" };
   return { text: "Aku belum punya informasi tentang topik itu. Kamu bisa bertanya tentang profil Rehan, karya, kemampuan, pengalaman, atau cara menghubunginya.", href: "/projects", label: "Jelajahi karya" };
@@ -48,8 +54,9 @@ function replyTo(question: string): Reply {
 const chatHistory = createChatHistory(replyTo);
 
 export function SiteChrome() {
+  const {locale,t}=useTranslation();
   const reduced = useSyncExternalStore(subscribeMotion,prefersReducedMotion,() => true);
-  const pathname = usePathname();
+  const pathname = logicalPath(usePathname());
   const menu = useRef<HTMLDialogElement>(null);
   const chat = useRef<HTMLDialogElement>(null);
   const launcher = useRef<HTMLButtonElement>(null);
@@ -143,7 +150,7 @@ export function SiteChrome() {
   }
   function active(href: string) { return href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`); }
 
-  return <>
+  return translateTree(<>
     <ChromeHeader pathname={pathname} menuOpen={menuOpen} onMenu={menuOpen ? closeMenu : openMenu} onNavigate={menuOpen ? () => navigateMenu("/") : undefined} onKeyDown={menuOpen ? menuKeyboard : undefined}/>
     <div className="header-space" aria-hidden="true" data-motion-static/>
     <dialog ref={menu} id="site-menu" className="chrome-dialog menu-dialog" aria-labelledby="menu-heading" onKeyDown={menuKeyboard} onCancel={event => { event.preventDefault(); closeMenu(); }} onClose={() => { setMenuOpen(false); if (!document.querySelector('.route-transition-viewport[data-active="true"]')) { const trigger = document.querySelector<HTMLElement>('.site-header:not(.popup-header) .menu-trigger'); if (trigger?.getClientRects().length && document.activeElement !== trigger) trigger.focus({ preventScroll: true }); } }} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}>
@@ -165,7 +172,7 @@ export function SiteChrome() {
         <AnimatePresence mode="wait"><motion.div key={resetVersion} className="chat-transcript" initial={reduced || resetVersion === 0 ? false : {opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:reduced ? 0 : .2}}>
         <div className="chat-reply"><p>Aku Azura. Mau tahu tentang Rehan, proyek, atau pengalamannya?</p></div>
         {messages.map(message => <div className="chat-exchange" key={message.id}>
-          <motion.div className="chat-question" initial={reduced || message.ready ? false : { opacity: 0, y: 28, x: 16, scale: .86 }} animate={{ opacity: 1, y: 0, x: 0, scale: 1 }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 340, damping: 26, mass: .8, opacity: { duration: .18 } }}><span className="sr-only">Kamu: </span>{message.question}</motion.div>
+          <motion.div className="chat-question" initial={reduced || message.ready ? false : { opacity: 0, y: 28, x: 16, scale: .86 }} animate={{ opacity: 1, y: 0, x: 0, scale: 1 }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 340, damping: 26, mass: .8, opacity: { duration: .18 } }}><span className="sr-only">Kamu: </span><span data-no-translate>{message.question}</span></motion.div>
           <AnimatePresence initial={false} mode="wait">
             {message.ready ? <motion.div key="reply" className="chat-reply" initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduced ? 0 : .46, ease: [.22, 1, .36, 1] }} onAnimationComplete={() => { if (log.current && chat.current?.open) log.current.scrollTo({ top: log.current.scrollHeight, behavior: reduced ? "instant" : "smooth" }); }}><p><span className="sr-only">Azura: </span>{message.reply.text}</p><SiteLink href={message.reply.href} className="text-link" onNavigate={closeChat}>{message.reply.label}<ArrowUpRight size={16} aria-hidden="true"/></SiteLink></motion.div>
             : <motion.div key="typing" className="chat-typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduced ? 0 : .18 }}><span className="sr-only">Azura sedang mengetik</span><span aria-hidden="true">{[0, 1, 2].map(dot => <motion.i key={dot} animate={reduced ? undefined : { y: [0, -4, 0], opacity: [.4, 1, .4] }} transition={{ duration: .9, repeat: Infinity, delay: dot * .12 }}/>)}</span></motion.div>}
@@ -173,9 +180,9 @@ export function SiteChrome() {
         </div>)}
         </motion.div></AnimatePresence>
       </div>
-      <div className="quick-questions" role="group" aria-label="Pertanyaan cepat">{["Tentang Rehan", "Proyek Vircuit", "Kompetensi", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(question)} disabled={typing || messages.length >= 20}>{question}</button>)}</div>
+      <div className="quick-questions" role="group" aria-label="Pertanyaan cepat">{["Tentang Rehan", "Proyek Vircuit", "Kompetensi", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(t(question))} disabled={typing || messages.length >= 20}>{question}</button>)}</div>
       <form onSubmit={submit} className="chat-form" autoComplete="off"><label htmlFor="azura-input" className="sr-only">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" name="azura-message" autoComplete="off" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={typing || messages.length >= 20}><Send size={18} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p><div className="chat-form-footer"><button type="button" className="reset-chat" onClick={resetChat}><motion.span initial={false} animate={{rotate:resetVersion * -360}} transition={{duration:reduced ? 0 : .4}}><RotateCcw size={14} aria-hidden="true"/></motion.span> Reset chat</button></div><p className="chat-retention">Percakapan disimpan di perangkat ini selama 1 jam.</p></form>
       </div>
     </dialog>
-  </>;
+  </>,t,locale);
 }

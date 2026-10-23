@@ -11,7 +11,7 @@ export function loadMotion(file, globals = {}, cache = new Map()) {
   cache.set(resolved, exports);
   const code = ts.transpileModule(fs.readFileSync(resolved, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
   vm.runInNewContext(code, { exports, ...globals, require(id) {
-    if (!id.startsWith('./')) throw Error(`Unexpected dependency: ${id}`);
+    if (!id.startsWith('./') && !id.startsWith('../')) throw Error(`Unexpected dependency: ${id}`);
     return loadMotion(path.resolve(path.dirname(resolved), `${id}.ts`), globals, cache);
   } }, { timeout: 1000 });
   return exports;

@@ -1,3 +1,6 @@
+import { serverTranslator } from "@/i18n/server";
+import { translateTree } from "@/i18n/translate";
+import { type Locale } from "@/i18n/config";
 import { DisplayLines } from "@/components/motion/DisplayLines";
 import { ArrowUpRight } from "lucide-react";
 import { SiteLink } from "@/components/layout/RouteTransition";
@@ -5,13 +8,15 @@ import type { Project } from "@/lib/content";
 import type { ReactNode } from "react";
 import { ProjectCover } from "@/components/media/ProjectCover";
 export function Arrow() { return <ArrowUpRight size={20} aria-hidden="true" />; }
-export function PageHeading({ eyebrow, children, description }: { eyebrow: string; children: ReactNode; description?: string }) {
+export function PageHeading({ locale="id", eyebrow, children, description }: { locale?:Locale; eyebrow: string; children: ReactNode; description?: string }) {
+  const t=serverTranslator(locale);
   const hasPunctuation = typeof children === "string" && /[.!?]$/.test(children.trim());
-  return <header className="page-heading"><p className="eyebrow accent">{eyebrow}</p><h1 tabIndex={-1}><DisplayLines>{children}{!hasPunctuation && <span className="accent">.</span>}</DisplayLines></h1>{description && <p className="page-description">{description}</p>}</header>;
+  return translateTree(<header className="page-heading"><p className="eyebrow accent">{eyebrow}</p><h1 tabIndex={-1}><DisplayLines>{children}{!hasPunctuation && <span className="accent">.</span>}</DisplayLines></h1>{description && <p className="page-description">{description}</p>}</header>,t,locale);
 }
-export function ProjectArt({ kind, title, variant = "documented" }: { kind: Project["visual"]; title: string; variant?: "documented" | "preview" }) {
+export function ProjectArt({ locale="id", kind, title, variant = "documented" }: { locale?:Locale; kind: Project["visual"]; title: string; variant?: "documented" | "preview" }) {
+  const t=serverTranslator(locale);
   const preview = variant === "preview";
-  return <figure className={`project-art art-${kind}${preview ? " project-art--preview" : ""}`} aria-hidden={preview || undefined}>
+  return translateTree(<figure className={`project-art art-${kind}${preview ? " project-art--preview" : ""}`} aria-hidden={preview || undefined}>
     {!preview && <div className="art-top"><span>FIELD NOTES / {kind === "aura" ? "02" : kind === "portal" ? "03" : "01"}</span><span>mhdrhn.</span></div>}
     <svg viewBox="0 0 700 390" aria-hidden="true" focusable="false">
       {kind === "aura" ? <>
@@ -26,8 +31,9 @@ export function ProjectArt({ kind, title, variant = "documented" }: { kind: Proj
         <g className="diagram-components" strokeWidth="3"><rect x="285" y="145" width="130" height="130"/><circle cx="115" cy="275" r="18"/><circle cx="580" cy="235" r="18"/></g>{!preview && <text x="310" y="227" className="art-letter">{kind === "research" ? "IoT" : "V."}</text>}
       </>}
     </svg>{!preview && <figcaption>{title} · Visual konsep · dokumentasi produk belum tersedia</figcaption>}
-  </figure>;
+  </figure>,t,locale);
 }
-export function ProjectSpread({ project, number, className = "", showRole = false }: { project: Project; number: number; className?: string; showRole?: boolean }) {
-  return <article className={`project-spread ${className}`}><SiteLink href={`/projects/${project.slug}`} className="art-link" aria-label={`Lihat proyek ${project.title}`}><ProjectCover project={project}/></SiteLink><div className="project-copy"><span className="project-number">{String(number).padStart(2, "0")}</span><p className="eyebrow">{project.categories.join(" / ")}</p><h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3><p className="meta">{[project.year, project.context].filter(Boolean).join(" · ")}</p><p>{project.summary}</p>{showRole && project.role && <p className="meta project-role">Peran Rehan · {project.role}</p>}<SiteLink className="text-link" href={`/projects/${project.slug}`}>Jelajahi proyek <Arrow/></SiteLink></div></article>;
+export function ProjectSpread({ locale="id", project, number, className = "", showRole = false }: { locale?:Locale; project: Project; number: number; className?: string; showRole?: boolean }) {
+  const t=serverTranslator(locale);
+  return translateTree(<article className={`project-spread ${className}`}><SiteLink href={`/projects/${project.slug}`} className="art-link" aria-label={`Lihat proyek ${project.title}`}><ProjectCover locale={locale} project={project}/></SiteLink><div className="project-copy"><span className="project-number">{String(number).padStart(2, "0")}</span><p className="eyebrow">{project.categories.join(" / ")}</p><h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3><p className="meta">{[project.year, project.context].filter(Boolean).join(" · ")}</p><p>{project.summary}</p>{showRole && project.role && <p className="meta project-role">Peran Rehan · {project.role}</p>}<SiteLink className="text-link" href={`/projects/${project.slug}`}>Jelajahi proyek <Arrow/></SiteLink></div></article>,t,locale);
 }

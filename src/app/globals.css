@@ -659,7 +659,7 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
   .search-form { grid-template-columns:minmax(180px,1fr) minmax(230px,1fr); align-items:end; }
   .project-pagination { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
-/* Preserve the original Syne face and its complete g alternate after font shorthands. */
+/* Display type keeps the approved Clash Display face after font shorthands. */
 /* Home expansion: native content first, bounded interaction islands second. */
 .rotating-roles { margin-top:24px; }
 .role-stage { display:grid; font-size:clamp(18px,2vw,26px); line-height:1.65; padding-block:.08em .2em; }
@@ -968,3 +968,11 @@ html[data-motion="minimal"] :is(.story-media-motion,.media-frame,.technology-mar
 @media(prefers-reduced-motion:reduce) {
   .story-media-motion,.media-frame,.technology-mark,.button-primary,.text-link,.icon-button svg,.contact-link svg { transform:none!important; translate:none!important; scale:1!important; }
 }
+.language-switcher { position:relative; display:flex; align-items:center; height:44px; }
+.language-trigger { font-size:12px; font-weight:700; letter-spacing:.03em; }
+.language-options { position:absolute; right:0; top:calc(100% + 8px); width:168px; max-width:calc(100vw - 32px); padding:6px; z-index:46; background:var(--canvas); border:1px solid var(--control); }
+.language-option { width:100%; min-height:44px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; text-align:left; background:transparent; border:0; font-size:14px; }
+.language-option[aria-checked="true"] { color:var(--accent-text); }
+@media(hover:hover) and (pointer:fine){.language-option:hover{background:var(--surface);}}
+.language-option:active { background:var(--surface); }
+html[data-language-changing="true"] main { will-change:opacity,transform; }

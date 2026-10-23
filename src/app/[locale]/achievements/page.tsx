@@ -1,3 +1,7 @@
+import {localizedMetadata} from "@/i18n/metadata";
+import { serverTranslator } from "@/i18n/server";
+import { translateTree } from "@/i18n/translate";
+import { requireLocale } from "@/i18n/config";
 import type { Metadata } from "next";
 import { PageMotion } from "@/components/motion/PageMotion";
 import { PageHeading, Arrow } from "@/components/ui/Editorial";
@@ -7,11 +11,12 @@ import { educationAchievements, featuredAchievements, festivalAchievements } fro
 import { CertificatePreview } from "@/components/sections/CertificatePreview";
 import { getAchievementMedia } from "@/lib/media";
 import { MediaGallery } from "@/components/media/MediaGallery";
-export const metadata: Metadata = { title: "Pencapaian", description: "Pencapaian Muhammad Rehan sebagai bagian dari perjalanan belajar dan berkarya. Kenali hasil yang diraih beserta kegiatan serta latar belakangnya." };
-export default function Achievements() {
-  return <div className="wrap">
+const pageMetadata: Metadata = { title: "Pencapaian", description: "Pencapaian Muhammad Rehan sebagai bagian dari perjalanan belajar dan berkarya. Kenali hasil yang diraih beserta kegiatan serta latar belakangnya." };
+export default async function Achievements({ params: localeParams }: { params: Promise<{locale:string}> }) {
+  const locale=requireLocale((await localeParams).locale); const t=serverTranslator(locale);
+  return translateTree(<div className="wrap">
     <PageMotion profile="achievements"/>
-    <PageHeading eyebrow="Achievements" description="Saya melihat pencapaian sebagai bagian dari proses belajar dan berkarya. Pengakuan yang diterima juga menjadi kesempatan untuk menghargai usaha serta dukungan orang-orang yang terlibat.">Pencapaian<br/>saya</PageHeading>
+    <PageHeading locale={locale} eyebrow="Achievements" description="Saya melihat pencapaian sebagai bagian dari proses belajar dan berkarya. Pengakuan yang diterima juga menjadi kesempatan untuk menghargai usaha serta dukungan orang-orang yang terlibat.">{locale==="en"?<>My<br/>achievements</>:<>Pencapaian<br/>saya</>}</PageHeading>
     <p className="section-note">Telusuri pencapaian beserta kegiatan dan latar belakangnya.</p>
     <nav className="section-jumps" aria-label="Arsip pencapaian"><a href="#featured-achievements">Karya tim</a><a href="#festival-achievements">Jejak kompetisi</a><a href="#education-achievements">Pencapaian pendidikan</a><a href="#certificates">Sertifikat</a></nav>
     <section className="section awards" id="featured-achievements" aria-labelledby="team-awards-heading">
@@ -32,6 +37,8 @@ export default function Achievements() {
       {educationAchievements.map((award, index) => <article className="education-award" key={award.id} data-achievement-id={award.id}><span className="eyebrow accent">0{index + 1}</span><div><h3>{award.result}</h3><p>{award.context}</p></div><span className="meta">Periode sekolah<br/>{award.period}</span></article>)}
       <SiteLink className="text-link" href="/about">Pendidikan & kemampuan <Arrow/></SiteLink>
     </section>
-    <section className="section" id="certificates" aria-labelledby="certificate-archive-heading"><p className="eyebrow accent">04 / Certificates</p><h2 id="certificate-archive-heading">Arsip sertifikat.</h2><CertificatePreview/></section>
-  </div>;
+    <section className="section" id="certificates" aria-labelledby="certificate-archive-heading"><p className="eyebrow accent">04 / Certificates</p><h2 id="certificate-archive-heading">Arsip sertifikat.</h2><CertificatePreview locale={locale}/></section>
+  </div>,t,locale);
 }
+
+export async function generateMetadata({params}:{params:Promise<{locale:string}>}):Promise<Metadata>{return localizedMetadata(requireLocale((await params).locale),"/achievements",pageMetadata);}

@@ -34,6 +34,7 @@ export function setMotionPreference(preference: MotionPreference) {
 
 /** One OS/storage subscription, released when the last mounted owner leaves. */
 export function subscribeMotion(listener: () => void) {
+  document.documentElement.dataset.motion = getMotionPreference();
   listeners.add(listener);
   if (!disconnect) {
     media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -46,7 +47,6 @@ export function subscribeMotion(listener: () => void) {
       media = undefined;
       disconnect = undefined;
     };
-    document.documentElement.dataset.motion = getMotionPreference();
   }
   return () => { listeners.delete(listener); if (!listeners.size) disconnect?.(); };
 }

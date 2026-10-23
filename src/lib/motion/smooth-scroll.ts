@@ -49,3 +49,5 @@ export function mountSmoothScroll() {
   const unsubscribe = subscribeMotion(sync); sync();
   return () => { disposed = true; release(); unsubscribe(); bodyObserver.disconnect(); coverObserver.disconnect(); document.removeEventListener("toggle",lock,true); document.removeEventListener("visibilitychange",sync); delete document.documentElement.dataset.smoothScroll; };
 }
+/** Refresh the existing scroll owner after localized layout changes. */
+export function refreshSmoothScroll(){active?.resize();}

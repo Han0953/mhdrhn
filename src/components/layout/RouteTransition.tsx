@@ -1,5 +1,10 @@
 "use client";
+import { useTranslation } from "@/i18n/LocaleProvider";
+import { translateTree } from "@/i18n/translate";
 
+
+import {cancelLanguageChange,languageChangePending} from "@/i18n/language-motion";
+import {localeHref} from "@/i18n/config";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
@@ -22,6 +27,7 @@ export function RouteReady({ error = false }: { error?: boolean }) {
 }
 
 export function RouteTransition({ children, projects = noProjects }: { children: ReactNode; projects?: readonly NavigationProject[] }) {
+  const {locale,t}=useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const layer = useRef<HTMLDivElement>(null);
@@ -29,7 +35,7 @@ export function RouteTransition({ children, projects = noProjects }: { children:
   const viewport = useRef<HTMLDialogElement>(null);
   const previous = useRef(pathname);
   const session = useRef<ReturnType<typeof createRouteSession> | null>(null);
-  const begin = useCallback((href: NavigationHref, options?: RouteOptions) => session.current?.intent(href, options) ?? false, []);
+  const begin = useCallback((href: NavigationHref, options?: RouteOptions) => {if(languageChangePending())cancelLanguageChange();return session.current?.intent(href, options) ?? false;}, []);
   const ready = useCallback((path: string, error = false) => session.current?.committed(path, error), []);
 
   useEffect(() => {
@@ -96,10 +102,12 @@ export function RouteTransition({ children, projects = noProjects }: { children:
 
   useEffect(() => { previous.current = pathname; }, [pathname]);
 
+  // The server has already localized these children. Keep the RSC tree opaque,
+  // including Next.js resource/bootstrap nodes that may travel with it.
   return <TransitionContext value={begin}><ReadyContext value={ready}><div ref={content}>{children}</div></ReadyContext>
-    <dialog className="route-transition-viewport" ref={viewport} tabIndex={-1} aria-modal="true" aria-hidden="true" aria-label="Transisi halaman" onCancel={event => { event.preventDefault(); session.current?.cancel(); }}
+    <dialog className="route-transition-viewport" ref={viewport} tabIndex={-1} aria-modal="true" aria-hidden="true" aria-label={t("Transisi halaman")} onCancel={event => { event.preventDefault(); session.current?.cancel(); }}
       onKeyDown={event => { if (event.key === "Tab") { event.preventDefault(); viewport.current?.focus({ preventScroll: true }); } }}>
-      <div className="route-wipe" ref={layer}>
+      <div className="route-wipe" ref={layer} data-locale={locale}>
         <span className="route-title" aria-hidden="true"/>
         <span className="sr-only" role="status"/>
       </div>
@@ -108,20 +116,23 @@ export function RouteTransition({ children, projects = noProjects }: { children:
 }
 
 function SlowLinkStatus() {
+  const {locale,t}=useTranslation();
   const [visible, setVisible] = useState(false);
   useEffect(() => { const timer = setTimeout(() => setVisible(true), 1200); return () => clearTimeout(timer); }, []);
-  return visible ? <span className="navigation-notice" role="status">Sedang membuka halaman… Kamu tetap bisa memakai navigasi.</span> : null;
+  return translateTree(visible ? <span className="navigation-notice" role="status">Sedang membuka halaman… Kamu tetap bisa memakai navigasi.</span> : null,t,locale);
 }
 function LinkPendingStatus() {
   const { pending } = useLinkStatus();
   return pending ? <SlowLinkStatus/> : null;
 }
 
-export function SiteLink({ href, onNavigate, children, ...props }: ComponentProps<typeof Link>) {
+export function SiteLink({ href: requestedHref, onNavigate, children, ...props }: ComponentProps<typeof Link>) {
+  const {locale,t}=useTranslation();
+  const href=typeof requestedHref==="string"?localeHref(requestedHref,locale):requestedHref.host||requestedHref.hostname||requestedHref.protocol?requestedHref:{...requestedHref,pathname:requestedHref.pathname?localeHref(requestedHref.pathname,locale):requestedHref.pathname};
   const begin = useContext(TransitionContext);
-  return <Link href={href} {...props} onNavigate={event => {
+  return translateTree(<Link href={href} {...props} onNavigate={event => {
     let cancelled = false;
     onNavigate?.({ preventDefault() { cancelled = true; event.preventDefault(); } });
     if (!cancelled && !props.as && begin(href, { scroll: props.scroll, replace: props.replace, prefetch: props.prefetch !== false })) event.preventDefault();
-  }}>{children}<LinkPendingStatus/></Link>;
+  }}>{children}<LinkPendingStatus/></Link>,t,locale);
 }

@@ -7,7 +7,7 @@ const results=[];
 async function check(name,fn){await fn();results.push({name,status:'PASS'});console.log(`PASS ${name}`);}
 function load(file,globals={},dependencies={}){
  const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2020}}).outputText;
- const exports={};vm.runInNewContext(code,{exports,...globals,require(id){if(id in dependencies)return dependencies[id];throw Error(id);}},{timeout:1000});return exports;
+ const exports={};vm.runInNewContext(code,{exports,...globals,require(id){if(id in dependencies)return dependencies[id];if(id==="@/i18n/LocaleProvider")return {useTranslation:()=>({locale:"id",t:value=>value})};if(id==="@/i18n/translate")return {translateTree:node=>node};throw Error(id);}},{timeout:1000});return exports;
 }
 function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};}
 function image({lazy=false,visible=true,complete=false}={}){const listeners=new Map();return {loading:lazy?'lazy':'eager',complete,hasAttribute(){return false;},getBoundingClientRect(){return {top:visible?100:2000,bottom:visible?300:2200,width:320};},addEventListener(name,fn){listeners.set(name,fn);},removeEventListener(name){listeners.delete(name);},emit(name){this.complete=true;listeners.get(name)?.();},listeners};}

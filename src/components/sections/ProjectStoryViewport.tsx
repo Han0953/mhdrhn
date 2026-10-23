@@ -1,14 +1,19 @@
 "use client";
+import { useTranslation } from "@/i18n/LocaleProvider";
+import { translateTree } from "@/i18n/translate";
+
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { mountProjectStory } from "@/lib/project-story-motion";
 import { List, PanelsTopLeft } from "lucide-react";
 
 export function ProjectStoryViewport({ children, overview, id, titles }: { children: ReactNode; overview: ReactNode; id: string; titles: readonly string[] }) {
+  const {locale,t}=useTranslation();
   const root = useRef<HTMLDivElement>(null);
   const [list, setList] = useState(false);
+  useEffect(()=>{const restore=(event:Event)=>{const value=(event as CustomEvent<{id:string;list:boolean}>).detail;if(value.id===(id==="latest"?"latest-projects":"electronics-projects"))setList(value.list);};window.addEventListener("mhdrhn:restore-story-view",restore);return()=>window.removeEventListener("mhdrhn:restore-story-view",restore);},[id]);
   useEffect(() => root.current ? mountProjectStory(root.current) : undefined, []);
-  return <div className="story-root" ref={root} data-view={list ? "list" : "scroll"}>
+  return translateTree(<div className="story-root" ref={root} data-view={list ? "list" : "scroll"}>
     <div className="story-sticky">
       <div className="story-overview">{overview}</div>
       <div className="story-stage">
@@ -20,5 +25,5 @@ export function ProjectStoryViewport({ children, overview, id, titles }: { child
       <div className="story-progress" aria-hidden="true"><span/></div>
       </div>
     </div>
-  </div>;
+  </div>,t,locale);
 }

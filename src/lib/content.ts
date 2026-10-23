@@ -4,14 +4,9 @@ import { archiveProjects } from "./project-archive";
 import { experienceGroups } from "./portfolio";
 import { featuredAchievements } from "./achievement-records";
 
-export const categories = ["Semua", "Web", "IoT", "Electronics", "Embedded", "Research", "AI"] as const;
-export type Category = (typeof categories)[number];
-export const projectStatuses = ["Semua", "Online", "Dalam pengembangan", "Belum dipublikasikan"] as const;
-// Public wording is separate from stable filter/query values.
-export const projectStatusLabels: Record<typeof projectStatuses[number], string> = {
-  Semua: "Semua status", Online: "Online", "Dalam pengembangan": "Dalam pengembangan", "Belum dipublikasikan": "Belum diinformasikan",
-};
-export type ProjectStatus = Exclude<(typeof projectStatuses)[number], "Semua" | "Belum dipublikasikan">;
+import type {Category, ProjectStatus} from "./project-taxonomy";
+export {categories,projectStatuses,projectStatusLabels} from "./project-taxonomy";
+export type {Category,ProjectStatus} from "./project-taxonomy";
 export interface Project {
   slug: string; title: string; subtitle: string; summary: string;
   categories: Exclude<Category, "Semua">[]; year?: number; context: string; role?: string;
@@ -107,8 +102,8 @@ export const experienceHighlights = ["lab-electronics-2026", "himpteka-vice-2025
 export function getPublishedProjects(): readonly Project[] { return projects; }
 export function getProjectBySlug(slug: string): Project | undefined { return projects.find(project => project.slug === slug); }
 export function getFeaturedProjects(): Project[] { return projects.filter(project => project.featured !== undefined).sort((a, b) => a.featured! - b.featured!); }
-export function filterProjects(category: string, query: string, status = "Semua"): readonly Project[] {
+export function filterProjects(category: string, query: string, status = "Semua", translate: (value:string)=>string = value=>value): readonly Project[] {
   const search = query.trim().toLocaleLowerCase("id");
-  return projects.filter(project => (category === "Semua" || project.categories.includes(category as Exclude<Category, "Semua">)) && (status === "Semua" || (project.status ?? "Belum dipublikasikan") === status) && `${project.title} ${project.summary} ${project.technologies.join(" ")}`.toLocaleLowerCase("id").includes(search));
+  return projects.filter(project => (category === "Semua" || project.categories.includes(category as Exclude<Category, "Semua">)) && (status === "Semua" || (project.status ?? "Belum dipublikasikan") === status) && `${project.title} ${translate(project.subtitle)} ${translate(project.summary)} ${project.technologies.join(" ")}`.toLocaleLowerCase("id").includes(search));
 }
 export function getRelatedProjects(project: Project) { return projects.filter(item => item.slug !== project.slug && item.categories.some(category => project.categories.includes(category))).slice(0, 2); }

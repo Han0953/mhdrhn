@@ -1,10 +1,14 @@
 "use client";
+import { useTranslation } from "@/i18n/LocaleProvider";
+import { translateTree } from "@/i18n/translate";
+
 
 import { useEffect, useRef, useState } from "react";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
 import { motionTokens } from "@/lib/motion/tokens";
 
 export function RotatingRoles({ roles }: { roles: readonly string[] }) {
+  const {locale,t}=useTranslation();
   const [index, setIndex] = useState(0);
   const root = useRef<HTMLDivElement>(null);
 
@@ -45,12 +49,12 @@ export function RotatingRoles({ roles }: { roles: readonly string[] }) {
     };
   }, [roles.length]);
 
-  return <div className="rotating-roles" ref={root} tabIndex={0} role="group" aria-label="Fokus dan peran; pergantian berhenti selama area ini difokuskan atau diarahkan pointer">
+  return translateTree(<div className="rotating-roles" ref={root} tabIndex={0} role="group" aria-label="Fokus dan peran; pergantian berhenti selama area ini difokuskan atau diarahkan pointer">
     <p className="sr-only">Fokus dan peran: {roles.join(" ")}</p>
     <div className="role-stage" aria-hidden="true">
       {/* All labels reserve the same responsive footprint before hydration. No clipping mask. */}
       {roles.map((role, i) => <span key={role} className={i === index ? "role-visible" : i === (index + roles.length - 1) % roles.length ? "role-leaving" : "role-reserve"}>{role}</span>)}
     </div>
     <span className="role-reduced-note meta">Fokus kreatif & rekayasa</span>
-  </div>;
+  </div>,t,locale);
 }

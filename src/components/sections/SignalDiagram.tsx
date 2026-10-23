@@ -1,4 +1,7 @@
 "use client";
+import { useTranslation } from "@/i18n/LocaleProvider";
+import { translateTree } from "@/i18n/translate";
+
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { EngineeringStep } from "@/lib/content";
@@ -6,6 +9,7 @@ import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences"
 import { motionTokens } from "@/lib/motion/tokens";
 
 export function SignalDiagram({ steps, story = false }: { steps: readonly EngineeringStep[]; story?: boolean }) {
+  const {locale,t}=useTranslation();
   const [active, setActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const signal = useRef<SVGPathElement>(null);
@@ -70,7 +74,7 @@ export function SignalDiagram({ steps, story = false }: { steps: readonly Engine
     };
   }, [clear, select, story]);
 
-  return <div className={`signal-widget${story ? " signal-story" : ""}`} ref={root} data-active-step={steps[active].id}>
+  return translateTree(<div className={`signal-widget${story ? " signal-story" : ""}`} ref={root} data-active-step={steps[active].id}>
     <figure className="redline-probe">
       <div className="probe-heading"><span className="eyebrow">{story ? "Dari gagasan ke sistem" : "Dari sinyal ke sistem"}</span><span className="meta">{story ? "FIG. 02" : "FIG. 01"}</span></div>
       <button type="button" className="signal-canvas" onClick={run} aria-label="Animasikan diagram Sense, Compute, Build">
@@ -89,5 +93,5 @@ export function SignalDiagram({ steps, story = false }: { steps: readonly Engine
       <h3><button type="button" aria-pressed={active === index} onClick={() => choose(index)}><span className="eyebrow">0{index + 1}</span>{step.title}<span aria-hidden="true">↗</span></button></h3>
       <p className="process-short">{step.short}</p><p>{step.description}</p>
     </li>)}</ol>}
-  </div>;
+  </div>,t,locale);
 }

@@ -1,12 +1,17 @@
 "use client";
+import { useTranslation } from "@/i18n/LocaleProvider";
+import { translateTree } from "@/i18n/translate";
+
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { ArrowLeft, ArrowRight, Maximize2, Minimize2, X, ZoomIn } from "lucide-react";
-import { getMediaDimensions, type MediaAsset } from "@/lib/media";
+import type {MediaAsset} from "@/lib/media";
+import {getMediaDimensions} from "@/lib/media-dimensions";
 import { MediaImage } from "./MediaImage";
 import { mountDialog } from "@/lib/motion/dialog";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
 
 export function MediaGallery({ items, label, compact = false, sizes }: { items: readonly MediaAsset[]; label: string; compact?: boolean; sizes?: string }) {
+  const {locale,t}=useTranslation();
   const publicItems = items.filter(item => item.publication === "PUBLIC");
   const dialog = useRef<HTMLDialogElement>(null);
   const panelMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
@@ -63,16 +68,16 @@ export function MediaGallery({ items, label, compact = false, sizes }: { items: 
   }
   if (!current) return null;
   const currentDimensions = getMediaDimensions(current);
-  return <div className={`media-gallery${compact ? " media-gallery--compact" : ""}`} data-gallery={label}>
+  return translateTree(<div className={`media-gallery${compact ? " media-gallery--compact" : ""}`} data-gallery={label}>
     <div className="media-gallery-grid">{publicItems.map((media, index) => {
       const dimensions = getMediaDimensions(media);
       const portrait = dimensions.height > dimensions.width;
-      return <figure key={media.id} data-media-orientation={portrait ? "portrait" : "landscape"}>
+      return translateTree(<figure key={media.id} data-media-orientation={portrait ? "portrait" : "landscape"}>
       <button className="media-open" type="button" onClick={event => open(index, event.currentTarget)} aria-haspopup="dialog" aria-controls={id} aria-label={`Perbesar gambar: ${media.alt}`}>
         <span className="media-frame" style={portrait ? { aspectRatio: dimensions.width / dimensions.height } : undefined}><MediaImage media={media} sizes={sizes ?? "(max-width: 767px) 100vw, 80vw"}/></span>
         <span className="media-enlarge" aria-hidden="true"><ZoomIn size={18}/></span>
       </button><figcaption>{media.caption}</figcaption>
-    </figure>; })}</div>
+    </figure>,t,locale); })}</div>
     <dialog ref={dialog} id={id} className="media-dialog" data-media-orientation={currentDimensions.height > currentDimensions.width ? "portrait" : "landscape"} aria-labelledby={`${id}-heading`} aria-describedby={`${id}-caption`} onKeyDown={keydown} onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) close(); }} onClose={() => { setOpened(false); setExpanded(false); opener.current?.focus({ preventScroll: true }); }}>
       <div className="media-dialog-content"><header className="media-dialog-top"><h2 id={`${id}-heading`}>{label}</h2><div className="dialog-actions">
         <button type="button" className="icon-button" onClick={() => setExpanded(value => !value)} aria-label={expanded ? "Sesuaikan gambar ke layar" : "Perbesar tampilan gambar"} aria-pressed={expanded}>{expanded ? <Minimize2 size={20}/> : <Maximize2 size={20}/>}</button>
@@ -82,5 +87,5 @@ export function MediaGallery({ items, label, compact = false, sizes }: { items: 
       <footer className="media-dialog-footer"><p id={`${id}-caption`}>{current.caption}</p>{publicItems.length > 1 && <nav aria-label="Navigasi gambar"><button type="button" className="icon-button" onClick={() => move(-1)} aria-label="Gambar sebelumnya"><ArrowLeft/></button><span className="meta" role="status">{active + 1} / {publicItems.length}</span><button type="button" className="icon-button" onClick={() => move(1)} aria-label="Gambar berikutnya"><ArrowRight/></button></nav>}</footer>
       </div>
     </dialog>
-  </div>;
+  </div>,t,locale);
 }

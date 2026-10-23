@@ -1,3 +1,4 @@
+import {logicalPath} from "../i18n/config";
 /** The shared order for header, footer, and directional navigation. */
 export const navigation = [
   { href: "/", label: "Home" },
@@ -38,7 +39,7 @@ export function navigationLabel(path: string, projects: readonly NavigationProje
 }
 
 function normalize(path: string) {
-  return path.split(/[?#]/, 1)[0].replace(/\/+$/, "") || "/";
+  return logicalPath(path.split(/[?#]/, 1)[0].replace(/\/+$/, "") || "/");
 }
 
 export function getNavigationIndex(path: string): number {

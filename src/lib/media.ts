@@ -13,9 +13,7 @@ export interface MediaAsset {
   credit: string;
 }
 const asset = (id: string, src: string, width: number, height: number, kind: MediaAsset["kind"], alt: string, caption: string, publication: MediaAsset["publication"] = "PUBLIC"): MediaAsset => ({ id, src, width, height, kind, alt, caption, publication, credit: "Dokumentasi Muhammad Rehan" });
-export function getMediaDimensions(media: MediaAsset) {
-  return media.rotation === 90 ? { width: media.height, height: media.width } : { width: media.width, height: media.height };
-}
+export {getMediaDimensions} from "./media-dimensions";
 export const mediaAssets = {
   portrait: asset("portrait", "/foto-profile.webp", 1680, 2048, "portrait", "Muhammad Rehan", "Muhammad Rehan · Pekanbaru, Riau"),
   vircuit: asset("vircuit", "/project/web/vircuit.webp", 1919, 971, "screenshot", "Halaman beranda Vircuit dengan antarmuka laboratorium virtual", "Beranda Vircuit."),

@@ -64,7 +64,7 @@ export function createRouteWipe(getLayer: () => HTMLElement | null, prefersReduc
     layer.dataset.direction = direction > 0 ? "right" : "left";
     layer.dataset.navigation = history ? "history" : "link"; layer.dataset.phase = phase;
     const title = layer.querySelector(".route-title"); if (title) title.textContent = label;
-    const status = layer.querySelector("[role=status]"); if (status) status.textContent = `Membuka halaman ${label}.`;
+    const status = layer.querySelector("[role=status]"); if (status) status.textContent = layer.dataset.locale === "en" ? `Opening ${label}.` : `Membuka halaman ${label}.`;
     if (layer.parentElement) { layer.parentElement.dataset.active = "true"; layer.parentElement.setAttribute("aria-hidden", "false"); }
     onActive(true, false);
     feedback = setTimeout(() => { if (current === token) layer.dataset.pending = "true"; }, 1500);

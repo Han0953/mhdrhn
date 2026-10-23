@@ -1,4 +1,7 @@
 "use client";
+import { useTranslation } from "@/i18n/LocaleProvider";
+import { translateTree } from "@/i18n/translate";
+
 
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
@@ -19,11 +22,13 @@ const options = [
 ] as const;
 
 export function ThemeToggle() {
+  const {locale,t}=useTranslation();
   const id = useId();
   const { theme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const motion = useSyncExternalStore(subscribeMotion, getMotionPreference, () => "system");
   const [open, setOpen] = useState(false);
+  useEffect(()=>{const other=(event:Event)=>{if((event as CustomEvent).detail=== "language")setOpen(false);};window.addEventListener("mhdrhn:popover",other);return()=>window.removeEventListener("mhdrhn:popover",other);},[]);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,7 +51,7 @@ export function ThemeToggle() {
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === "Escape" && open) { event.preventDefault(); event.stopPropagation(); close(true); }
     if ((event.key === "ArrowDown" || event.key === "ArrowUp") && event.target === trigger.current) {
-      event.preventDefault(); cancelLeave(); reason.current = "control"; setOpen(true);
+      event.preventDefault(); cancelLeave(); reason.current = "control"; window.dispatchEvent(new CustomEvent("mhdrhn:popover",{detail:"theme"})); setOpen(true);
     }
   }
 
@@ -64,7 +69,7 @@ export function ThemeToggle() {
     return () => { document.removeEventListener("pointerdown", outside); window.removeEventListener("popstate", history); };
   }, [open, close]);
 
-  return <div className="theme-switcher" ref={root} onKeyDown={onKeyDown}
+  return translateTree(<div className="theme-switcher" ref={root} onKeyDown={onKeyDown}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) close(); }}
     onPointerEnter={event => {
       cancelLeave();
@@ -84,6 +89,7 @@ export function ThemeToggle() {
         cancelLeave();
         if (open && reason.current === "hover") { reason.current = "control"; return; }
         reason.current = "control";
+        if(!open)window.dispatchEvent(new CustomEvent("mhdrhn:popover",{detail:"theme"}));
         setOpen(!open);
         if (event.detail === 0) reason.current = "control";
       }}>
@@ -105,5 +111,5 @@ export function ThemeToggle() {
       </div>
       <p className="preference-hint">Minimal menghentikan animasi dan teks bergilir.</p>
     </div>
-  </div>;
+  </div>,t,locale);
 }

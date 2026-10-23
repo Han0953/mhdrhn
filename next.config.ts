@@ -8,6 +8,8 @@ const localPreviewHosts = Object.values(networkInterfaces()).flatMap(addresses =
 );
 
 const nextConfig: NextConfig = {
+  // The locale segment is the root layout; provide a complete bilingual global 404.
+  experimental: { globalNotFound: true },
   allowedDevOrigins: ["127.0.0.1", ...new Set(localPreviewHosts)],
 };
 

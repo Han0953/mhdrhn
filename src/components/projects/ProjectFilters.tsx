@@ -1,16 +1,20 @@
 "use client";
+import {useTranslation} from "@/i18n/LocaleProvider";
+import {translateTree} from "@/i18n/translate";
 
 import { useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@base-ui/react/select";
 import { Check, ChevronDown } from "lucide-react";
-import { projectStatuses, projectStatusLabels, type Category } from "@/lib/content";
+import { projectStatuses, projectStatusLabels, type Category } from "@/lib/project-taxonomy";
+import {localeHref} from "@/i18n/config";
 import { projectFilterHref } from "@/lib/project-filters";
 
 type ProjectStatus = typeof projectStatuses[number];
 
 /** Only the controls hydrate; the filtered catalog remains server rendered. */
 export function ProjectFilters({ category, query, status }: { category: Category; query: string; status: ProjectStatus }) {
+  const {locale,t}=useTranslation();
   const router = useRouter();
   const search = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
@@ -21,10 +25,10 @@ export function ProjectFilters({ category, query, status }: { category: Category
   }, [query]);
   const apply = (nextStatus: ProjectStatus) => {
     const href = projectFilterHref(category, search.current?.value ?? query, nextStatus);
-    startTransition(() => router.replace(href, { scroll: false }));
+    startTransition(() => router.replace(localeHref(href,locale), { scroll: false }));
   };
 
-  return <form action="/projects" className="search-form" data-pending={pending ? "" : undefined} aria-busy={pending} onSubmit={event => { event.preventDefault(); apply(status); }}>
+  return translateTree(<form action="/projects" className="search-form" data-pending={pending ? "" : undefined} aria-busy={pending} onSubmit={event => { event.preventDefault(); apply(status); }}>
     {category !== "Semua" && <input type="hidden" name="category" value={category}/>}
     <div className="search-field"><label htmlFor="project-search">Cari proyek</label><input ref={search} id="project-search" name="q" placeholder="Nama proyek atau teknologi…" defaultValue={query} maxLength={100} type="search" aria-describedby="project-filter-help" onKeyDown={event => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); apply(status); } }} onChange={event => { if (!event.currentTarget.value) apply(status); }}/></div>
     <div className="status-field">
@@ -35,5 +39,5 @@ export function ProjectFilters({ category, query, status }: { category: Category
       </Select.Root>
     </div>
     <p id="project-filter-help" className="filter-help" role="status">{pending ? "Memperbarui hasil…" : "Tekan Enter untuk mencari. Status langsung memfilter hasil."}</p>
-  </form>;
+  </form>,t,locale);
 }
