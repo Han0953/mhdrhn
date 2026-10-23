@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import { loadContent } from './load-content.mjs';
 const { projectFilterHref } = loadContent('src/lib/project-filters.ts');
 const { festivalAchievements, publicAchievementOutcomeCount } = loadContent('src/lib/achievement-records.ts');
@@ -30,10 +31,14 @@ check('two ESF outcomes add no fabricated category, certificate URL, team or pro
   for (const field of ['category','certificate','source','team','projectSlug']) assert.equal(event[field],undefined);
 });
 check('the official brand font remains bundled, licensed and served locally', () => {
-  const font = fs.readFileSync('src/app/fonts/Syne-Variable.ttf');
-  assert.ok(font.includes(Buffer.from('ss04'))); assert.match(fs.readFileSync('src/app/fonts/OFL-Syne.txt','utf8'),/SIL OPEN FONT LICENSE/);
-  assert.match(fs.readFileSync('src/app/globals.css','utf8'),/font-feature-settings:"ss04" 1/);
-  assert.match(fs.readFileSync('src/app/layout.tsx','utf8'),/next\/font\/local/);
+  const font = fs.readFileSync('src/app/fonts/ClashDisplay-Semibold.woff2');
+  assert.equal(font.toString('ascii',0,4),'wOF2');
+  assert.equal(createHash('sha256').update(font).digest('hex'),'e748ea11c49f39ae2375dce4fbda8dc971c5ca8b64ac8a838b5daba96f61a10a');
+  assert.match(fs.readFileSync('src/app/fonts/ITF-FFL-ClashDisplay.txt','utf8'),/You may self-host the Font Software/);
+  const layout=fs.readFileSync('src/app/layout.tsx','utf8');
+  assert.match(layout,/next\/font\/local/);
+  assert.match(layout,/ClashDisplay-Semibold\.woff2/);
+  assert.match(layout,/weight: "600"/);
 });
 fs.writeFileSync(process.env.MHDRHN_QA_GLYPH_EVIDENCE || 'docs/execution/evidence/glyph-filter-content-2026-10-19/targeted-checks.json',JSON.stringify({results},null,2));
 console.log(`${results.length} targeted regression checks passed.`);

@@ -10,8 +10,8 @@ import { Footer } from "@/components/layout/Footer";
 import { MotionPreferences } from "@/components/motion/MotionPreferences";
 import { LenisProvider } from "@/providers/LenisProvider";
 import { getPublishedProjects } from "@/lib/content";
-// Original pairing: Syne for display text and the wordmark, Manrope for body text.
-const brand = localFont({ src: "./fonts/Syne-Variable.ttf", variable: "--font-brand", weight: "400 800", display: "swap" });
+// Owner-approved pairing: Clash Display Semibold for display text; Manrope for body.
+const brand = localFont({ src: "./fonts/ClashDisplay-Semibold.woff2", variable: "--font-brand", weight: "600", style: "normal", display: "swap" });
 const body = Manrope({ variable: "--font-body", subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
   title: { default: "Muhammad Rehan — Creative Engineering | mhdrhn.", template: "%s | mhdrhn." },
