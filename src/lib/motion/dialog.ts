@@ -2,7 +2,7 @@ import { prefersReducedMotion, subscribeMotion } from "./preferences";
 import { motionTokens } from "./tokens";
 
 /** Native dialog owns focus/top-layer semantics; navigation can close immediately. */
-export function mountDialog(dialog: HTMLDialogElement, side = false) {
+export function mountDialog(dialog: HTMLDialogElement, side = false, anchor?: () => HTMLElement | null) {
   // Keep the mobile header stationary in the native modal top layer.
   const panel = dialog.querySelector?.<HTMLElement>("[data-dialog-panel]") ?? dialog;
   let animation: Animation | undefined, timer: ReturnType<typeof setTimeout> | undefined;
@@ -15,7 +15,7 @@ export function mountDialog(dialog: HTMLDialogElement, side = false) {
     contentAnimations.splice(0).forEach(item => item.cancel());
   }
   function closeNow() { if (side) dialog.dataset.menuPhase = "closed"; stop(); closing = false; delete dialog.dataset.motionState; if (dialog.open) dialog.close(); }
-  function move(exit: boolean, from?: string, glyphFrom?: { transform: string; opacity: string }[]) {
+  function move(exit: boolean, from?: string, glyphFrom?: { transform: string; opacity: string }[], fromOpacity?: string) {
     const token = ++generation;
     let trailingContent = false;
     const transform = "translateY(20px)";
@@ -32,11 +32,18 @@ export function mountDialog(dialog: HTMLDialogElement, side = false) {
     if (prefersReducedMotion() || document.hidden || typeof panel.animate !== "function") { done(); return; }
     dialog.dataset.motionState = exit ? "closing" : "opening";
     // An opaque side panel must not expose the dim backdrop through its canvas.
-    const frames = side ? [{ transform: from ?? (exit ? "none" : "translateX(100%)") }, { transform: exit ? "translateX(100%)" : "none" }] : [{ opacity: 0, transform }, { opacity: 1, transform: "none" }];
+    const source = anchor?.()?.getBoundingClientRect();
+    const target = source ? panel.getBoundingClientRect() : undefined;
+    const collapsed = source && target && target.width && target.height
+      ? `translate(${source.left + source.width / 2 - target.left - target.width / 2}px,${source.top + source.height / 2 - target.top - target.height / 2}px) scale(${source.width / target.width},${source.height / target.height})`
+      : transform;
+    const frames = side ? [{ transform: from ?? (exit ? "none" : "translateX(100%)") }, { transform: exit ? "translateX(100%)" : "none" }]
+      : anchor ? [{ opacity: fromOpacity ?? (exit ? 1 : 0), transform: from ?? (exit ? "none" : collapsed) }, { opacity: exit ? 0 : 1, transform: exit ? collapsed : "none" }]
+      : [{ opacity: 0, transform: collapsed }, { opacity: 1, transform: "none" }];
     const duration = side ? (exit ? 460 : 620) : exit ? motionTokens.duration.modalClose : motionTokens.duration.modalOpen;
     let completionDuration = duration;
     try {
-      animation = panel.animate(!side && exit ? frames.reverse() : frames, { duration, easing: side ? motionTokens.easing.transfer : motionTokens.easing.response, fill: "both" });
+      animation = panel.animate(!side && !anchor && exit ? frames.reverse() : frames, { duration, easing: side ? motionTokens.easing.transfer : motionTokens.easing.response, fill: "both" });
       animation.onfinish = done; animation.oncancel = done;
       if (side) Array.from(dialog.querySelectorAll?.<HTMLElement>(".menu-glyph>span") ?? []).forEach((line, index) => {
         const closed = { transform: index === 1 ? "scaleX(1)" : `translateY(${index === 0 ? -5 : 5}px) rotate(0deg)`, opacity: 1 };
@@ -60,12 +67,12 @@ export function mountDialog(dialog: HTMLDialogElement, side = false) {
   document.addEventListener("visibilitychange", preference);
   const unsubscribe = subscribeMotion(preference);
   function snapshot() {
-    if (!side || !dialog.open || typeof getComputedStyle !== "function") return {};
-    return { from: getComputedStyle(panel).transform, glyphFrom: Array.from(dialog.querySelectorAll<HTMLElement>(".menu-glyph>span"), line => ({ transform: getComputedStyle(line).transform, opacity: getComputedStyle(line).opacity })) };
+    if ((!side && !anchor) || !dialog.open || typeof getComputedStyle !== "function") return {};
+    return { from: getComputedStyle(panel).transform, opacity: getComputedStyle(panel).opacity, glyphFrom: Array.from(dialog.querySelectorAll<HTMLElement>(".menu-glyph>span"), line => ({ transform: getComputedStyle(line).transform, opacity: getComputedStyle(line).opacity })) };
   }
   return {
-    open() { const current = snapshot(); stop(); closing = false; if (side) dialog.dataset.menuPhase = "open"; if (!dialog.open) { if (side) dialog.show(); else dialog.showModal(); } move(false, current.from, current.glyphFrom); },
-    close(immediate = false) { if (!dialog.open || (closing && !immediate)) return; const current = snapshot(); stop(); closing = true; if (side) dialog.dataset.menuPhase = "closing"; if (immediate) closeNow(); else move(true, current.from, current.glyphFrom); },
+    open() { const current = snapshot(); stop(); closing = false; if (side) dialog.dataset.menuPhase = "open"; if (!dialog.open) { if (side) dialog.show(); else dialog.showModal(); } move(false, current.from, current.glyphFrom, current.opacity); },
+    close(immediate = false) { if (!dialog.open || (closing && !immediate)) return; const current = snapshot(); stop(); closing = true; if (side) dialog.dataset.menuPhase = "closing"; if (immediate) closeNow(); else move(true, current.from, current.glyphFrom, current.opacity); },
     dispose() { stop(); delete dialog.dataset.motionState; delete dialog.dataset.menuPhase; unsubscribe(); dialog.removeEventListener("close", nativeClosed); document.removeEventListener("visibilitychange", preference); },
   };
 }

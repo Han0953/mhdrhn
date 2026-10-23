@@ -301,9 +301,10 @@ html:has(.menu-dialog[open])::-webkit-scrollbar { visibility:hidden; }
 .menu-note { margin-top:28px; }
 .azura-launcher { position:fixed; z-index:35; bottom:max(16px,env(safe-area-inset-bottom)); right:max(16px,env(safe-area-inset-right)); display:grid; place-items:center; width:44px; height:44px; padding:0; background:var(--ink); color:var(--canvas); border:1px solid var(--canvas); }
 .launcher-note { display:block; font-size:10px; margin-top:3px; }
-.azura-panel { display:flex; flex-direction:column; width:min(520px,calc(100% - 24px)); max-height:calc(100% - var(--header-height) - 24px); height:680px; min-height:0; flex-shrink:0; margin:auto; padding:20px; background:var(--canvas); border:1px solid var(--rule); overflow-y:auto; overscroll-behavior:contain; transition:width 480ms var(--motion-response),height 480ms var(--motion-response); }
-.azura-dialog[data-size="wide"] .azura-panel { width:min(960px,calc(100% - 24px)); height:820px; }
-.chat-typing { padding:16px; background:var(--surface); }
+.azura-dialog { position:fixed; top:var(--chat-viewport-top,0px); bottom:auto; height:var(--chat-viewport-height,100dvh); max-height:var(--chat-viewport-height,100dvh); padding:12px; }
+.azura-panel { display:flex; flex-direction:column; width:min(560px,100%); max-height:100%; height:720px; min-height:0; flex-shrink:0; margin:auto; padding:16px; background:var(--canvas); border:1px solid var(--rule); overflow:hidden; overscroll-behavior:contain; transition:width 480ms var(--motion-response),height 480ms var(--motion-response); }
+.azura-dialog[data-size="wide"] .azura-panel { width:min(960px,100%); height:820px; }
+.chat-typing { width:fit-content; padding:12px; background:var(--surface); border:1px solid var(--rule); }
 .chat-typing>span[aria-hidden] { display:flex; align-items:center; gap:6px; min-height:23px; }
 .chat-typing i { display:block; width:6px; height:6px; border-radius:50%; background:var(--accent-text); }
 html[data-motion="minimal"] .azura-panel { transition:none; }
@@ -312,9 +313,13 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
 .dialog-actions button { display:grid; place-items:center; width:44px; height:44px; background:transparent; border:0; }
 .azura-dialog .dialog-top { gap:8px; flex-shrink:0; }
 .azura-dialog .dialog-top h2 { font-size:28px; }
+.azura-dialog .dialog-top .eyebrow { font-size:10px; letter-spacing:.06em; }
 .footer-back-top { display:flex; align-items:center; gap:12px; min-height:44px; margin-block:24px; padding:8px 0; background:transparent; color:inherit; border:0; border-bottom:1px solid currentColor; }
-.chat-description { padding:16px 0; border-bottom:1px solid var(--rule); font-size:12px; }
-.chat-log { flex:1; overflow-y:auto; overscroll-behavior:contain; min-height:60px; padding:20px 4px 20px 0; }
+.chat-description { padding:8px 0 12px; border-bottom:1px solid var(--rule); font-size:12px; flex-shrink:0; }
+.chat-log { flex:1; overflow-y:auto; overscroll-behavior:contain; min-height:0; padding:16px 4px 16px 0; }
+.chat-transcript,.chat-exchange { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
+.chat-transcript { gap:16px; }
+.chat-exchange { width:100%; }
 .chat-log,.azura-panel { scrollbar-width:thin; scrollbar-color:var(--control) var(--surface); }
 @supports selector(::-webkit-scrollbar) {
   .chat-log,.azura-panel { scrollbar-width:auto; scrollbar-color:auto; }
@@ -322,19 +327,42 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
 .chat-log::-webkit-scrollbar,.azura-panel::-webkit-scrollbar { width:3px; height:3px; }
 .chat-log::-webkit-scrollbar-track,.azura-panel::-webkit-scrollbar-track { background:transparent; }
 .chat-log::-webkit-scrollbar-thumb,.azura-panel::-webkit-scrollbar-thumb { background:var(--control); border:0; border-radius:3px; }
-.chat-reply { padding:16px; background:var(--surface); font-size:14px; overflow-wrap:anywhere; }
+.chat-reply { align-self:flex-start; max-width:88%; padding:12px; background:var(--surface); border:1px solid var(--rule); font-size:14px; line-height:1.55; overflow-wrap:anywhere; }
 .chat-reply .text-link { font-size:13px; margin-top:8px; }
-.chat-question { font-size:14px; border-left:3px solid var(--brand); padding:12px; margin:16px 0; overflow-wrap:anywhere; }
-.quick-questions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
-.quick-questions button { background:transparent; border:1px solid var(--control); padding:8px 10px; min-height:44px; font-size:12px; }
+.chat-question { align-self:flex-end; max-width:85%; font-size:14px; line-height:1.55; background:var(--brand); color:var(--on-brand); border:1px solid var(--brand); padding:10px 12px; overflow-wrap:anywhere; }
+.quick-questions { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; flex-shrink:0; }
+.quick-questions button { background:transparent; border:1px solid var(--control); padding:6px 8px; min-height:36px; font-size:11px; }
+.chat-form { flex-shrink:0; }
 .chat-form label { font-size:12px; font-weight:600; display:block; margin-bottom:8px; }
 .chat-input-row { display:flex; gap:8px; }
-.chat-input-row input { width:100%; font-size:16px; }
-.chat-input-row button { background:var(--brand); color:var(--on-brand); height:48px; }
+.chat-input-row input { width:100%; min-width:0; font-size:16px; height:44px; padding:10px; }
+.chat-input-row button { background:var(--brand); color:var(--on-brand); height:44px; flex-shrink:0; }
 .form-error { font-size:12px; color:var(--accent-text); margin-top:6px; }
 .chat-form-footer { display:flex; gap:8px; justify-content:space-between; align-items:center; }
 .chat-form-footer .meta { font-size:10px; }
 .reset-chat { display:flex; align-items:center; gap:6px; background:transparent; border:0; min-height:44px; font-size:12px; }
+.reset-chat>span { display:flex; }
+.chat-retention { font-size:10px; line-height:1.4; color:var(--muted); }
+.azura-dialog[data-keyboard="true"] .quick-questions,.azura-dialog[data-keyboard="true"] .chat-description { display:none; }
+@media(max-width:767px) {
+  .azura-launcher { width:40px; height:40px; }
+  .azura-launcher svg { width:17px; height:17px; }
+  .azura-dialog { padding:8px; padding-bottom:max(8px,env(safe-area-inset-bottom)); }
+  .azura-panel { padding:12px; height:100%; }
+  .azura-dialog .dialog-top h2 { font-size:22px; }
+  .azura-dialog .dialog-actions { gap:0; }
+  .azura-dialog .dialog-actions button { width:40px; min-width:40px; height:40px; }
+  .chat-reply,.chat-question { font-size:13px; }
+  .chat-reply .text-link { font-size:12px; min-height:36px; gap:8px; }
+  .quick-questions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .chat-form-footer { min-height:36px; }
+  .reset-chat { min-height:36px; font-size:11px; }
+}
+@media(max-height:420px) {
+  .azura-dialog .quick-questions,.azura-dialog .chat-description,.azura-dialog .dialog-top .eyebrow,.chat-retention { display:none; }
+  .azura-panel { padding:8px; }
+  .chat-log { padding-block:8px; }
+}
 @media(min-width:768px) {
   .wrap { width:calc(100% - 64px); }
   .hero-grid { grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:32px; margin-top:64px; }
