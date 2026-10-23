@@ -63,7 +63,8 @@ img { max-width:100%; height:auto; }
 .skip-link { position:fixed; z-index:100; top:8px; left:16px; background:var(--ink); color:var(--canvas); padding:12px 20px; transform:translateY(-150%); }
 .skip-link:focus { transform:none; }
 main { min-height:65vh; }
-.site-header { height:calc(var(--header-height) - 12px); position:fixed; inset:0 0 auto; z-index:40; background:transparent; border:0; isolation:isolate; }
+:root { --header-surface-height:calc(var(--header-height) - 12px); }
+.site-header { height:var(--header-surface-height); position:fixed; inset:0 0 auto; z-index:40; background:transparent; border:0; isolation:isolate; }
 .header-space { height:var(--header-height); }
 .site-header::before { content:""; position:absolute; inset:0; z-index:-1; background:var(--canvas); pointer-events:none; }
 @media(max-width:1279px) {
@@ -278,9 +279,10 @@ dialog::backdrop { background:rgb(0 0 0 / .65); }
 html[data-motion="minimal"] .chrome-dialog::backdrop { transition:none; }
 @media(prefers-reduced-motion:reduce) { .chrome-dialog::backdrop { transition:none; } }
 .popup-header { width:100%; flex-shrink:0; position:relative; inset:auto; }
-.menu-dialog { position:fixed; z-index:36; padding-top:var(--header-height); isolation:isolate; }
-.menu-dialog::before { content:""; position:absolute; inset:0; z-index:-1; background:rgb(0 0 0 / .65); pointer-events:none; opacity:1; transition:opacity 620ms var(--motion-response); }
-.menu-dialog::after { content:""; position:absolute; inset:0 0 auto; height:var(--header-height); z-index:-1; background:var(--canvas); pointer-events:none; opacity:1; transition:opacity 460ms var(--motion-response); }
+/* The panel, header cap and dim layer share the compact header boundary. */
+.menu-dialog { position:fixed; z-index:36; padding-top:var(--header-surface-height); isolation:isolate; }
+.menu-dialog::before { content:""; position:absolute; inset:var(--header-surface-height) 0 0; z-index:-1; background:rgb(0 0 0 / .65); pointer-events:none; opacity:1; transition:opacity 620ms var(--motion-response); }
+.menu-dialog::after { content:""; position:absolute; inset:0 0 auto; height:var(--header-surface-height); z-index:-1; background:var(--canvas); pointer-events:none; opacity:1; transition:opacity 460ms var(--motion-response); }
 .menu-dialog:is([data-menu-phase="closing"],[data-menu-phase="closed"])::after { opacity:0; }
 .menu-dialog:is([data-menu-phase="closing"],[data-menu-phase="closed"])::before { opacity:0; transition-duration:460ms; }
 @starting-style { .menu-dialog[open]::before { opacity:0; } }
