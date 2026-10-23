@@ -5,7 +5,7 @@ export const inventoryIconNames = [
   "cpp", "typescript", "javascript", "php", "python", "micropython", "dart", "sql", "react", "flutter",
   "code", "web", "database", "layers", "wind", "bolt", "waves", "box", "network", "panels", "worker",
   "cpu", "arduino", "raspberry", "radio", "cloud", "monitor", "automation", "sensor", "circuit", "wrench", "flask", "gauge",
-  "testing", "bug", "eye", "camera", "video", "file", "ide", "orbit", "terminal", "palette", "office", "android", "git", "ruler", "asterisk", "theater", "braces",
+  "testing", "bug", "eye", "camera", "video", "file", "ide", "orbit", "terminal", "palette", "office", "android", "git", "ruler", "asterisk", "theater", "braces", "puzzle", "users",
 ] as const;
 export type InventoryIcon = typeof inventoryIconNames[number];
 export interface InventoryItem {
@@ -46,7 +46,6 @@ function fromSkills(ids: readonly string[], accept: (name: string) => boolean = 
 export const ownerSoftware: readonly InventoryItem[] = [
   { id: "vs-code", name: "VS Code", icon: "ide", source: "DATA §12.9" },
   { id: "antigravity-ide", name: "Antigravity IDE", icon: "orbit", source: "DATA §12.9" },
-  { id: "codex", name: "Codex", icon: "terminal", source: "DATA §12.9" },
   { id: "canva", name: "Canva", icon: "palette", source: "DATA §12.9" },
   { id: "microsoft-office", name: "Microsoft Office", icon: "office", source: "DATA §12.9" },
   { id: "arduino-ide", name: "Arduino IDE", icon: "arduino", source: "DATA §12.9" },
@@ -70,7 +69,10 @@ export const technologyInventoryGroups: readonly InventoryGroup[] = [
   { id: "tech", title: "Tech", description: "Bahasa dan teknologi untuk mengembangkan sistem serta aplikasi.", items: [...fromSkills(["languages", "web", "mobile"], name => name !== "MIT App Inventor"), ...projectTesting] },
   { id: "embedded", title: "Embedded & IoT", description: "Perangkat dan teknologi untuk mengolah masukan, menjalankan kendali, dan saling terhubung.", items: fromSkills(["embedded", "iot"]) },
   { id: "tools", title: "Tools & Software", description: "Aplikasi untuk menulis kode, merancang, dan mendokumentasikan pekerjaan.", items: [...ownerSoftware, ...fromSkills(["mobile"], name => name === "MIT App Inventor")] },
-  { id: "capabilities", title: "Capabilities", description: "Keterampilan praktis yang saya gunakan saat mengerjakan dan memeriksa hasil pekerjaan.", items: fromSkills(["electronics", "qa", "media"]) },
+  { id: "capabilities", title: "Capabilities", description: "Keterampilan praktis yang saya gunakan saat mengerjakan dan memeriksa hasil pekerjaan.", items: [...fromSkills(["electronics", "qa", "media"]),
+    { id: "problem-solving", name: "Problem Solving", icon: "puzzle", source: "Konfirmasi pemilik · 23 Oktober 2026" },
+    { id: "teamwork", name: "Teamwork", icon: "users", source: "Konfirmasi pemilik · 23 Oktober 2026" },
+  ] },
 ];
 export const technologyInventoryItems = technologyInventoryGroups.flatMap(group => group.items);
 
@@ -78,8 +80,8 @@ export const technologyInventoryItems = technologyInventoryGroups.flatMap(group 
 const homeSelection: Record<InventoryGroup["id"], readonly string[]> = {
   tech: ["cpp", "javascript", "typescript", "php", "sql", "react", "next-js", "tailwind-css", "laravel", "python", "micropython"],
   embedded: ["arduino-uno", "esp8266", "esp32", "stm32", "raspberry-pi", "mqtt", "blynk-blynk-cloud-http-api"],
-  tools: ["vs-code", "codex", "git", "arduino-ide", "android-studio", "wokwi", "canva", "microsoft-office"],
-  capabilities: ["circuit-design", "electronics-troubleshooting", "sensor-integration", "laboratory-practice", "mobile-application-software-testing", "documentation"],
+  tools: ["vs-code", "antigravity-ide", "git", "arduino-ide", "android-studio", "wokwi", "canva", "microsoft-office"],
+  capabilities: ["circuit-design", "electronics-troubleshooting", "sensor-integration", "laboratory-practice", "mobile-application-software-testing", "documentation", "problem-solving", "teamwork"],
 };
 export const homeTechnologyGroups: readonly InventoryGroup[] = technologyInventoryGroups.map(group => ({
   ...group,

@@ -21,10 +21,11 @@ await check('all DATA 12.1–8 inventory entries are present exactly once in the
     assert.equal(matches.length,1,`DATA 12.${section}: ${name}`);assert.equal(matches[0].source,`DATA §12.${section}`);
   }
 });
-await check('13 requested applications match DATA 12.9 and remain in Tools; MIT App Inventor is software too',()=>{
-  const expected=['VS Code','Antigravity IDE','Codex','Canva','Microsoft Office','Arduino IDE','Android Studio','Git','Wokwi','AutoCAD','Cirkit Designer IDE','Open Code','Claude Code'];
-  assert.deepEqual(Array.from(ownerSoftware,item=>item.name),expected);assert.deepEqual(sourceItems(9),expected);
-  const tools=groups.find(g=>g.id==='tools');assert.equal(tools.items.length,14);
+await check('current owner selection replaces Codex while preserving the historical DATA software record',()=>{
+  const recorded=['VS Code','Antigravity IDE','Codex','Canva','Microsoft Office','Arduino IDE','Android Studio','Git','Wokwi','AutoCAD','Cirkit Designer IDE','Open Code','Claude Code'];
+  const expected=recorded.filter(name=>name!=='Codex');
+  assert.deepEqual(Array.from(ownerSoftware,item=>item.name),expected);assert.deepEqual(sourceItems(9),recorded);
+  const tools=groups.find(g=>g.id==='tools');assert.equal(tools.items.length,13);
   expected.concat('MIT App Inventor').forEach(name=>assert.ok(tools.items.some(item=>item.name===name),name));
   for(const name of ['Monaco Editor','React Flow / XYFlow','Vitest','Playwright','Laravel Pint'])assert.ok(!tools.items.some(item=>item.name===name),name);
 });
@@ -36,7 +37,7 @@ await check('requested and source Learning markers are consistent in Home and Ab
 });
 await check('every item has one stable ID, name, known icon, source, and no navigation destination',()=>{
   assert.equal(new Set(items.map(item=>item.id)).size,items.length);assert.equal(new Set(items.map(item=>item.name)).size,items.length);
-  for(const item of items){assert.ok(inventoryIconNames.includes(item.icon),item.name);assert.match(item.source,/^DATA §(?:9|12)\./);assert.ok(!('href'in item));}
+  for(const item of items){assert.ok(inventoryIconNames.includes(item.icon),item.name);if(['problem-solving','teamwork'].includes(item.id))assert.equal(item.source,'Konfirmasi pemilik · 23 Oktober 2026');else assert.match(item.source,/^DATA §(?:9|12)\./);assert.ok(!('href'in item));}
 });
 await check('hardware and IoT inventories are complete while project code tools retain accurate provenance',()=>{
   const embedded=groups.find(g=>g.id==='embedded');assert.equal(embedded.items.length,11);
@@ -53,15 +54,15 @@ if(origin){
     assert.doesNotMatch(section,/<a\b|<button\b|tabindex=|role="(?:link|button)"|Seluruh bidang &amp; kemampuan/i);
     assert.equal((section.match(/data-inventory-group=/g)||[]).length,4);
   });
-  await check('Home curates 32 records across four groups, preserving source identity, icons and only Learning labels',()=>{
-    const preview=homeGroups.flatMap(g=>g.items);assert.equal(preview.length,32);assert.equal((section.match(/data-technology=/g)||[]).length,32);
+  await check('Home curates 34 records across four groups, preserving source identity, icons and only Learning labels',()=>{
+    const preview=homeGroups.flatMap(g=>g.items);assert.equal(preview.length,34);assert.equal((section.match(/data-technology=/g)||[]).length,34);
     assert.ok(homeGroups.every(g=>g.items.length>=6));assert.doesNotMatch(section,/Team Stack|data-basis="(?:team|project)"/);
-    assert.equal((section.match(/<svg\b/g)||[]).length,32);assert.equal((section.match(/data-basis="learning"/g)||[]).length,4);
+    assert.equal((section.match(/<svg\b/g)||[]).length,34);assert.equal((section.match(/data-basis="learning"/g)||[]).length,4);
     for(const item of preview){assert.ok(items.some(full=>full.id===item.id&&full.source===item.source));const row=section.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);}
   });
-  await check('About owns all 68 names with matching SVGs and exactly seven Learning records',async()=>{
+  await check('About owns all 69 names with matching SVGs and exactly seven Learning records',async()=>{
     const response=await fetch(origin+'/about');assert.equal(response.status,200);const about=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
-    assert.equal(items.length,68);assert.equal((about.match(/data-technology=/g)||[]).length,68);
+    assert.equal(items.length,69);assert.equal((about.match(/data-technology=/g)||[]).length,69);
     for(const item of items){const row=about.match(new RegExp(`<li[^>]*data-technology="${item.id}"[^>]*>([\\s\\S]*?)<\\/li>`))?.[1];assert.ok(row,item.name);assert.ok(row.includes(item.name.replaceAll('&','&amp;')),item.name);assert.match(row,/<svg[^>]*aria-hidden="true"/);if(item.learning)assert.match(row,/data-basis="learning"/);assert.doesNotMatch(row,/data-basis="(?:team|project)"/);}
     assert.equal((about.match(/class="technology-badge" data-basis="learning"/g)||[]).length,7);
   });

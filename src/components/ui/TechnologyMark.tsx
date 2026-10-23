@@ -2,7 +2,7 @@ import {
   Activity, Asterisk, Atom, Bot, Box, Braces, Bug, Camera, CircuitBoard,
   ClipboardCheck, Cloud, CodeXml, Cpu, Database, Eye, Files, FileText,
   FlaskConical, Gauge, GitBranch, Layers, Monitor, Network, Orbit,
-  Palette, PanelLeft, Radio, Ruler, SquareCode, Terminal,
+  Palette, PanelLeft, Puzzle, Radio, Ruler, SquareCode, Terminal, Users,
   Theater, Video, Waves, Wind, Workflow, Wrench, Zap, type LucideIcon,
 } from "lucide-react";
 import type { InventoryIcon } from "@/lib/technology-inventory";
@@ -16,6 +16,7 @@ const symbols: Record<InventoryIcon, LucideIcon> = {
   monitor: Monitor, automation: Workflow, sensor: Activity, circuit: CircuitBoard, wrench: Wrench, flask: FlaskConical, gauge: Gauge,
   testing: ClipboardCheck, bug: Bug, eye: Eye, camera: Camera, video: Video, file: FileText, ide: SquareCode, orbit: Orbit, terminal: Terminal,
   palette: Palette, office: Files, android: Bot, git: GitBranch, ruler: Ruler, asterisk: Asterisk, theater: Theater, braces: Braces,
+  puzzle: Puzzle, users: Users,
 };
 const languageMarks: Partial<Record<InventoryIcon, string>> = { cpp: "C++", typescript: "TS", javascript: "JS", php: "PHP", python: "Py", micropython: "µPy", dart: "Dt", sql: "SQL" };
 
