@@ -28,7 +28,7 @@ function ChromeHeader({ pathname, menuOpen, onMenu, onNavigate, onKeyDown, popup
   const active = (href: string) => href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
   return <header className={popup ? "site-header popup-header" : "site-header"} data-menu-open={menuOpen} onKeyDown={onKeyDown}><div className="header-inner wrap">
     {!popup && <PageMotion profile="chrome"/>}
-    <SiteLink className="wordmark" href="/" aria-label="mhdrhn. — Home" onNavigate={onNavigate}>mhdrhn<span className="accent">.</span></SiteLink>
+    <SiteLink className="wordmark" href="/" aria-label="Rehan — Home" onNavigate={onNavigate}><span className="accent">{"<"}</span>Rehan/<span className="accent">{">"}</span></SiteLink>
     {!popup && <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>}
     <div className="header-controls" data-motion-static><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu"><span className="menu-glyph" data-open={menuOpen} aria-hidden="true"><span/><span/><span/></span></button></div>
   </div></header>;

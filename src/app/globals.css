@@ -63,14 +63,15 @@ img { max-width:100%; height:auto; }
 .skip-link { position:fixed; z-index:100; top:8px; left:16px; background:var(--ink); color:var(--canvas); padding:12px 20px; transform:translateY(-150%); }
 .skip-link:focus { transform:none; }
 main { min-height:65vh; }
-.site-header { height:var(--header-height); position:fixed; inset:0 0 auto; z-index:40; background:transparent; border:0; isolation:isolate; }
+.site-header { height:calc(var(--header-height) - 12px); position:fixed; inset:0 0 auto; z-index:40; background:transparent; border:0; isolation:isolate; }
 .header-space { height:var(--header-height); }
 .site-header::before { content:""; position:absolute; inset:0; z-index:-1; background:var(--canvas); pointer-events:none; }
 @media(max-width:1279px) {
   .site-header::before { background:color-mix(in srgb,var(--canvas) 78%,transparent); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
   .popup-header[data-menu-open="true"]::before { background:var(--canvas); -webkit-backdrop-filter:none; backdrop-filter:none; }
 }
-.header-inner { height:100%; display:flex; align-items:center; justify-content:space-between; gap:4px; }
+/* Center logo and controls within the compact header surface. */
+.site-header > .header-inner { height:100%; display:flex; align-items:center; justify-content:space-between; gap:4px; }
 .wordmark { font-family:var(--font-brand),Arial,sans-serif; font-size:19px; font-weight:800; letter-spacing:-.07em; white-space:nowrap; display:flex; align-items:center; min-height:44px; }
 .header-controls,.theme-controls { display:flex; align-items:center; }
 .header-controls { gap:4px; }
@@ -116,6 +117,7 @@ html[data-motion="minimal"] .icon-button:active,html[data-motion="minimal"] .foo
 .hero-top .meta { font-size:12px; }
 .hero-grid { display:grid; gap:36px; margin-top:44px; }
 .hero-identity { min-width:0; }
+.hero-greeting { margin-bottom:16px; font-size:clamp(18px,2vw,24px); font-weight:500; line-height:1.5; }
 .hero-identity h1 { font-size:clamp(40px,12.1vw,85px); letter-spacing:-.045em; line-height:var(--display-leading); }
 .hero-identity h1>span { display:block; }
 .hero-role { margin-top:24px; font-size:clamp(18px,2vw,26px); }
@@ -531,7 +533,7 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
 
 /* Content completion: readable type boxes and functional, native controls. */
 .page-heading h1,.hero-identity h1,.home-introduction h2,.home-closing h2,.archive-row h3,.lab-records h3 { padding-bottom:.16em; }
-.wordmark { line-height:1.35; padding-block:4px; }
+.site-header .wordmark { font-size:clamp(18px,2vw,24px); letter-spacing:-.045em; line-height:1.35; padding-block:4px; }
 .section-note { margin-top:24px; color:var(--muted); }
 .section-jumps { display:flex; flex-wrap:wrap; gap:8px 24px; margin-block:24px; }
 .section-jumps a { display:inline-flex; align-items:center; min-height:44px; border-bottom:1px solid var(--control); font-size:14px; }
