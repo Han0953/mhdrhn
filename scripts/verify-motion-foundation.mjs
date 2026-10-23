@@ -157,11 +157,12 @@ check('twenty mount/unmount cycles release animations, RAF, observers, timers an
 
 function panel({waapi=true,throws=false}={}) {
   const e=environment(),animations=[];
-  const dialog=emitter({open:false,dataset:{},showModal(){this.open=true;},close(){this.open=false;this.emit('close');}});
+  const dialog=emitter({open:false,dataset:{},show(){this.open=true;this.mode='inline';},showModal(){this.open=true;this.mode='modal';},close(){this.open=false;this.emit('close');}});
   if(waapi)dialog.animate=(frames,options)=>{if(throws)throw Error('WAAPI');const a={frames,options,cancel(){this.cancelled=true;}};animations.push(a);return a;};
   return {...e,dialog,animations,controller:e.dialogMotion.mountDialog(dialog,true),finish(){animations.at(-1)?.onfinish?.();}};
 }
-check('menu panel uses native modal, bounded entrance and exit, releasing native close at completion',()=>{
+check('side menu stays outside the modal top layer so the persistent page header is never replaced',()=>{const t=panel();t.controller.open();assert.equal(t.dialog.mode,'inline');t.controller.close(true);assert.equal(t.dialog.open,false);t.controller.dispose();});
+check('menu panel uses bounded entrance and exit, releasing native close at completion',()=>{
  const t=panel();t.controller.open();assert.equal(t.dialog.open,true);assert.equal(t.animations[0].frames[0].transform,'translateX(100%)');t.finish();assert.equal(t.dialog.dataset.motionState,undefined);t.controller.close();assert.equal(t.dialog.open,true);assert.equal(t.dialog.dataset.motionState,'closing');t.finish();assert.equal(t.dialog.open,false);assert.equal(t.timers.size,0);t.controller.dispose();
 });
 check('twenty panel reversals and stale exit finishes cannot close a reopened modal',()=>{

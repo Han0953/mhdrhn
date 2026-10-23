@@ -22,15 +22,15 @@ function containDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
 }
 
 /** Same header in the modal top layer: visible and operable, with native focus isolation. */
-function ChromeHeader({ pathname, menuOpen, onMenu, onNavigate, popup = false }: {
-  pathname: string; menuOpen: boolean; onMenu: () => void; onNavigate?: () => void; popup?: boolean;
+function ChromeHeader({ pathname, menuOpen, onMenu, onNavigate, onKeyDown, popup = false }: {
+  pathname: string; menuOpen: boolean; onMenu: () => void; onNavigate?: () => void; onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void; popup?: boolean;
 }) {
   const active = (href: string) => href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
-  return <header className={popup ? "site-header popup-header" : "site-header"} data-menu-open={menuOpen}><div className="header-inner wrap">
+  return <header className={popup ? "site-header popup-header" : "site-header"} data-menu-open={menuOpen} onKeyDown={onKeyDown}><div className="header-inner wrap">
     {!popup && <PageMotion profile="chrome"/>}
     <SiteLink className="wordmark" href="/" aria-label="mhdrhn. — Home" onNavigate={onNavigate}>mhdrhn<span className="accent">.</span></SiteLink>
     {!popup && <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>}
-    <div className="header-controls" data-motion-static><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen && popup ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu"><span className="menu-glyph" data-open={menuOpen && popup} aria-hidden="true"><span/><span/><span/></span></button></div>
+    <div className="header-controls" data-motion-static><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu"><span className="menu-glyph" data-open={menuOpen} aria-hidden="true"><span/><span/><span/></span></button></div>
   </div></header>;
 }
 function replyTo(question: string): Reply {
@@ -90,6 +90,13 @@ export function SiteChrome() {
     return () => media.removeEventListener("change", closeOnDesktop);
   }, []);
   useEffect(() => {
+    if (!menuOpen) return;
+    const blocked = Array.from(document.querySelectorAll<HTMLElement>("main,.site-footer,.azura-launcher,.skip-link"));
+    const previous = blocked.map(node => node.inert);
+    blocked.forEach(node => { node.inert = true; });
+    return () => { blocked.forEach((node, index) => { node.inert = previous[index]; }); };
+  }, [menuOpen]);
+  useEffect(() => {
     if (!menuOpen && !chatOpen) return;
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -99,7 +106,7 @@ export function SiteChrome() {
     log.current?.scrollTo({ top: log.current.scrollHeight, behavior: reduced ? "instant" : "smooth" });
   }, [messages, reduced]);
 
-  function openMenu() { chat.current?.close(); if (menuMotion.current) menuMotion.current.open(); else menu.current?.showModal(); setMenuOpen(true); }
+  function openMenu() { chat.current?.close(); if (menuMotion.current) menuMotion.current.open(); else menu.current?.show(); setMenuOpen(true); }
   function openChat() { resetChatSize.current = false; menu.current?.close(); if (chatMotion.current) chatMotion.current.open(); else chat.current?.showModal(); setChatOpen(true); }
   function send(question: string) {
     if (pendingReply.current) return;
@@ -114,6 +121,14 @@ export function SiteChrome() {
   }
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); send(draft); }
   function closeMenu() { if (menuMotion.current) menuMotion.current.close(); else menu.current?.close(); }
+  function menuKeyboard(event: KeyboardEvent<HTMLElement>) {
+    if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeMenu(); return; }
+    if (event.key !== "Tab") return;
+    const targets = Array.from(document.querySelectorAll<HTMLElement>('.site-header:not(.popup-header) a[href],.site-header:not(.popup-header) button,#site-menu a[href],#site-menu button')).filter(node => node.getClientRects().length && !node.closest('[inert]') && getComputedStyle(node).visibility !== "hidden");
+    const first = targets[0], last = targets.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus({ preventScroll: true }); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus({ preventScroll: true }); }
+  }
   // A new route keeps the menu in place until the route curtain covers it.
   function navigateMenu(href: string) { if (href === pathname) closeMenu(); }
   function closeChat() { resetChatSize.current = true; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
@@ -121,9 +136,9 @@ export function SiteChrome() {
   function active(href: string) { return href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`); }
 
   return <>
-    <ChromeHeader pathname={pathname} menuOpen={menuOpen} onMenu={openMenu}/>
-    <dialog ref={menu} id="site-menu" className="chrome-dialog menu-dialog" aria-labelledby="menu-heading" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeMenu(); }} onClose={() => setMenuOpen(false)} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}>
-      <ChromeHeader pathname={pathname} menuOpen={true} onMenu={closeMenu} onNavigate={() => navigateMenu("/")} popup/>
+    <ChromeHeader pathname={pathname} menuOpen={menuOpen} onMenu={menuOpen ? closeMenu : openMenu} onNavigate={menuOpen ? () => navigateMenu("/") : undefined} onKeyDown={menuOpen ? menuKeyboard : undefined}/>
+    <div className="header-space" aria-hidden="true" data-motion-static/>
+    <dialog ref={menu} id="site-menu" className="chrome-dialog menu-dialog" aria-labelledby="menu-heading" onKeyDown={menuKeyboard} onCancel={event => { event.preventDefault(); closeMenu(); }} onClose={() => { setMenuOpen(false); if (!document.querySelector('.route-transition-viewport[data-active="true"]')) { const trigger = document.querySelector<HTMLElement>('.site-header:not(.popup-header) .menu-trigger'); if (trigger?.getClientRects().length) trigger.focus({ preventScroll: true }); } }} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}>
       <div className="menu-panel" data-dialog-panel="menu">
       <div className="dialog-top"><h2 id="menu-heading">Jelajahi.</h2></div>
       <nav aria-label="Menu navigasi">{navigation.map((item, index) => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined} onNavigate={() => navigateMenu(item.href)}><span className="meta">0{index + 1}</span>{item.label}<ArrowUpRight size={24} aria-hidden="true"/></SiteLink>)}</nav>

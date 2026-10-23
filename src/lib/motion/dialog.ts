@@ -64,7 +64,7 @@ export function mountDialog(dialog: HTMLDialogElement, side = false) {
     return { from: getComputedStyle(panel).transform, glyphFrom: Array.from(dialog.querySelectorAll<HTMLElement>(".menu-glyph>span"), line => ({ transform: getComputedStyle(line).transform, opacity: getComputedStyle(line).opacity })) };
   }
   return {
-    open() { const current = snapshot(); stop(); closing = false; if (!dialog.open) dialog.showModal(); move(false, current.from, current.glyphFrom); },
+    open() { const current = snapshot(); stop(); closing = false; if (!dialog.open) { if (side) dialog.show(); else dialog.showModal(); } move(false, current.from, current.glyphFrom); },
     close(immediate = false) { if (!dialog.open || (closing && !immediate)) return; const current = snapshot(); stop(); closing = true; if (immediate) closeNow(); else move(true, current.from, current.glyphFrom); },
     dispose() { stop(); delete dialog.dataset.motionState; unsubscribe(); dialog.removeEventListener("close", nativeClosed); document.removeEventListener("visibilitychange", preference); },
   };

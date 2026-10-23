@@ -38,7 +38,7 @@ check('rapid theme reversals own one timer and disposal removes all pending work
 check('dialog animates its panel while the top-layer mobile header stays stationary',()=>{
   const c=clock(),animations=[],listeners=new Map(),docEvents=new Map();let reduced=false,preference;
   const panel={animate(frames,options){const a={frames,options,cancel(){}};animations.push(a);return a;}};
-  const dialog={open:false,dataset:{},querySelector:()=>panel,querySelectorAll:()=>[],showModal(){this.open=true;},close(){this.open=false;listeners.get('close')?.();},
+  const dialog={open:false,dataset:{},querySelector:()=>panel,querySelectorAll:()=>[],show(){this.open=true;},showModal(){this.open=true;},close(){this.open=false;listeners.get('close')?.();},
     addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k),animate(){throw Error('header must not move');}};
   const{mountDialog}=load('src/lib/motion/dialog.ts',{'./preferences':{prefersReducedMotion:()=>reduced,subscribeMotion(fn){preference=fn;return()=>preference=null;}},'./tokens':{motionTokens:{duration:{modalOpen:520,modalClose:420},easing:{response:'ease',editorial:'ease'}}}},
     {...c,document:{hidden:false,addEventListener:(k,v)=>docEvents.set(k,v),removeEventListener:k=>docEvents.delete(k)}});
@@ -51,7 +51,7 @@ check('side panel stays opaque, travels its full width and morphs three hamburge
   const c=clock(),animations=[],listeners=new Map();
   const target=name=>({animate(frames,options){const a={name,frames,options,cancel(){this.cancelled=true;}};animations.push(a);return a;}});
   const panel=target('panel'),lines=[target('top'),target('middle'),target('bottom')];
-  const dialog={open:false,dataset:{},querySelector:()=>panel,querySelectorAll:selector=>selector==='.menu-glyph>span'?lines:[],showModal(){this.open=true;},close(){this.open=false;listeners.get('close')?.();},addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)};
+  const dialog={open:false,dataset:{},querySelector:()=>panel,querySelectorAll:selector=>selector==='.menu-glyph>span'?lines:[],show(){this.open=true;},showModal(){this.open=true;},close(){this.open=false;listeners.get('close')?.();},addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)};
   const{mountDialog}=load('src/lib/motion/dialog.ts',{'./preferences':{prefersReducedMotion:()=>false,subscribeMotion:()=>()=>{}},'./tokens':{motionTokens:{duration:{modalOpen:520,modalClose:420},easing:{response:'ease',editorial:'ease'}}}},{...c,document:{hidden:false,addEventListener(){},removeEventListener(){}}});
   const controller=mountDialog(dialog,true);controller.open();
   assert.equal(animations[0].frames.some(frame=>'opacity'in frame),false);
@@ -73,7 +73,7 @@ check('menu text keeps its stagger after the panel settles and cleanup cancels t
   const c=clock(),animations=[],listeners=new Map();
   const target=()=>({animate(frames,options){const a={frames,options,cancel(){this.cancelled=true;}};animations.push(a);return a;}});
   const panel=target(),text=Array.from({length:9},target);
-  const dialog={open:false,dataset:{},querySelector:()=>panel,querySelectorAll:s=>s==='.menu-glyph>span'?[]:text,showModal(){this.open=true;},close(){this.open=false;listeners.get('close')?.();},addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)};
+  const dialog={open:false,dataset:{},querySelector:()=>panel,querySelectorAll:s=>s==='.menu-glyph>span'?[]:text,show(){this.open=true;},showModal(){this.open=true;},close(){this.open=false;listeners.get('close')?.();},addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)};
   const{mountDialog}=load('src/lib/motion/dialog.ts',{'./preferences':{prefersReducedMotion:()=>false,subscribeMotion:()=>()=>{}},'./tokens':{motionTokens:{duration:{modalOpen:520,modalClose:420},easing:{response:'ease',transfer:'ease',editorial:'ease'}}}},{...c,document:{hidden:false,addEventListener(){},removeEventListener(){}}});
   const controller=mountDialog(dialog,true);controller.open();
   assert.equal(animations[1].options.delay,279);assert.equal(animations.at(-1).options.delay,599);
@@ -101,7 +101,7 @@ function chromeFixture(){
     'next/navigation':{usePathname:()=>pathname},'lucide-react':{},'@/components/ui/ThemeToggle':{},'./RouteTransition':{SiteLink:'link'},'@/lib/navigation':{navigation:[]},
     '@/lib/motion/dialog':{mountDialog:dialog=>({open(){dialog.open=true;},close(){dialog.close();},dispose(){}})},
   };
-  const document={body:{style:{overflow:''}}};
+  const document={body:{style:{overflow:''}},querySelectorAll:()=>[],querySelector:()=>null};
   const{SiteChrome}=load('src/components/layout/SiteChrome.tsx',dependencies,{...c,document,window:{matchMedia:()=>({matches:false,addEventListener(){},removeEventListener(){}})}});
   const dialogs=new Map();
   function render(){let limit=0;do{dirty=false;cursor=0;tree=SiteChrome();for(const node of all(tree,n=>n.type==='dialog')){
@@ -122,6 +122,12 @@ function chromeFixture(){
     unmount(){slots.forEach(s=>s?.cleanup?.());},
   };
 }
+check('menu reuses its page header rather than rendering a popup header for native close to remove',()=>{
+  const t=chromeFixture();const header=t.find(n=>n.props?.pathname==='/about'&&n.props?.popup===undefined);
+  header.props.onMenu();t.render();assert.equal(t.dialogs.get('site-menu').open,true);
+  const menu=t.find(n=>n.props?.id==='site-menu');assert.equal(menu.props.children.props.className,'menu-panel');
+  t.find(n=>n.props?.pathname==='/about'&&n.props?.popup===undefined).props.onMenu();t.render();assert.equal(t.dialogs.get('site-menu').open,false);t.unmount();
+});
 check('sending renders the user message first, typing feedback, then the real local reply',()=>{
   const t=chromeFixture();t.open();t.ask('Proyek Vircuit');assert.equal(t.count(),1);assert.equal(t.busy(),true);assert.equal(t.button('Kirim pertanyaan').props.disabled,true);
   assert.equal(t.c.timers.size,1);t.c.tick(640);t.render();assert.equal(t.busy(),false);assert.equal(t.c.timers.size,0);assert.ok(t.find(n=>n.props?.className==='chat-reply'&&n.props.onAnimationComplete));t.unmount();
