@@ -162,6 +162,17 @@ function panel({waapi=true,throws=false}={}) {
   return {...e,dialog,animations,controller:e.dialogMotion.mountDialog(dialog,true),finish(){animations.at(-1)?.onfinish?.();}};
 }
 check('side menu stays outside the modal top layer so the persistent page header is never replaced',()=>{const t=panel();t.controller.open();assert.equal(t.dialog.mode,'inline');t.controller.close(true);assert.equal(t.dialog.open,false);t.controller.dispose();});
+check('closed visual phase is set before native close and survives the delayed React close event',()=>{
+ const t=panel();t.controller.open();t.finish();let observed;
+ t.dialog.close=function(){observed=this.dataset.menuPhase;this.open=false;};
+ t.controller.close();assert.equal(t.dialog.dataset.menuPhase,'closing');t.finish();
+ assert.equal(observed,'closed');assert.equal(t.dialog.dataset.motionState,undefined);assert.equal(t.dialog.dataset.menuPhase,'closed');
+ t.dialog.emit('close');assert.equal(t.dialog.dataset.menuPhase,'closed');t.controller.open();assert.equal(t.dialog.dataset.menuPhase,'open');
+ t.controller.dispose();assert.equal(t.dialog.dataset.menuPhase,undefined);
+});
+check('immediate close and live Minimal preserve the closed drawing until a new opening',()=>{
+ for(const mode of ['immediate','minimal']){const t=panel();t.controller.open();t.finish();if(mode==='immediate')t.controller.close(true);else{t.controller.close();t.preference.setMotionPreference('minimal');}assert.equal(t.dialog.open,false);assert.equal(t.dialog.dataset.menuPhase,'closed');assert.equal(t.timers.size,0);t.controller.dispose();}
+});
 check('menu panel uses bounded entrance and exit, releasing native close at completion',()=>{
  const t=panel();t.controller.open();assert.equal(t.dialog.open,true);assert.equal(t.animations[0].frames[0].transform,'translateX(100%)');t.finish();assert.equal(t.dialog.dataset.motionState,undefined);t.controller.close();assert.equal(t.dialog.open,true);assert.equal(t.dialog.dataset.motionState,'closing');t.finish();assert.equal(t.dialog.open,false);assert.equal(t.timers.size,0);t.controller.dispose();
 });

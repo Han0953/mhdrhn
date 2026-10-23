@@ -14,7 +14,7 @@ export function mountDialog(dialog: HTMLDialogElement, side = false) {
     animation = undefined; clearTimeout(timer); timer = undefined;
     contentAnimations.splice(0).forEach(item => item.cancel());
   }
-  function closeNow() { stop(); closing = false; delete dialog.dataset.motionState; if (dialog.open) dialog.close(); }
+  function closeNow() { if (side) dialog.dataset.menuPhase = "closed"; stop(); closing = false; delete dialog.dataset.motionState; if (dialog.open) dialog.close(); }
   function move(exit: boolean, from?: string, glyphFrom?: { transform: string; opacity: string }[]) {
     const token = ++generation;
     let trailingContent = false;
@@ -54,7 +54,7 @@ export function mountDialog(dialog: HTMLDialogElement, side = false) {
       timer = setTimeout(() => { done(); if (side && !exit && token === generation) stop(); }, completionDuration + 120);
     } catch { done(); }
   }
-  function nativeClosed() { stop(); closing = false; delete dialog.dataset.motionState; }
+  function nativeClosed() { if (side) dialog.dataset.menuPhase = dialog.open ? "open" : "closed"; stop(); closing = false; delete dialog.dataset.motionState; }
   function preference() { if (prefersReducedMotion() || document.hidden) { if (closing) closeNow(); else nativeClosed(); } }
   dialog.addEventListener("close", nativeClosed);
   document.addEventListener("visibilitychange", preference);
@@ -64,8 +64,8 @@ export function mountDialog(dialog: HTMLDialogElement, side = false) {
     return { from: getComputedStyle(panel).transform, glyphFrom: Array.from(dialog.querySelectorAll<HTMLElement>(".menu-glyph>span"), line => ({ transform: getComputedStyle(line).transform, opacity: getComputedStyle(line).opacity })) };
   }
   return {
-    open() { const current = snapshot(); stop(); closing = false; if (!dialog.open) { if (side) dialog.show(); else dialog.showModal(); } move(false, current.from, current.glyphFrom); },
-    close(immediate = false) { if (!dialog.open || (closing && !immediate)) return; const current = snapshot(); stop(); closing = true; if (immediate) closeNow(); else move(true, current.from, current.glyphFrom); },
-    dispose() { stop(); delete dialog.dataset.motionState; unsubscribe(); dialog.removeEventListener("close", nativeClosed); document.removeEventListener("visibilitychange", preference); },
+    open() { const current = snapshot(); stop(); closing = false; if (side) dialog.dataset.menuPhase = "open"; if (!dialog.open) { if (side) dialog.show(); else dialog.showModal(); } move(false, current.from, current.glyphFrom); },
+    close(immediate = false) { if (!dialog.open || (closing && !immediate)) return; const current = snapshot(); stop(); closing = true; if (side) dialog.dataset.menuPhase = "closing"; if (immediate) closeNow(); else move(true, current.from, current.glyphFrom); },
+    dispose() { stop(); delete dialog.dataset.motionState; delete dialog.dataset.menuPhase; unsubscribe(); dialog.removeEventListener("close", nativeClosed); document.removeEventListener("visibilitychange", preference); },
   };
 }
