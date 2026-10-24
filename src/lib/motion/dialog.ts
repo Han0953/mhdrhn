@@ -40,10 +40,11 @@ export function mountDialog(dialog: HTMLDialogElement, side = false, anchor?: ()
     const frames = side ? [{ transform: from ?? (exit ? "none" : "translateX(100%)") }, { transform: exit ? "translateX(100%)" : "none" }]
       : anchor ? [{ opacity: fromOpacity ?? (exit ? 1 : 0), transform: from ?? (exit ? "none" : collapsed) }, { opacity: exit ? 0 : 1, transform: exit ? collapsed : "none" }]
       : [{ opacity: 0, transform: collapsed }, { opacity: 1, transform: "none" }];
-    const duration = side ? (exit ? 460 : 620) : exit ? motionTokens.duration.modalClose : motionTokens.duration.modalOpen;
+    const duration = side ? (exit ? 460 : 620) : exit ? (anchor ? motionTokens.duration.chatClose : motionTokens.duration.modalClose) : motionTokens.duration.modalOpen;
+    const easing = side ? motionTokens.easing.transfer : anchor && exit ? motionTokens.easing.settle : motionTokens.easing.response;
     let completionDuration = duration;
     try {
-      animation = panel.animate(!side && !anchor && exit ? frames.reverse() : frames, { duration, easing: side ? motionTokens.easing.transfer : motionTokens.easing.response, fill: "both" });
+      animation = panel.animate(!side && !anchor && exit ? frames.reverse() : frames, { duration, easing, fill: "both" });
       animation.onfinish = done; animation.oncancel = done;
       if (side) Array.from(dialog.querySelectorAll?.<HTMLElement>(".menu-glyph>span") ?? []).forEach((line, index) => {
         const closed = { transform: index === 1 ? "scaleX(1)" : `translateY(${index === 0 ? -5 : 5}px) rotate(0deg)`, opacity: 1 };

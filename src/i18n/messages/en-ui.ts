@@ -87,7 +87,6 @@ export const messages = {
   "Tanya tentang karya…": "Ask about the work…",
   "Kirim pertanyaan": "Send question",
   "Reset chat": "Reset chat",
-  "Percakapan disimpan di perangkat ini selama 1 jam.": "Conversations are saved on this device for 1 hour.",
   "Kembali ke atas": "Back to top",
   "Ada kendala": "Something went wrong",
   "Halaman belum": "This page could",

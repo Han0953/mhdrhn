@@ -147,6 +147,8 @@ export function SiteChrome() {
   function resetChat() {
     if (pendingReply.current) clearTimeout(pendingReply.current.timer);
     pendingReply.current = null; chatHistory.reset(); setDraft(""); setError(""); setResetVersion(value => value + 1);
+    // Reset disappears with the conversation; keep focus on a stable control.
+    chat.current?.querySelector<HTMLButtonElement>('.dialog-actions [aria-pressed]')?.focus({preventScroll:true});
   }
   function active(href: string) { return href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`); }
 
@@ -165,6 +167,7 @@ export function SiteChrome() {
       <div className="azura-panel" data-dialog-panel="azura">
       <div className="dialog-top"><div><p className="eyebrow accent">Asisten portofolio</p><h2 id="azura-heading">Azura.</h2></div><div className="dialog-actions">
         <button className="icon-button" type="button" onClick={() => setChatWide(value => !value)} aria-label={chatWide ? "Kecilkan panel Azura" : "Lebarkan panel Azura"} title={chatWide ? "Kecilkan panel" : "Lebarkan panel"} aria-pressed={chatWide}>{chatWide ? <Minimize2 size={19} aria-hidden="true"/> : <Maximize2 size={19} aria-hidden="true"/>}</button>
+        <div className="chat-reset-slot" data-active={messages.length > 0}><AnimatePresence initial={false}>{messages.length > 0 && <motion.button key="reset" className="icon-button reset-chat" type="button" onClick={resetChat} aria-label="Reset chat" title="Reset chat" initial={reduced ? false : {opacity:0,scale:.8}} animate={{opacity:1,scale:1,rotate:0}} exit={{opacity:0,scale:.8,rotate:-90}} transition={{duration:reduced ? 0 : .18}}><RotateCcw size={18} aria-hidden="true"/></motion.button>}</AnimatePresence></div>
         <button className="icon-button" type="button" onClick={closeChat} aria-label="Tutup Azura" title="Tutup"><X size={20} aria-hidden="true"/></button>
       </div></div>
       <p id="azura-description" className="meta chat-description">Tanyakan tentang Rehan dan karyanya.</p>
@@ -181,7 +184,7 @@ export function SiteChrome() {
         </motion.div></AnimatePresence>
       </div>
       <div className="quick-questions" role="group" aria-label="Pertanyaan cepat">{["Tentang Rehan", "Proyek Vircuit", "Kompetensi", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(t(question))} disabled={typing || messages.length >= 20}>{question}</button>)}</div>
-      <form onSubmit={submit} className="chat-form" autoComplete="off"><label htmlFor="azura-input" className="sr-only">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" name="azura-message" autoComplete="off" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={typing || messages.length >= 20}><Send size={18} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p><div className="chat-form-footer"><button type="button" className="reset-chat" onClick={resetChat}><motion.span initial={false} animate={{rotate:resetVersion * -360}} transition={{duration:reduced ? 0 : .4}}><RotateCcw size={14} aria-hidden="true"/></motion.span> Reset chat</button></div><p className="chat-retention">Percakapan disimpan di perangkat ini selama 1 jam.</p></form>
+      <form onSubmit={submit} className="chat-form" autoComplete="off"><label htmlFor="azura-input" className="sr-only">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" name="azura-message" autoComplete="off" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={typing || messages.length >= 20}><Send size={18} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p></form>
       </div>
     </dialog>
   </>,t,locale);

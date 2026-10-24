@@ -308,11 +308,14 @@ html:has(.menu-dialog[open])::-webkit-scrollbar { visibility:hidden; }
 .chat-typing { width:fit-content; padding:12px; background:var(--surface); border:1px solid var(--rule); }
 .chat-typing>span[aria-hidden] { display:flex; align-items:center; gap:6px; min-height:23px; }
 .chat-typing i { display:block; width:6px; height:6px; border-radius:50%; background:var(--accent-text); }
-html[data-motion="minimal"] .azura-panel { transition:none; }
-@media(prefers-reduced-motion:reduce) { .azura-panel { transition:none; } }
+html[data-motion="minimal"] :is(.azura-panel,.chat-reset-slot) { transition:none; }
+@media(prefers-reduced-motion:reduce) { .azura-panel,.azura-dialog .chat-reset-slot { transition:none; } }
 .dialog-actions { display:flex; flex-shrink:0; }
 .dialog-actions button { display:grid; place-items:center; width:44px; height:44px; background:transparent; border:0; }
 .azura-dialog .dialog-top { gap:8px; flex-shrink:0; }
+.azura-dialog .dialog-actions { --chat-action-size:44px; }
+.chat-reset-slot { width:0; flex-shrink:0; overflow:hidden; transition:width 280ms var(--motion-response); }
+.chat-reset-slot[data-active="true"] { width:var(--chat-action-size); }
 .azura-dialog .dialog-top h2 { font-size:28px; }
 .azura-dialog .dialog-top .eyebrow { font-size:10px; letter-spacing:.06em; }
 .footer-back-top { display:flex; align-items:center; gap:12px; min-height:44px; margin-block:24px; padding:8px 0; background:transparent; color:inherit; border:0; border-bottom:1px solid currentColor; }
@@ -341,10 +344,7 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
 @media(forced-colors:active) { .azura-panel .chat-input-row input:focus { border-color:Highlight; outline-color:Highlight; } }
 .chat-input-row button { background:var(--brand); color:var(--on-brand); height:44px; flex-shrink:0; }
 .form-error { font-size:12px; color:var(--accent-text); margin-top:6px; }
-.chat-form-footer { display:flex; gap:8px; justify-content:flex-end; align-items:center; }
-.reset-chat { display:flex; align-items:center; gap:6px; background:transparent; border:0; min-height:44px; font-size:12px; }
-.reset-chat>span { display:flex; }
-.chat-retention { font-size:10px; line-height:1.4; color:var(--muted); }
+.chat-form .form-error:empty { display:none; }
 .azura-dialog[data-keyboard="true"] .quick-questions,.azura-dialog[data-keyboard="true"] .chat-description { display:none; }
 @media(max-width:767px) {
   .azura-launcher { width:40px; height:40px; }
@@ -352,16 +352,14 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
   .azura-dialog { padding:8px; padding-bottom:max(8px,env(safe-area-inset-bottom)); }
   .azura-panel { padding:12px; height:100%; }
   .azura-dialog .dialog-top h2 { font-size:22px; }
-  .azura-dialog .dialog-actions { gap:0; }
+  .azura-dialog .dialog-actions { gap:0; --chat-action-size:40px; }
   .azura-dialog .dialog-actions button { width:40px; min-width:40px; height:40px; }
   .chat-reply,.chat-question { font-size:13px; }
   .chat-reply .text-link { font-size:12px; min-height:36px; gap:8px; }
   .quick-questions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .chat-form-footer { min-height:36px; }
-  .reset-chat { min-height:36px; font-size:11px; }
 }
 @media(max-height:420px) {
-  .azura-dialog .quick-questions,.azura-dialog .chat-description,.azura-dialog .dialog-top .eyebrow,.chat-retention { display:none; }
+  .azura-dialog .quick-questions,.azura-dialog .chat-description,.azura-dialog .dialog-top .eyebrow { display:none; }
   .azura-panel { padding:8px; }
   .chat-log { padding-block:8px; }
 }
@@ -680,10 +678,11 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
 .technology-mark { display:flex; align-items:center; flex-shrink:0; width:28px; height:32px; }
 .technology-mark>svg { width:28px; height:28px; }
 .technology-brand-set { display:flex; align-items:center; justify-content:center; gap:4px; width:100%; height:28px; }
-.technology-brand { display:block; flex-shrink:0; width:28px; height:28px; background-color:var(--ink); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center; -webkit-mask-size:contain; mask-size:contain; }
-.technology-brand-bitmap { display:block; flex-shrink:0; width:28px; height:28px; object-fit:contain; filter:grayscale(1) contrast(100); mix-blend-mode:multiply; }
-.technology-brand-set:has(.technology-brand-bitmap) { background:var(--canvas); }
-html.dark .technology-brand-bitmap { filter:grayscale(1) contrast(100) invert(1); mix-blend-mode:screen; }
+/* Match the mark's inherited hover/touch color for both Home and About. */
+.technology-brand { display:block; flex-shrink:0; width:28px; height:28px; background-color:currentColor; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center; -webkit-mask-size:contain; mask-size:contain; }
+/* PNG: intersect its alpha with inverse luminance, keeping the white backing
+   transparent and the real artwork tinted by the same hover color as SVG. */
+.technology-brand-raster { mask-mode:alpha,alpha,luminance; -webkit-mask-composite:source-in,xor; mask-composite:intersect,exclude; }
 .technology-brand-set[data-count="2"] .technology-brand { width:16px; height:24px; }
 .technology-mark:has(.technology-brand-set[data-count="2"]) { width:36px; }
 @media(forced-colors:active) { .technology-brand { background-color:CanvasText; forced-color-adjust:none; } }

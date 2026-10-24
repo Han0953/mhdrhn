@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import type { InventoryIcon } from "@/lib/technology-inventory";
 import { brandFilesForTechnology } from "@/lib/technology-brands";
-import Image from "next/image";
 
 // Local source-verified artwork for brands; Lucide remains the honest generic fallback.
 // Names provide accessible labels, while decorative marks stay hidden from screen readers.
@@ -23,7 +22,7 @@ const symbols: Record<InventoryIcon, LucideIcon> = {
 export function TechnologyMark({ icon, itemId }: { icon: InventoryIcon; itemId?: string }) {
   const files = brandFilesForTechnology(itemId);
   if (files.length) return <span className="technology-brand-set" data-count={files.length} aria-hidden="true">{files.map(file => file.endsWith(".png")
-    ? <Image key={file} className="technology-brand-bitmap" data-brand-asset={file} src={`/brand-icons/${file}`} width={28} height={28} alt="" aria-hidden="true" unoptimized/>
+    ? <span key={file} className="technology-brand technology-brand-raster" data-brand-asset={file} style={{ maskImage: `url("/brand-icons/${file}"), linear-gradient(white, white), url("/brand-icons/${file}")`, WebkitMaskImage: `url("/brand-icons/${file}"), linear-gradient(white, white), url("/brand-icons/${file}")` }}/>
     : <span key={file} className="technology-brand" data-brand-asset={file} style={{ maskImage: `url("/brand-icons/${file}")`, WebkitMaskImage: `url("/brand-icons/${file}")` }}/>)}</span>;
   const Icon = symbols[icon];
   return <Icon size={32} strokeWidth={1.5} aria-hidden="true" focusable="false"/>;
