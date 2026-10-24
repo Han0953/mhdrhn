@@ -8,13 +8,15 @@ import { logicalPath } from "./config";
 import { captureLanguageTheme, releaseLanguageTheme, restoreThemeBeforePaint } from "@/lib/motion/theme";
 import { captureLanguageContext, clearLanguageContext, restoreLanguageDisclosure } from "./language-context";
 import { captureViewportAnchor, maintainViewportAnchor, type ViewportAnchor } from "./viewport-anchor";
+import { captureLanguageLayout, animateLanguageLayout, type LayoutSnapshot } from "./layout-reflow";
 
-type Snapshot = {path:string;href:string;anchor:ViewportAnchor;words:TextSnapshot;completing?:boolean};
+type Snapshot = {path:string;href:string;anchor:ViewportAnchor;words:TextSnapshot;layout:LayoutSnapshot;completing?:boolean};
 let sequence=0, pending:Snapshot|undefined, visual:ReturnType<typeof morphWords>|undefined;
 let watchdog:ReturnType<typeof setTimeout>|undefined;
 let stopPosition:(()=>void)|undefined;
+let layoutVisual:ReturnType<typeof animateLanguageLayout>|undefined;
 const currentMain=()=>Array.from(document.querySelectorAll<HTMLElement>('main')).find(node=>node.getClientRects().length>0);
-function clearVisual(){stopPosition?.();stopPosition=undefined;visual?.stop();visual=undefined;clearTimeout(watchdog);delete document.documentElement.dataset.languageChanging;releaseLanguageCheckpoints();clearLanguageContext();releaseLanguageTheme();}
+function clearVisual(){stopPosition?.();stopPosition=undefined;visual?.stop();visual=undefined;layoutVisual?.stop();layoutVisual=undefined;clearTimeout(watchdog);delete document.documentElement.dataset.languageChanging;releaseLanguageCheckpoints();clearLanguageContext();releaseLanguageTheme();}
 export function languageChangePending(){return !!pending;}
 
 export async function changeLanguage(href:string,navigate:(href:string)=>void){
@@ -23,7 +25,7 @@ export async function changeLanguage(href:string,navigate:(href:string)=>void){
   captureLanguageTheme();
   captureLanguageCheckpoints();
   captureLanguageContext(main);
-  pending={path:logicalPath(location.pathname),href,anchor:captureViewportAnchor(main),words:captureVisibleWords()};
+  pending={path:logicalPath(location.pathname),href,anchor:captureViewportAnchor(main),words:captureVisibleWords(),layout:captureLanguageLayout()};
   document.documentElement.dataset.languageChanging='true';
   watchdog=setTimeout(()=>{pending=undefined;clearVisual();},12000);
   // Keep the source page fully painted and interactive while RSC is pending.
@@ -38,11 +40,14 @@ export async function completeLanguageChange(path:string){
   restoreThemeBeforePaint(document.documentElement);
   main.querySelectorAll('details').forEach(restoreLanguageDisclosure);
   refreshSmoothScroll(); ScrollTrigger.refresh();
-  stopPosition=maintainViewportAnchor(main,snapshot.anchor,top=>{visual?.stop();scrollToPosition(top,true);});
+  stopPosition=maintainViewportAnchor(main,snapshot.anchor,top=>{visual?.stop();layoutVisual?.stop();scrollToPosition(top,true);});
   // Layout effects of incoming motion islands have restored their checkpoint.
-  // Words crossfade and follow copy reflow; entrance animations never replay.
+  // Measure words and boxes before either layer moves; entrance never replays.
   if(!prefersReducedMotion()){
-    visual=morphWords(snapshot.words,captureVisibleWords()); await visual.finished;
+    const words=captureVisibleWords(),layout=captureLanguageLayout();
+    visual=morphWords(snapshot.words,words);
+    layoutVisual=animateLanguageLayout(snapshot.layout,layout);
+    await Promise.all([visual.finished,layoutVisual.finished]);
   }
   await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
   if(token===sequence&&pending===snapshot){pending=undefined;clearVisual();document.querySelector<HTMLElement>('.language-trigger')?.focus({preventScroll:true});}
