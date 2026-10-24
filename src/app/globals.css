@@ -975,4 +975,6 @@ html[data-motion="minimal"] :is(.story-media-motion,.media-frame,.technology-mar
 .language-option[aria-checked="true"] { color:var(--accent-text); }
 @media(hover:hover) and (pointer:fine){.language-option:hover{background:var(--surface);}}
 .language-option:active { background:var(--surface); }
-html[data-language-changing="true"] main { will-change:opacity,transform; }
+[data-language-overlay] { position:fixed; inset:0; pointer-events:none; z-index:39; overflow:visible; }
+[data-language-overlay="header"] { z-index:2; }
+[data-language-overlay]>span { position:absolute; display:block; white-space:pre; pointer-events:none; line-height:1; margin:0; padding:0; }

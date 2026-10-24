@@ -1,6 +1,7 @@
 "use client";
 import { useTranslation } from "@/i18n/LocaleProvider";
 import { translateTree } from "@/i18n/translate";
+import { cancelLanguageChange, languageChangePending } from "@/i18n/language-motion";
 
 
 import { useTheme } from "next-themes";
@@ -103,7 +104,7 @@ export function ThemeToggle() {
       }}>
       <span className="preference-label" id={`${id}-theme-label`}>Tema</span>
       <div className="theme-choice-row" role="group" aria-labelledby={`${id}-theme-label`}>{options.map(({ value, label, Icon }) => <button key={value} type="button" className="icon-button" aria-label={label} title={label} aria-pressed={mounted && theme === value} onPointerDown={focusWithoutScroll}
-        onClick={() => { setTheme(value); close(true); }}><Icon size={19} aria-hidden="true"/></button>)}</div>
+        onClick={() => { if(languageChangePending())cancelLanguageChange(); setTheme(value); close(true); }}><Icon size={19} aria-hidden="true"/></button>)}</div>
       <span className="preference-label" id={`${id}-motion-label`}>Gerak</span>
       <div className="motion-choice-row" role="group" aria-labelledby={`${id}-motion-label`}>
         <button type="button" aria-label="Ikuti pengaturan gerak sistem" aria-pressed={motion === "system"} onPointerDown={focusWithoutScroll} onClick={() => { setMotionPreference("system"); close(true); }}>Sistem</button>

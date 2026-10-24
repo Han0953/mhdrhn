@@ -1,6 +1,7 @@
 import { prefersReducedMotion, subscribeMotion } from "./preferences";
 import { prepareReveal, type RevealItem, type RevealKind, type RevealPlayer } from "./engines";
 import { registerEntrance } from "./entrance";
+import { languageCheckpoint, languageMotionActive, motionElementKey, registerLanguageCheckpoint } from "./language-checkpoint";
 import type { SequenceOptions } from "./variants";
 
 export type PageMotionProfile = "home" | "about" | "projects" | "detail" | "experience" | "lab" | "achievements" | "contact" | "footer" | "recovery" | "chrome";
@@ -55,6 +56,9 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   let lastScroll = window.scrollY, downTravel = 0, portraitUnlocked = false;
   const seen = new WeakSet<HTMLElement>();
   const groups = new Map<HTMLElement, Group>();
+  const checkpoint = languageCheckpoint(profile);
+  const restoredGroups = new WeakSet<HTMLElement>();
+  portraitUnlocked = checkpoint?.portraitUnlocked ?? false;
   const cover = document.querySelector<HTMLElement>(".route-transition-viewport");
   const activeCover = () => cover?.dataset.active === "true";
   const visible = (node: HTMLElement) => {
@@ -84,6 +88,7 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   }
   function play(group: Group, wave = 0, lead = 0) {
     if (disposed || group.played || !group.root.isConnected || !inViewport(group)) return;
+    if (languageMotionActive()) return;
     if (scrollPortrait(group) && !portraitUnlocked && !prefersReducedMotion()) return;
     if (prefersReducedMotion() || document.hidden) { settleGroup(group); return; }
     if (!released && activeCover()) return;
@@ -118,7 +123,7 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
       const leaves = lines.length ? lines : node.matches(".hero-identity h1") ? Array.from(node.children) as HTMLElement[] : [node];
       const owner = node.closest<HTMLElement>(groupSelector) ?? node;
       let group = groups.get(owner);
-      if (group?.played) {
+      if (group?.played && !(languageMotionActive() && restoredGroups.has(owner))) {
         group = groups.get(node);
         if (!group) { group = {root:node,items:[],played:false}; groups.set(node,group); }
       }
@@ -131,6 +136,14 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
         group.items.forEach(stage);
       }
       seen.add(node);
+      // Only already revealed/currently visible groups stay still on a language
+      // swap. Unseen groups retain their observer and their future entrance.
+      if (checkpoint && languageMotionActive() && (checkpoint.played.has(motionElementKey(group.root, root)) ||
+          visible(group.root) && (!scrollPortrait(group) || portraitUnlocked) && !node.matches(".portrait-photo"))) {
+        group.played = true; group.root.dataset.sequence = "complete";
+        restoredGroups.add(group.root);
+      }
+      if (group.played) return;
       leaves.forEach(leaf => {
         if (prefersReducedMotion() || typeof IntersectionObserver === "undefined") return;
         const plan = revealPlan(leaf,profile,group.items.length); group.items.push(plan);
@@ -183,12 +196,23 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   };
   const unsubscribe = subscribeMotion(preference);
   const unregister = registerEntrance({root,prepare,start,settle});
+  const unregisterCheckpoint = registerLanguageCheckpoint(root, profile, () => {
+    groups.forEach(group => { if (group.played) settleGroup(group); });
+    return { played: new Set(Array.from(groups.values()).filter(group => group.played).map(group => motionElementKey(group.root,root))), portraitUnlocked };
+  });
+  const resumeLanguage = () => {
+    // No replay at the restored viewport; leave offscreen observers armed.
+    groups.forEach(group => { if (inViewport(group) && (!scrollPortrait(group) || portraitUnlocked)) settleGroup(group); });
+    start();
+  };
+  window.addEventListener("mhdrhn:language-complete",resumeLanguage);
   if (profile === "about") window.addEventListener("scroll", onScroll, { passive: true });
   root.addEventListener("focusin",focus); root.addEventListener("toggle",refresh,true); document.addEventListener("visibilitychange",preference);
   prepare(); initialFrame = requestAnimationFrame(() => { if (!activeCover()) start(); });
   return () => {
     disposed = true; cancelAnimationFrame(frame); cancelAnimationFrame(initialFrame); settle();
-    observer?.disconnect(); mutation.disconnect(); unsubscribe(); unregister();
+    observer?.disconnect(); mutation.disconnect(); unsubscribe(); unregister(); unregisterCheckpoint();
+    window.removeEventListener("mhdrhn:language-complete",resumeLanguage);
     if (profile === "about") window.removeEventListener("scroll", onScroll);
     root.removeEventListener("focusin",focus); root.removeEventListener("toggle",refresh,true); document.removeEventListener("visibilitychange",preference);
     groups.forEach(group => { delete group.root.dataset.sequence; delete group.root.dataset.engine; }); groups.clear();

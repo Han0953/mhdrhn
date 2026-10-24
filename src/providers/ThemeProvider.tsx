@@ -2,8 +2,8 @@
 import {useLocale} from "@/i18n/LocaleProvider";
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { useEffect, useSyncExternalStore, type ReactNode } from "react";
-import { mountThemeMotion } from "@/lib/motion/theme";
+import { useEffect, useLayoutEffect, useSyncExternalStore, type ReactNode } from "react";
+import { mountThemeMotion, restoreThemeBeforePaint } from "@/lib/motion/theme";
 
 const subscribe = () => () => {};
 const clientSnapshot = () => true;
@@ -13,6 +13,7 @@ const inertBootstrap = { type: "text/plain" };
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const locale=useLocale();
   const clientMounted=useSyncExternalStore(subscribe,clientSnapshot,serverSnapshot);
+  useLayoutEffect(() => { restoreThemeBeforePaint(document.documentElement); }, [locale]);
   useEffect(() => mountThemeMotion(document.documentElement), [locale]);
   return (
     <NextThemesProvider

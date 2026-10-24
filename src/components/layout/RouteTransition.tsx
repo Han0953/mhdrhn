@@ -85,7 +85,7 @@ export function RouteTransition({ children, projects = noProjects }: { children:
     });
     session.current = transaction;
     const onPreference = () => { if (prefersReducedMotion()) transaction?.skip(); };
-    const onEscape = (event: KeyboardEvent) => { if (event.key === "Escape") { if (viewport.current?.open) event.preventDefault(); settleRouteEntrance(document.querySelector("main")); transaction?.cancel(); } };
+    const onEscape = (event: KeyboardEvent) => { if (event.key === "Escape") { if(languageChangePending()){cancelLanguageChange();return;} if (viewport.current?.open) event.preventDefault(); settleRouteEntrance(document.querySelector("main")); transaction?.cancel(); } };
     const onHidden = () => { if (document.hidden) transaction?.skip(); };
     const onHistory = () => transaction?.history(previous.current);
     const unsubscribe = subscribeMotion(onPreference);
