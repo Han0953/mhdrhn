@@ -332,6 +332,8 @@ html[data-motion="minimal"] :is(.azura-panel,.chat-reset-slot) { transition:none
 .chat-log::-webkit-scrollbar-track,.azura-panel::-webkit-scrollbar-track { background:transparent; }
 .chat-log::-webkit-scrollbar-thumb,.azura-panel::-webkit-scrollbar-thumb { background:var(--control); border:0; border-radius:3px; }
 .chat-reply { align-self:flex-start; max-width:88%; padding:12px; background:var(--surface); border:1px solid var(--rule); font-size:14px; line-height:1.55; overflow-wrap:anywhere; }
+.chat-reply p { white-space:pre-wrap; }
+.chat-request-error { max-width:90%; font-size:12px; line-height:1.6; color:var(--accent-text); }
 .chat-reply .text-link { font-size:13px; margin-top:8px; }
 .chat-question { align-self:flex-end; max-width:85%; font-size:14px; line-height:1.55; background:var(--brand); color:var(--on-brand); border:1px solid var(--brand); padding:10px 12px; overflow-wrap:anywhere; transform-origin:right bottom; }
 .quick-questions { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; flex-shrink:0; }

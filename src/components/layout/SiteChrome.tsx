@@ -14,7 +14,10 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SiteLink } from "./RouteTransition";
 import { navigation } from "@/lib/navigation";
 import { mountDialog } from "@/lib/motion/dialog";
-import { createChatHistory, type Reply } from "@/lib/azura/history";
+import { createChatHistory, conversationTurns } from "@/lib/azura/history";
+import { requestAnswer } from "@/lib/azura/client";
+import { AI_ERRORS } from "@/lib/azura/protocol";
+import { ProgressiveAnswer } from "@/components/chat/ProgressiveAnswer";
 import { mountChatViewport } from "@/lib/azura/viewport";
 
 function containDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
@@ -39,19 +42,7 @@ function ChromeHeader({ pathname, menuOpen, onMenu, onNavigate, onKeyDown, popup
     <div className="header-controls" data-motion-static><LanguageSwitcher/><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu"><span className="menu-glyph" data-open={menuOpen} aria-hidden="true"><span/><span/><span/></span></button></div>
   </div></header>,t,locale);
 }
-function replyTo(question: string): Reply {
-  const text = question.toLocaleLowerCase("id");
-  if (/vircuit/.test(text)) return { text: "Vircuit adalah laboratorium virtual untuk belajar elektronika, mikrokontroler, dan IoT. Proyek tim Trio Hengker Enjoyer ini meraih Juara 3 Web Development FESTRA UNRI 2026.", href: "/projects/vircuit", label: "Jelajahi Vircuit" };
-  if (/aura/.test(text)) return { text: "AURA POD merupakan inovasi fotobioreaktor mikroalga dari tim ALGA NOVA dengan dukungan elektronika dan IoT. Tim meraih Juara 1 dan Most Favorite BPDC SiCheCo UNSRI 2026.", href: "/projects/aura-pod", label: "Jelajahi AURA POD" };
-  if (/kontak|hubung|contact|email|kolaborasi|collaborat/.test(text)) return { text: "Profil GitHub Rehan tersedia di halaman Contact. Dari sana, kamu bisa membuka repositori dan melihat aktivitas pengembangannya.", href: "/contact", label: "Buka Contact" };
-  if (/riset|research|iot|lab|inkubator|incubator/.test(text)) return { text: "Halaman Lab merangkum penelitian dan praktik yang Rehan ikuti. Kamu bisa melihat topik yang dikerjakan, perkembangannya, dan dokumentasi yang tersedia.", href: "/lab", label: "Buka Lab & Research" };
-  if (/siapa|profil|tentang|rehan|about|who/.test(text)) return { text: "Rehan adalah mahasiswa S1 Pendidikan Vokasional Teknik Elektronika di Universitas Muhammadiyah Riau. Minatnya mencakup elektronika, embedded systems, IoT, dan pengembangan software.", href: "/about", label: "Tentang Rehan" };
-  if (/skill|kompetensi|kemampuan|technolog/.test(text)) return { text: "Di halaman About, kamu bisa mengenal kemampuan yang Rehan kembangkan dan teknologi yang digunakan. Label Learning menunjukkan yang masih dipelajari.", href: "/about#skills-heading", label: "Jelajahi kompetensi" };
-  if (/pengalaman|experience/.test(text)) return { text: "Halaman Experience merangkum peran yang pernah Rehan jalani beserta latar kegiatannya. Pilih kategori untuk menelusuri pengalaman yang ingin kamu kenal lebih jauh.", href: "/experience", label: "Lihat pengalaman" };
-  if (/proyek|project|karya/.test(text)) return { text: "Di Projects, kamu bisa menjelajahi karya Rehan dan membaca informasi yang tersedia pada setiap proyek. Gunakan pencarian atau kategori untuk menemukan yang ingin kamu lihat.", href: "/projects", label: "Jelajahi karya" };
-  return { text: "Aku belum punya informasi tentang topik itu. Kamu bisa bertanya tentang profil Rehan, karya, kemampuan, pengalaman, atau cara menghubunginya.", href: "/projects", label: "Jelajahi karya" };
-}
-const chatHistory = createChatHistory(replyTo);
+const chatHistory = createChatHistory();
 
 export function SiteChrome() {
   const {locale,t}=useTranslation();
@@ -69,22 +60,23 @@ export function SiteChrome() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const nextId = useRef(0);
-  const pendingReply = useRef<{ timer: ReturnType<typeof setTimeout>; id: number } | null>(null);
+  const pendingReply = useRef<{ controller:AbortController; id:number } | null>(null);
   const resetChatSize = useRef(false);
   const menuMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
   const chatMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
   const typing = messages.some(message => !message.ready);
   const finishReply = useCallback(() => {
     const pending = pendingReply.current;
-    if (!pending) return;
-    clearTimeout(pending.timer);
-    pendingReply.current = null;
-    chatHistory.finish(pending.id);
+    if (pending) { pendingReply.current=null;pending.controller.abort();chatHistory.fail(pending.id,'interrupted'); }
+    chatHistory.settle();
   }, []);
   useEffect(() => {
-    const unsubscribe = subscribeMotion(() => { if (prefersReducedMotion()) finishReply(); });
+    const unsubscribe = subscribeMotion(() => { if (prefersReducedMotion()) chatHistory.settle(); });
     return () => { unsubscribe(); finishReply(); };
   }, [finishReply]);
+  useEffect(()=>{const pending=pendingReply.current;if(pending&&!messages.some(message=>message.id===pending.id)){pendingReply.current=null;pending.controller.abort();}},[messages]);
+  const settleReply=useCallback((id:number)=>chatHistory.settle(id),[]);
+  const scrollReply=useCallback(()=>{if(log.current&&chat.current?.open)log.current.scrollTo({top:log.current.scrollHeight,behavior:'instant'});},[]);
 
   useEffect(() => {
     if (menu.current) menuMotion.current = mountDialog(menu.current, true);
@@ -119,17 +111,23 @@ export function SiteChrome() {
 
   function openMenu() { chat.current?.close(); if (menuMotion.current) menuMotion.current.open(); else menu.current?.show(); setMenuOpen(true); }
   function openChat() { resetChatSize.current = false; menu.current?.close(); if (chatMotion.current) chatMotion.current.open(); else chat.current?.showModal(); setChatOpen(true); }
-  function send(question: string) {
+  async function send(question: string) {
     if (pendingReply.current) return;
     const value = question.trim();
     if (!value) { setError("Tulis pertanyaan terlebih dahulu."); return; }
     if (value.length > 500) { setError("Batasi pertanyaan hingga 500 karakter."); return; }
-    if (messages.length >= 20) { setError("Percakapan ini sudah memuat 20 pertanyaan. Mulai ulang percakapan untuk bertanya lagi."); return; }
-    const id = Math.max(nextId.current, ...messages.map(message => message.id + 1));
+    const currentMessages=chatHistory.getSnapshot();
+    if (currentMessages.length >= 20) { setError("Percakapan ini sudah memuat 20 pertanyaan. Mulai ulang percakapan untuk bertanya lagi."); return; }
+    const id = Math.max(nextId.current, ...currentMessages.map(message => message.id + 1));
     nextId.current = id + 1;
-    chatHistory.append({ id, question: value, reply: replyTo(value), ready: reduced });
-    if (!reduced) pendingReply.current = { id, timer: setTimeout(finishReply, 640) };
+    const history=conversationTurns(currentMessages);
+    const controller=new AbortController(),pending={id,controller};pendingReply.current=pending;
+    chatHistory.append({ id, question: value, reply:{text:''}, ready:false });
     setDraft(""); setError("");
+    const result=await requestAnswer({question:value,locale,history},controller.signal);
+    if(pendingReply.current!==pending)return;
+    pendingReply.current=null;
+    if('error' in result)chatHistory.fail(id,result.error);else chatHistory.finish(id,{text:result.text});
   }
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); send(draft); }
   function closeMenu() { if (menuMotion.current) menuMotion.current.close(); else menu.current?.close(); }
@@ -143,9 +141,9 @@ export function SiteChrome() {
   }
   // A new route keeps the menu in place until the route curtain covers it.
   function navigateMenu(href: string) { if (href === pathname) closeMenu(); }
-  function closeChat() { resetChatSize.current = true; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
+  function closeChat() { finishReply();resetChatSize.current = true; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
   function resetChat() {
-    if (pendingReply.current) clearTimeout(pendingReply.current.timer);
+    if (pendingReply.current) pendingReply.current.controller.abort();
     pendingReply.current = null; chatHistory.reset(); setDraft(""); setError(""); setResetVersion(value => value + 1);
     // Reset disappears with the conversation; keep focus on a stable control.
     chat.current?.querySelector<HTMLButtonElement>('.dialog-actions [aria-pressed]')?.focus({preventScroll:true});
@@ -173,11 +171,11 @@ export function SiteChrome() {
       <p id="azura-description" className="meta chat-description">Tanyakan tentang Rehan dan karyanya.</p>
       <div className="chat-log" ref={log} role="log" aria-label="Percakapan dengan Azura" aria-live="polite" aria-relevant="additions text" aria-busy={typing}>
         <AnimatePresence mode="wait"><motion.div key={resetVersion} className="chat-transcript" initial={reduced || resetVersion === 0 ? false : {opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:reduced ? 0 : .2}}>
-        <div className="chat-reply"><p>Aku Azura. Mau tahu tentang Rehan, proyek, atau pengalamannya?</p></div>
+        <div className="chat-reply"><p>Halo, saya Azura. Apa yang ingin kamu ketahui tentang Rehan dan karyanya?</p></div>
         {messages.map(message => <div className="chat-exchange" key={message.id}>
           <motion.div className="chat-question" initial={reduced || message.ready ? false : { opacity: 0, y: 28, x: 16, scale: .86 }} animate={{ opacity: 1, y: 0, x: 0, scale: 1 }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 340, damping: 26, mass: .8, opacity: { duration: .18 } }}><span className="sr-only">Kamu: </span><span data-no-translate>{message.question}</span></motion.div>
           <AnimatePresence initial={false} mode="wait">
-            {message.ready ? <motion.div key="reply" className="chat-reply" initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduced ? 0 : .46, ease: [.22, 1, .36, 1] }} onAnimationComplete={() => { if (log.current && chat.current?.open) log.current.scrollTo({ top: log.current.scrollHeight, behavior: reduced ? "instant" : "smooth" }); }}><p><span className="sr-only">Azura: </span>{message.reply.text}</p><SiteLink href={message.reply.href} className="text-link" onNavigate={closeChat}>{message.reply.label}<ArrowUpRight size={16} aria-hidden="true"/></SiteLink></motion.div>
+            {message.ready ? message.error ? <motion.p key="error" className="chat-request-error" role="status" initial={{opacity:0}} animate={{opacity:1}}>{AI_ERRORS[message.error]}</motion.p> : <motion.div key="reply" className="chat-reply" initial={reduced || !message.animate ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduced ? 0 : .24, ease: [.22, 1, .36, 1] }}><ProgressiveAnswer id={message.id} text={message.reply.text} animate={!!message.animate} reduced={reduced} onDone={settleReply} onProgress={scrollReply}/></motion.div>
             : <motion.div key="typing" className="chat-typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduced ? 0 : .18 }}><span className="sr-only">Azura sedang mengetik</span><span aria-hidden="true">{[0, 1, 2].map(dot => <motion.i key={dot} animate={reduced ? undefined : { y: [0, -4, 0], opacity: [.4, 1, .4] }} transition={{ duration: .9, repeat: Infinity, delay: dot * .12 }}/>)}</span></motion.div>}
           </AnimatePresence>
         </div>)}
