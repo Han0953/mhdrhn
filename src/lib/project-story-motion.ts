@@ -49,6 +49,7 @@ export function mountProjectStory(root: HTMLElement) {
     // Flex overflow can omit the trailing padding. Measure the final card and retain its gutter.
     const lastCard = cards.at(-1);
     travel = lastCard ? Math.max(0, Math.ceil(lastCard.offsetLeft + lastCard.offsetWidth + gutter - viewport.clientWidth)) : 0;
+    root.style.setProperty("--story-travel",`${travel}`);
     centers = cards.map(card => card.offsetLeft + card.offsetWidth / 2);
     viewportWidth = viewport.clientWidth;
     if (travel <= 0) { pinned = false; root.dataset.mode = "native"; }
@@ -106,6 +107,6 @@ export function mountProjectStory(root: HTMLElement) {
     delete root.dataset.mode; root.style.height = ""; track.style.transform = "";
     media.forEach(node => node?.style.removeProperty("--story-emphasis"));
     controls.forEach(button => button.removeAttribute("aria-current"));
-    for (const property of ["--story-progress", "--story-gutter", "--story-height", "--story-overview-height", "--story-top"]) root.style.removeProperty(property);
+    for (const property of ["--story-progress", "--story-travel", "--story-gutter", "--story-height", "--story-overview-height", "--story-top"]) root.style.removeProperty(property);
   };
 }

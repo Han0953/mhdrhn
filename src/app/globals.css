@@ -592,6 +592,7 @@ html[data-motion="minimal"] .azura-panel { transition:none; }
 .motion-disclosure summary svg { flex:none; transition:transform var(--motion-micro,140ms) var(--motion-response,ease-out); }
 .motion-disclosure[open] summary svg { transform:rotate(45deg); }
 .disclosure-body { display:flow-root; }
+.motion-disclosure:not([open])>.disclosure-content { display:none; }
 .lab-records h3 { font-size:clamp(25px,3vw,38px); }
 .search-form { display:grid; width:100%; min-width:0; grid-template-columns:minmax(0,1fr); align-items:end; gap:16px; }
 .search-field { min-width:0; }

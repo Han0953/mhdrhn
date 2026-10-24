@@ -1,9 +1,11 @@
 import { animate } from "framer-motion";
 import { motionElementKey } from "@/lib/motion/language-checkpoint";
+import { disclosureTextHidden } from "./language-context";
 
-type Word = { text: string; x: number; y: number; height: number; font: string; color: string; spacing: string; transform: string; features: string; chrome: "main" | "popup" | null };
+type Word = { text: string; offset: number; x: number; y: number; height: number; font: string; color: string; spacing: string; transform: string; features: string; chrome: "main" | "popup" | null };
 type Block = { text: string; ranges: Range[]; words: Word[] };
 export type TextSnapshot = Map<string, Block>;
+type PaintedWord = { word: Word; x: number; y: number; mode: "enter" | "exit" | "move" };
 const excluded = "script,style,noscript,svg,textarea,select,option,.sr-only,[hidden],[data-language-overlay],.language-options,.language-trigger,.route-transition-viewport,nextjs-portal";
 
 /** Read ranges rather than wrapping/mutating text owned by React. Viewport only. */
@@ -14,7 +16,7 @@ export function captureVisibleWords(): TextSnapshot {
   let count = 0;
   while ((current = walker.nextNode()) && count < 650) {
     const node = current as Text, parent = node.parentElement;
-    if (!parent || !node.data.trim() || parent.closest(excluded)) continue;
+    if (!parent || !node.data.trim() || parent.closest(excluded) || disclosureTextHidden(parent)) continue;
     const rect = parent.getBoundingClientRect();
     if (rect.bottom <= 0 || rect.top >= innerHeight || rect.right <= 0 || rect.left >= innerWidth) continue;
     const style = getComputedStyle(parent);
@@ -34,7 +36,7 @@ export function captureVisibleWords(): TextSnapshot {
       range.setStart(node, match.index); range.setEnd(node, match.index + match[0].length);
       const box = range.getBoundingClientRect();
       if (!box.width || !box.height || box.bottom <= 0 || box.top >= innerHeight || box.right <= 0 || box.left >= innerWidth) continue;
-      ranges.push(range); words.push({text:match[0],x:box.left,y:box.top,height:box.height,font:style.font,color:style.color,spacing:style.letterSpacing,transform:style.textTransform,features:style.fontFeatureSettings,chrome:parent.closest('.popup-header')?'popup':parent.closest('.site-header')?'main':null}); count++;
+      ranges.push(range); words.push({text:match[0],offset:match.index,x:box.left,y:box.top,height:box.height,font:style.font,color:style.color,spacing:style.letterSpacing,transform:style.textTransform,features:style.fontFeatureSettings,chrome:parent.closest('.popup-header')?'popup':parent.closest('.site-header')?'main':null}); count++;
     }
     if (words.length) blocks.set(key,{text:node.data,ranges,words});
   }
@@ -43,12 +45,31 @@ export function captureVisibleWords(): TextSnapshot {
 
 /** The real text stays semantic/selectable; this short-lived, inert layer paints words only. */
 export function morphWords(before: TextSnapshot, after: TextSnapshot): { finished: Promise<void>; stop: () => void } {
-  const ranges: Range[] = [], outgoing: Word[] = [], incoming: Word[] = [];
+  const ranges: Range[] = [], painted: PaintedWord[] = [];
   for (const [key, block] of after) {
     const old = before.get(key);
-    if (old?.text === block.text) continue;
-    ranges.push(...block.ranges); incoming.push(...block.words);
-    if (old) outgoing.push(...old.words);
+    if (old?.text === block.text) {
+      // Untranslated names/labels also follow the reflow of surrounding copy.
+      // Match by source offset even if reflow changes the viewport's crop:
+      // React may have replaced the entire locale subtree.
+      const previousWords = new Map(old.words.map(word => [word.offset, word]));
+      block.words.forEach((word, i) => {
+        const previous = previousWords.get(word.offset);
+        if (!previous) return;
+        const x = previous.x - word.x, y = previous.y - word.y;
+        if (Math.abs(x) < .5 && Math.abs(y) < .5) return;
+        ranges.push(block.ranges[i]); painted.push({word, x, y, mode:"move"});
+      });
+      continue;
+    }
+    ranges.push(...block.ranges);
+    const x = old ? old.words[0].x - block.words[0].x : 0;
+    const y = old ? old.words[0].y - block.words[0].y : 0;
+    // Crossfade both languages while their block moves to its new baseline.
+    // Transform only the disposable word layer, leaving entrance controllers
+    // and the reading-position anchor in sole control of the real page.
+    if (old) old.words.forEach(word => painted.push({word, x:-x, y:-y, mode:"exit"}));
+    block.words.forEach(word => painted.push({word, x, y, mode:"enter"}));
   }
   if (!ranges.length || !("highlights" in CSS) || typeof Highlight === "undefined") return {finished:Promise.resolve(),stop:()=>{}};
   const layer = document.createElement("div");
@@ -74,7 +95,8 @@ export function morphWords(before: TextSnapshot, after: TextSnapshot): { finishe
     window.removeEventListener("wheel",stop); window.removeEventListener("touchstart",stop); window.removeEventListener("resize",stop);
     resolveFinished();
   };
-  function paint(word: Word, index: number, enter: boolean) {
+  function paint({word, x, y, mode}: PaintedWord, index: number) {
+    const enter = mode === "enter", move = mode === "move";
     const span = document.createElement("span"); span.textContent = word.text;
     Object.assign(span.style,{left:`${word.x}px`,top:`${word.y}px`,height:`${word.height}px`,font:word.font,lineHeight:`${word.height}px`,color:word.color,letterSpacing:word.spacing,textTransform:word.transform,fontFeatureSettings:word.features,opacity:enter?"0":"1"});
     const host = word.chrome === 'popup' ? document.querySelector<HTMLElement>('dialog[open] .popup-header') : word.chrome === 'main' ? header : undefined;
@@ -83,15 +105,27 @@ export function morphWords(before: TextSnapshot, after: TextSnapshot): { finishe
       if (!overlay) { overlay=document.createElement('div');overlay.dataset.languageOverlay='header';overlay.setAttribute('aria-hidden','true');overlay.inert=true;host.append(overlay);headerLayers.set(host,overlay); }
       overlay.append(span);
     } else layer.append(span);
-    controls.push(animate(span,{opacity:enter?[0,1]:[1,0],y:enter?[5,0]:[0,-4]},{duration:enter?.32:.2,delay:Math.min(index*.009,.16),ease:[.22,1,.36,1]}));
+    // A complete transform lets Motion use the browser's native animation
+    // driver instead of updating hundreds of individual x/y values per frame.
+    const from = mode==="exit" ? "translate(0px, 0px)" : `translate(${x}px, ${y+(enter?5:0)}px)`;
+    const to = mode==="exit" ? `translate(${x}px, ${y-4}px)` : "translate(0px, 0px)";
+    controls.push(animate(span,{
+      opacity:move?[1,1]:enter?[0,1]:[1,0],
+      transform:[from,to],
+    },{
+      duration:mode==="exit"?.3:.48,
+      // Reflow starts together; only the word crossfade gets a small stagger.
+      delay:move?0:Math.min(index*.007,.14),
+      ease:[.22,1,.36,1],
+    }));
   }
   try {
     document.head.append(highlightStyle);
     CSS.highlights.set("language-morph",new Highlight(...ranges));
     document.body.append(layer);
     window.addEventListener("wheel",stop,{passive:true}); window.addEventListener("touchstart",stop,{passive:true}); window.addEventListener("resize",stop);
-    outgoing.forEach((word,i)=>paint(word,i,false)); incoming.forEach((word,i)=>paint(word,i,true));
-    timeout=setTimeout(stop,800);
+    painted.forEach(paint);
+    timeout=setTimeout(stop,1000);
     void Promise.all(controls).then(stop);
     return {finished,stop};
   } catch { stop(); return {finished:Promise.resolve(),stop}; }
