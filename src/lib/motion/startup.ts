@@ -63,7 +63,8 @@ export function motionStartupFailed() {
 
 /** Header/footer readiness cannot release a still-unprepared destination main. */
 export function releaseMotionStartup(root:HTMLElement) {
-  if(root.closest('main'))window.dispatchEvent(new Event('mhdrhn:motion-staged'));
+  const main=root.closest('main');
+  if(main&&!main.querySelector?.('[data-home-scene][data-scene-state="pending"]'))window.dispatchEvent(new Event('mhdrhn:motion-staged'));
 }
 
 type StartupClaim={animations:Animation[];complete:()=>void;onComplete:()=>void};

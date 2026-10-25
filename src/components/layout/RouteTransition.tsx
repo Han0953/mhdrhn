@@ -11,7 +11,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import type { NavigationHref, NavigationProject } from "@/lib/navigation";
 import { createRouteWipe } from "@/lib/route-motion";
 import { createRouteSession, type RouteOptions } from "@/lib/route-session";
-import { awaitRouteAssets } from "@/lib/route-readiness";
+import { awaitRouteAssets, awaitHomeScene } from "@/lib/route-readiness";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
 import { prepareRouteEntrance, startRouteEntrance, settleRouteEntrance } from "@/lib/motion/entrance";
 
@@ -39,6 +39,7 @@ export function RouteTransition({ children, projects = noProjects }: { children:
   const ready = useCallback((path: string, error = false) => session.current?.committed(path, error), []);
 
   useEffect(() => {
+    const initialAbort=new AbortController();let initialScene=false,disposing=false;
     const controller = createRouteWipe(() => layer.current, prefersReducedMotion, (active, completed) => {
       // A native top-layer curtain covers an open navigation dialog without closing it first.
       if (active && !viewport.current?.open) viewport.current?.showModal();
@@ -46,6 +47,7 @@ export function RouteTransition({ children, projects = noProjects }: { children:
       if (content.current) { content.current.inert = active; content.current.setAttribute("aria-busy", String(active)); }
       if (active) viewport.current?.focus({ preventScroll: true });
       else {
+        if(initialScene){initialScene=false;if(disposing)document.documentElement.dataset.homeSceneBoot='pending';else window.dispatchEvent(new Event('mhdrhn:home-scene-released'));}
         if (completed) startRouteEntrance(document.querySelector("main"));
         else settleRouteEntrance(document.querySelector("main"));
         const request = transaction?.complete();
@@ -78,12 +80,28 @@ export function RouteTransition({ children, projects = noProjects }: { children:
       },
       assets: async signal => {
         const main = document.querySelector("main");
-        const ready = await awaitRouteAssets(main, signal);
+        const results = await Promise.all([awaitRouteAssets(main, signal),awaitHomeScene(main,signal)]);
+        const ready=results.every(Boolean);
         if (ready && !signal.aborted) { prepareRouteEntrance(main); startRouteEntrance(main); }
         return ready;
       },
     });
     session.current = transaction;
+    if(document.documentElement.dataset.homeSceneBoot==='pending'){
+      const main=document.querySelector('main');
+      const hasIntro=['active','leaving'].includes(document.documentElement.dataset.visitIntro??'');
+      if(!main?.querySelector('[data-home-scene]')||hasIntro||prefersReducedMotion()){
+        void awaitHomeScene(main,initialAbort.signal).then(()=>{if(!initialAbort.signal.aborted)window.dispatchEvent(new Event('mhdrhn:home-scene-released'));});
+      }else{
+        initialScene=true;
+        controller.hold('Home',token=>{
+          void Promise.all([awaitRouteAssets(main,initialAbort.signal),awaitHomeScene(main,initialAbort.signal)]).then(()=>{
+            if(initialAbort.signal.aborted)return;prepareRouteEntrance(main);controller.ready(token);
+          });
+        });
+        document.documentElement.dataset.homeSceneBoot='covered';
+      }
+    }
     const onPreference = () => { if (prefersReducedMotion()) transaction?.skip(); };
     const onEscape = (event: KeyboardEvent) => { if (event.key === "Escape") { if(languageChangePending()){cancelLanguageChange();return;} if (viewport.current?.open) event.preventDefault(); settleRouteEntrance(document.querySelector("main")); transaction?.cancel(); } };
     const onHidden = () => { if (document.hidden) transaction?.skip(); };
@@ -93,6 +111,7 @@ export function RouteTransition({ children, projects = noProjects }: { children:
     document.addEventListener("keydown", onEscape);
     document.addEventListener("visibilitychange", onHidden);
     return () => {
+      disposing=true;initialAbort.abort();
       transaction?.dispose(); session.current = null; unsubscribe();
       window.removeEventListener("popstate", onHistory);
       document.removeEventListener("keydown", onEscape);
@@ -108,7 +127,7 @@ export function RouteTransition({ children, projects = noProjects }: { children:
     <dialog className="route-transition-viewport" ref={viewport} tabIndex={-1} aria-modal="true" aria-hidden="true" aria-label={t("Transisi halaman")} onCancel={event => { event.preventDefault(); session.current?.cancel(); }}
       onKeyDown={event => { if (event.key === "Tab") { event.preventDefault(); viewport.current?.focus({ preventScroll: true }); } }}>
       <div className="route-wipe" ref={layer} data-locale={locale}>
-        <span className="route-title" aria-hidden="true"/>
+        <span className="route-title" aria-hidden="true">Home</span>
         <span className="sr-only" role="status"/>
       </div>
     </dialog>

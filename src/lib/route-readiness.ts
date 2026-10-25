@@ -40,3 +40,18 @@ export function awaitRouteAssets(main: HTMLElement | null, signal: AbortSignal, 
     });
   });
 }
+
+/** Home's real canvas must render its first frame, independently of the media budget. */
+export function awaitHomeScene(main:HTMLElement|null,signal:AbortSignal,budget=8000):Promise<boolean>{
+  const scene=main?.querySelector<HTMLElement>('[data-home-scene]');
+  if(signal.aborted)return Promise.resolve(false);
+  if(!scene||scene.dataset.sceneState!=='pending')return Promise.resolve(true);
+  return new Promise(resolve=>{
+    let done=false;
+    function finish(value:boolean){if(done)return;done=true;clearTimeout(timer);signal.removeEventListener('abort',abort);scene!.removeEventListener('mhdrhn:scene-state',check);resolve(value);}
+    function check(){if(scene!.dataset.sceneState!=='pending')finish(true);}
+    function abort(){finish(false);}
+    const timer=setTimeout(()=>{scene!.dispatchEvent(new Event('mhdrhn:scene-timeout'));finish(true);},budget);
+    scene.addEventListener('mhdrhn:scene-state',check);signal.addEventListener('abort',abort,{once:true});check();
+  });
+}

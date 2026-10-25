@@ -104,7 +104,7 @@ html.dark .theme-icon-dark { display:block; }
 .icon-button[aria-pressed="true"] { background:var(--ink); color:var(--canvas); }
 .icon-button[aria-pressed="true"]::after { content:""; position:absolute; bottom:4px; width:10px; height:2px; background:currentColor; }
 .desktop-nav { display:none; }
-.route-transition-viewport { position:fixed; inset:0; width:100%; max-width:100%; height:100dvh; max-height:100dvh; margin:0; padding:0; border:0; background:transparent; overflow:hidden; z-index:60; pointer-events:none; visibility:hidden; }
+.route-transition-viewport { position:fixed; inset:0; width:100vw; max-width:100vw; height:100dvh; max-height:100dvh; margin:0; padding:0; border:0; background:transparent; overflow:hidden; z-index:60; pointer-events:none; visibility:hidden; }
 .route-transition-viewport::backdrop { background:transparent; }
 .route-transition-viewport[data-active="true"] { visibility:visible; pointer-events:auto; }
 .route-wipe { position:absolute; inset:0; background:var(--brand); color:#fff; transform:translateX(-101%); display:grid; place-items:center; padding:24px; text-align:center; }
@@ -910,6 +910,32 @@ h1,h2,h3,h4,.capability-category h3,.capability-category h4,.wordmark,.art-lette
 
 /* P2-C/D: bounded wrapper motion; text, intrinsic media and scroll owners stay independent. */
 .hero-signal-frame { min-width:0; }
+.hero-signal-frame:has(.hero-scene[data-scene-state="unavailable"]) {display:none;}
+.hero-grid:has(.hero-scene[data-scene-state="unavailable"]) {grid-template-columns:1fr;}
+.hero-scene {margin:0;width:100%;position:relative;}
+.hero-scene:not([data-scene-state="ready"]) {visibility:hidden;}
+.hero-scene-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.hero-scene-heading .eyebrow {font-size:11px;}
+.hero-scene-heading>.meta {font-size:9px;letter-spacing:.08em;white-space:nowrap;}
+.hero-scene-stage {position:relative;width:100%;height:300px;isolation:isolate;}
+.hero-scene-stage canvas {display:block;width:100%;height:100%;}
+.hero-scene-surface {position:absolute;inset:0;border:0;background:none;padding:0;cursor:grab;touch-action:pan-y;}
+.hero-scene-surface:active {cursor:grabbing;}
+.hero-scene-surface:focus-visible {outline:1px solid var(--accent-text);outline-offset:-6px;}
+.hero-scene-toolbar {display:flex;align-items:center;gap:12px;border-top:1px solid var(--rule);}
+.hero-scene-steps {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1;}
+.hero-scene-steps>button {position:relative;min-height:58px;padding:10px 4px;text-align:left;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;}
+.hero-scene-steps>button>.meta {display:block;font-size:9px;line-height:1.5;}
+.hero-scene-steps>button::after {content:"";position:absolute;left:4px;right:12px;bottom:-1px;height:2px;background:var(--accent-text);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.22,1,.36,1);}
+.hero-scene-steps>button[aria-pressed="true"] {color:var(--ink);}
+.hero-scene-steps>button[aria-pressed="true"]::after {transform:scaleX(1);}
+.hero-scene-actions {display:flex;gap:2px;}
+.hero-scene-actions>.icon-button {width:44px;min-width:44px;height:44px;}
+.hero-scene-actions>.icon-button[aria-pressed="true"] {color:var(--accent-text);}
+.hero-scene>figcaption {font-size:10px;margin-top:12px;color:var(--muted);}
+@media(min-width:768px) {.hero-signal-frame:has(.hero-scene) {align-self:center;}.hero-scene-stage {height:360px;}.hero-scene-heading .eyebrow {font-size:12px;}}
+@media(min-width:1280px) {.hero-scene-stage {height:420px;}}
+@media(hover:hover) and (pointer:fine) {.hero-scene-steps>button:hover,.hero-scene-actions>.icon-button:hover {color:var(--accent-text);}}
 .story-media { flex:none; width:100%; min-width:0; overflow:hidden; }
 .story-media-motion { min-width:0; transform:translateY(calc((1 - var(--story-emphasis,1)) * 6px)) scale(calc(1 + var(--story-emphasis,0) * .015)); }
 .story-root[data-mode="native"] .story-media-motion,.story-root[data-view="list"] .story-media-motion { transform:none; }

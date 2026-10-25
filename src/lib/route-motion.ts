@@ -55,7 +55,7 @@ export function createRouteWipe(getLayer: () => HTMLElement | null, prefersReduc
     const layer = getLayer(); if (layer) layer.dataset.phase = phase;
     animate("translateX(0)", `translateX(${-direction * 101}%)`, motionTokens.duration.routeReveal, () => clear(true));
   }
-  function play(nextDirection: NavigationDirection, history = false, label = "", onCovered?: (id: number) => void) {
+  function play(nextDirection: NavigationDirection, history = false, label = "", onCovered?: (id: number) => void, initial=false) {
     clear(); const layer = getLayer();
     if (!nextDirection || !layer) return false;
     const token = ++generation;
@@ -69,12 +69,14 @@ export function createRouteWipe(getLayer: () => HTMLElement | null, prefersReduc
     onActive(true, false);
     feedback = setTimeout(() => { if (current === token) layer.dataset.pending = "true"; }, 1500);
     stall = setTimeout(() => { if (current === token) layer.dataset.stalled = "true"; }, 8000);
-    animate(`translateX(${direction * 101}%)`, "translateX(0)", history ? 320 : motionTokens.duration.routeCover, () => {
+    const fullyCovered=() => {
       if (current !== token) return;
       phase = "holding"; layer.dataset.phase = phase;
       const handoff = covered; covered = undefined; handoff?.(token);
       if (current === token) reveal();
-    });
+    };
+    if(initial){layer.style.transform='translateX(0)';fullyCovered();}
+    else animate(`translateX(${direction * 101}%)`, "translateX(0)", history ? 320 : motionTokens.duration.routeCover, fullyCovered);
     return token;
   }
   function ready(token: number) {
@@ -98,5 +100,5 @@ export function createRouteWipe(getLayer: () => HTMLElement | null, prefersReduc
     }
   }
   function label(value: string) { const title = getLayer()?.querySelector(".route-title"); if (title) title.textContent = value; }
-  return { play, ready, clear, preferenceChanged, label };
+  return { play, hold:(label:string,onCovered:(id:number)=>void)=>play(1,false,label,onCovered,true), ready, clear, preferenceChanged, label };
 }
