@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { PageMotion } from "@/components/motion/PageMotion";
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
 import { usePathname } from "next/navigation";
-import { X, MessageCircle, Send, RotateCcw, ArrowUpRight, Maximize2, Minimize2 } from "lucide-react";
+import { X, MessageCircle, Send, RotateCcw, ArrowUpRight, ArrowDown, Maximize2, Minimize2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SiteLink } from "./RouteTransition";
 import { navigation } from "@/lib/navigation";
@@ -52,6 +52,8 @@ export function SiteChrome() {
   const chat = useRef<HTMLDialogElement>(null);
   const launcher = useRef<HTMLButtonElement>(null);
   const log = useRef<HTMLDivElement>(null);
+  const followLatest = useRef(true);
+  const [chatAwayFromBottom, setChatAwayFromBottom] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatWide, setChatWide] = useState(false);
@@ -76,7 +78,29 @@ export function SiteChrome() {
   }, [finishReply]);
   useEffect(()=>{const pending=pendingReply.current;if(pending&&!messages.some(message=>message.id===pending.id)){pendingReply.current=null;pending.controller.abort();}},[messages]);
   const settleReply=useCallback((id:number)=>chatHistory.settle(id),[]);
-  const scrollReply=useCallback(()=>{if(log.current&&chat.current?.open)log.current.scrollTo({top:log.current.scrollHeight,behavior:'instant'});},[]);
+  const scrollReply=useCallback(()=>{if(followLatest.current&&log.current&&chat.current?.open)log.current.scrollTo({top:log.current.scrollHeight,behavior:'instant'});},[]);
+  function chatScrolled() {
+    const viewport=log.current;if(!viewport)return;
+    const away=viewport.scrollHeight-viewport.scrollTop-viewport.clientHeight>32;
+    followLatest.current=!away;setChatAwayFromBottom(away);
+  }
+  function jumpToLatest() {
+    const viewport=log.current;if(!viewport)return;
+    followLatest.current=true;
+    viewport.focus({preventScroll:true});
+    viewport.scrollTo({top:viewport.scrollHeight,behavior:reduced?'instant':'smooth'});
+  }
+  useEffect(()=>{
+    const viewport=log.current,content=viewport?.querySelector('.chat-log-content');if(!viewport||!content)return;
+    const update=()=>{
+      if(!chat.current?.open)return;
+      if(followLatest.current)viewport.scrollTo({top:viewport.scrollHeight,behavior:'instant'});
+      setChatAwayFromBottom(viewport.scrollHeight-viewport.scrollTop-viewport.clientHeight>32);
+    };
+    const observer=new ResizeObserver(update);observer.observe(viewport);observer.observe(content);
+    const frame=requestAnimationFrame(update);
+    return()=>{observer.disconnect();cancelAnimationFrame(frame);};
+  },[]);
 
   useEffect(() => {
     if (menu.current) menuMotion.current = mountDialog(menu.current, true);
@@ -106,8 +130,8 @@ export function SiteChrome() {
     return () => { document.body.style.overflow = original; };
   }, [menuOpen, chatOpen]);
   useEffect(() => {
-    log.current?.scrollTo({ top: log.current.scrollHeight, behavior: reduced ? "instant" : "smooth" });
-  }, [messages, reduced]);
+    scrollReply();
+  }, [messages, scrollReply]);
 
   function openMenu() { chat.current?.close(); if (menuMotion.current) menuMotion.current.open(); else menu.current?.show(); setMenuOpen(true); }
   function openChat() { resetChatSize.current = false; menu.current?.close(); if (chatMotion.current) chatMotion.current.open(); else chat.current?.showModal(); setChatOpen(true); }
@@ -122,6 +146,8 @@ export function SiteChrome() {
     nextId.current = id + 1;
     const history=conversationTurns(currentMessages);
     const controller=new AbortController(),pending={id,controller};pendingReply.current=pending;
+    followLatest.current=true;setChatAwayFromBottom(false);
+    if(document.activeElement?.closest('.quick-questions'))chat.current?.querySelector<HTMLInputElement>('#azura-input')?.focus({preventScroll:true});
     chatHistory.append({ id, question: value, reply:{text:''}, ready:false });
     setDraft(""); setError("");
     const result=await requestAnswer({question:value,locale,history},controller.signal);
@@ -143,6 +169,7 @@ export function SiteChrome() {
   function navigateMenu(href: string) { if (href === pathname) closeMenu(); }
   function closeChat() { finishReply();resetChatSize.current = true; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
   function resetChat() {
+    followLatest.current=true;setChatAwayFromBottom(false);
     if (pendingReply.current) pendingReply.current.controller.abort();
     pendingReply.current = null; chatHistory.reset(); setDraft(""); setError(""); setResetVersion(value => value + 1);
     // Reset disappears with the conversation; keep focus on a stable control.
@@ -169,19 +196,26 @@ export function SiteChrome() {
         <button className="icon-button" type="button" onClick={closeChat} aria-label="Tutup Azura" title="Tutup"><X size={20} aria-hidden="true"/></button>
       </div></div>
       <p id="azura-description" className="meta chat-description">Tanyakan tentang Rehan dan karyanya.</p>
-      <div className="chat-log" ref={log} role="log" aria-label="Percakapan dengan Azura" aria-live="polite" aria-relevant="additions text" aria-busy={typing}>
+      <div className="chat-log-region">
+      <div className="chat-log" ref={log} onScroll={chatScrolled} tabIndex={-1} role="log" aria-label="Percakapan dengan Azura" aria-live="polite" aria-relevant="additions text" aria-busy={typing}>
+        <div className="chat-log-content">
         <AnimatePresence mode="wait"><motion.div key={resetVersion} className="chat-transcript" initial={reduced || resetVersion === 0 ? false : {opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:reduced ? 0 : .2}}>
         <div className="chat-reply"><p>Halo, saya Azura. Apa yang ingin kamu ketahui tentang Rehan dan karyanya?</p></div>
         {messages.map(message => <div className="chat-exchange" key={message.id}>
           <motion.div className="chat-question" initial={reduced || message.ready ? false : { opacity: 0, y: 28, x: 16, scale: .86 }} animate={{ opacity: 1, y: 0, x: 0, scale: 1 }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 340, damping: 26, mass: .8, opacity: { duration: .18 } }}><span className="sr-only">Kamu: </span><span data-no-translate>{message.question}</span></motion.div>
           <AnimatePresence initial={false} mode="wait">
             {message.ready ? message.error ? <motion.p key="error" className="chat-request-error" role="status" initial={{opacity:0}} animate={{opacity:1}}>{AI_ERRORS[message.error]}</motion.p> : <motion.div key="reply" className="chat-reply" initial={reduced || !message.animate ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduced ? 0 : .24, ease: [.22, 1, .36, 1] }}><ProgressiveAnswer id={message.id} text={message.reply.text} animate={!!message.animate} reduced={reduced} onDone={settleReply} onProgress={scrollReply}/></motion.div>
-            : <motion.div key="typing" className="chat-typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduced ? 0 : .18 }}><span className="sr-only">Azura sedang mengetik</span><span aria-hidden="true">{[0, 1, 2].map(dot => <motion.i key={dot} animate={reduced ? undefined : { y: [0, -4, 0], opacity: [.4, 1, .4] }} transition={{ duration: .9, repeat: Infinity, delay: dot * .12 }}/>)}</span></motion.div>}
+            : <motion.div key="typing" className="chat-typing" data-reduced={reduced} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduced ? 0 : .18 }}><span className="sr-only">Azura sedang mengetik</span><span aria-hidden="true">{[0, 1, 2].map(dot => <i key={dot}/>)}</span></motion.div>}
           </AnimatePresence>
         </div>)}
         </motion.div></AnimatePresence>
+        </div>
       </div>
-      <div className="quick-questions" role="group" aria-label="Pertanyaan cepat">{["Tentang Rehan", "Proyek Vircuit", "Kompetensi", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(t(question))} disabled={typing || messages.length >= 20}>{question}</button>)}</div>
+      <AnimatePresence initial={false}>{chatAwayFromBottom && <motion.button key="latest" className="icon-button chat-jump-latest" type="button" onClick={jumpToLatest} aria-label="Ke pesan terbaru" title="Ke pesan terbaru" initial={reduced?false:{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}} transition={{duration:reduced?0:.2}}><ArrowDown size={15} aria-hidden="true"/></motion.button>}</AnimatePresence>
+      </div>
+      <div className="quick-questions-region" inert={messages.length>0}>
+        <AnimatePresence initial={false}>{messages.length===0 && <motion.div key="suggestions" className="quick-questions" role="group" aria-label="Pertanyaan cepat" initial={reduced ? false : {height:0,opacity:0,marginTop:0,marginBottom:0}} animate={{height:'auto',opacity:1,marginTop:8,marginBottom:8}} exit={{height:0,opacity:0,marginTop:0,marginBottom:0}} transition={{duration:reduced ? 0 : .48,ease:[.25,.1,.25,1]}}>{["Tentang Rehan", "Karya & proyek", "Kompetensi", "Pengalaman", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(t(question))}>{question}</button>)}</motion.div>}</AnimatePresence>
+      </div>
       <form onSubmit={submit} className="chat-form" autoComplete="off"><label htmlFor="azura-input" className="sr-only">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" name="azura-message" autoComplete="off" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={typing || messages.length >= 20}><Send size={18} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p></form>
       </div>
     </dialog>
