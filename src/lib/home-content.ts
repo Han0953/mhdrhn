@@ -5,8 +5,8 @@ import { featuredAchievements, festivalAchievements } from "./achievement-record
 export const heroRoles = [
   { label: "Creative Engineering.", source: "DATA §1.2" },
   { label: "IoT Engineer.", source: "DATA §8.1 / §9.4" },
-  { label: "Full Stack Web Developer.", source: "DATA §7.2 / §9.3" },
   { label: "Electronics & Embedded Systems.", source: "DATA §1.2 / §12.1–2" },
+  { label: "Full Stack Web Developer.", source: "DATA §7.2 / §9.3" },
   { label: "Research & Prototyping.", source: "DATA §1.3 / §8" },
 ] as const;
 

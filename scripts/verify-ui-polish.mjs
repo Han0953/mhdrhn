@@ -148,7 +148,7 @@ check('unmount releases a pending reply and body scroll lock',()=>{
   const t=chromeFixture();t.open();t.ask('Kontak');assert.equal(t.c.timers.size,1);assert.equal(t.document.body.style.overflow,'hidden');t.unmount();assert.equal(t.c.timers.size,0);assert.equal(t.subscriptions.size,0);assert.equal(t.document.body.style.overflow,'');
 });
 check('portrait owns a separate upward reveal, keeping existing media trajectories intact',()=>{
-  const{revealPlan}=load('src/lib/motion/choreography.ts',{'./preferences':{},'./engines':{},'./entrance':{}},{window:{innerWidth:1280}});
+  const{revealPlan}=load('src/lib/motion/choreography.ts',{'./preferences':{},'./engines':{},'./entrance':{},'./startup':{},'./selectors':{}},{window:{innerWidth:1280}});
   const node={matches:s=>s==='.portrait-photo',closest:()=>null};const plan=revealPlan(node,'about',0);
   assert.equal(plan.kind,'portrait');assert.match(plan.from,/translate3d\(0px,96px,0\)/);assert.match(plan.from,/scale\(1\)/);assert.equal(plan.delay,0);
 });

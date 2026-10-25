@@ -17,11 +17,14 @@ import { Footer } from "@/components/layout/Footer";
 import { MotionPreferences } from "@/components/motion/MotionPreferences";
 import { LenisProvider } from "@/providers/LenisProvider";
 import { getPublishedProjects } from "@/lib/content";
+import { motionStartupScript, motionStartupStyle } from "@/lib/motion/startup";
+import {VisitIntro} from "@/components/motion/VisitIntro";
+import {visitIntroScript,visitIntroStyle} from "@/lib/motion/visit-intro";
 // Owner-approved pairing: Clash Display Semibold for display text; Manrope for body.
 const brand = localFont({ src: "../fonts/ClashDisplay-Semibold.woff2", variable: "--font-brand", weight: "600", style: "normal", display: "swap" });
 const body = Manrope({ variable: "--font-body", subsets: ["latin"], display: "swap" });
 const baseMetadata: Metadata = {
-  title: { default: "Muhammad Rehan — Creative Engineering | mhdrhn.", template: "%s | mhdrhn." },
+  title: { default: "Muhammad Rehan | Creative Engineering", template: "%s | mhdrhn." },
   description: "Website personal Muhammad Rehan dari Pekanbaru. Kenali perjalanan, karya, dan hal-hal yang dipelajarinya melalui pengalaman serta praktik.",
   authors: [{ name: "Muhammad Rehan" }],
   // Release hostname and indexing are intentionally deferred to the release gate.
@@ -33,6 +36,7 @@ export async function generateMetadata({params}:{params:Promise<{locale:string}>
 export default async function RootLayout({ children, params }: Readonly<{ children: React.ReactNode; params: Promise<{locale:string}> }>) {
  const {locale}=await params;if(!isLocale(locale))notFound();const t=serverTranslator(locale);
   return <html lang={locale} suppressHydrationWarning className={`${brand.variable} ${body.variable}`}>
-    <body><LocaleProvider locale={locale} messages={locale==="en"?englishUI:{}}><ThemeProvider><MotionPreferences/><LanguageTransition/><LenisProvider><RouteTransition projects={getPublishedProjects().map(({ slug, title }) => ({ slug, title }))}><a className="skip-link" href="#main-content">{t("Lewati ke konten")}</a><SiteChrome/><main id="main-content" tabIndex={-1}>{children}</main><Footer locale={locale}/></RouteTransition></LenisProvider></ThemeProvider></LocaleProvider></body>
+    <head><style id="mhdrhn-motion-startup-style" dangerouslySetInnerHTML={{__html:motionStartupStyle+visitIntroStyle}}/><script id="mhdrhn-motion-startup" dangerouslySetInnerHTML={{__html:visitIntroScript+motionStartupScript}}/></head>
+    <body><VisitIntro/><LocaleProvider locale={locale} messages={locale==="en"?englishUI:{}}><ThemeProvider><MotionPreferences/><LanguageTransition/><LenisProvider><RouteTransition projects={getPublishedProjects().map(({ slug, title }) => ({ slug, title }))}><a className="skip-link" href="#main-content">{t("Lewati ke konten")}</a><SiteChrome/><main id="main-content" tabIndex={-1}>{children}</main><Footer locale={locale}/></RouteTransition></LenisProvider></ThemeProvider></LocaleProvider></body>
   </html>;
 }

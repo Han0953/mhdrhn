@@ -3,28 +3,17 @@ import { prepareReveal, type RevealItem, type RevealKind, type RevealPlayer } fr
 import { registerEntrance } from "./entrance";
 import { languageCheckpoint, languageMotionActive, motionElementKey, registerLanguageCheckpoint } from "./language-checkpoint";
 import type { SequenceOptions } from "./variants";
+import { motionStartupFailed, releaseMotionStartup, claimStartupReveal, settleStartupReveal } from "./startup";
+import { revealSelector } from "./selectors";
+export { revealSelector } from "./selectors";
 
 export type PageMotionProfile = "home" | "about" | "projects" | "detail" | "experience" | "lab" | "achievements" | "contact" | "footer" | "recovery" | "chrome";
 // Retained for the isolated previous sequence module; active runtime uses prepareReveal.
 export type MotionBeat = "hero" | "heading" | "row" | "frame" | "results" | "rule" | "copy" | "label" | "logos";
 export type PlaySequence = (nodes: HTMLElement[], beat: MotionBeat, mobile: boolean, done: () => void, options?: SequenceOptions) => () => void;
 
-/** Actual content leaves; media images and diagram coordinates keep their own transforms. */
-export const revealSelector = [
-  "h1,h2,h3,h4,p,figcaption,dt,dd,summary,button",
-  ".technology-item,.technology-mark,.technology-label,.technology-badge",
-  ".plain-list>li,.home-domain-list>li,.tags>span,.tag-list>li",
-  ".timeline-row,.education-record,.skill-group,.certificate-record,.archive-row,.award-row,.education-award,.project-spread",
-  ".home-achievement-list>li,.certificate-title-list>li,.search-field,.status-field",
-  ".home-entry-year,.archive-number,.project-number,.award-row>span,.education-award>span,.timeline-row>.meta,.footer-bottom>span",
-  ".text-link,.button-primary,.footer-cta,.footer-wordmark,.contact-link,.contact-channel,nav>a",
-  ".portrait-photo,.media-gallery-grid .media-frame,.project-spread .media-frame,.archive-thumbnail,.story-media",
-  ".wordmark,.media-enlarge",
-  ".text-link>svg,.button-primary>svg,.contact-link>svg,.footer-cta>svg,.icon-button>svg",
-  ".hero-signal-frame,.rotating-roles,.hero-top>.meta,.project-facts>div",
-].join(",");
 const groupSelector = ".portrait-window,.home-hero,.page-heading,.story-card,.technology-item,.logo-group-heading,.timeline-row,.education-record,.skill-group,.certificate-record,.archive-row,.award-row,.education-award,.project-spread,.home-achievement-list>li,.certificate-title-list>li,.section-heading,.story-heading,.about-intro,.detail-section,.project-facts,.contact-layout,.footer-top,.footer-nav,.footer-bottom,.plain-list,.section-jumps,.catalog-controls,.catalog-feedback,.section,.home-closing";
-type Group = { root: HTMLElement; items: RevealItem[]; player?: RevealPlayer; played: boolean; intersecting?: boolean };
+type Group = { root: HTMLElement; items: RevealItem[]; player?: RevealPlayer; played: boolean; intersecting?: boolean; startupOwned?:boolean };
 function kindOf(node: HTMLElement): RevealKind {
   if (node.matches(".portrait-photo")) return "portrait";
   if (node.matches("svg,.technology-mark,.technology-badge,.media-enlarge")) return "icon";
@@ -50,9 +39,10 @@ export function revealPlan(node: HTMLElement, profile: PageMotionProfile, order:
   return { node, kind, from, duration, delay: Math.min(order * (hero ? .09 : .065), hero ? 1 : .7) };
 }
 
-/** useLayoutEffect prepares before paint. Navigation primes under the red curtain. */
+/** Layout effects stage hydrated frames; the parser-time guard covers the SSR gap. */
 export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   let disposed = false, frame = 0, initialFrame = 0, released = false;
+  let collected = false;
   let lastScroll = window.scrollY, downTravel = 0, portraitUnlocked = false;
   const seen = new WeakSet<HTMLElement>();
   const groups = new Map<HTMLElement, Group>();
@@ -61,6 +51,7 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
   portraitUnlocked = checkpoint?.portraitUnlocked ?? false;
   const cover = document.querySelector<HTMLElement>(".route-transition-viewport");
   const activeCover = () => cover?.dataset.active === "true";
+  const startupFallback = motionStartupFailed() && !activeCover();
   const visible = (node: HTMLElement) => {
     const rect = node.getBoundingClientRect();
     return rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth;
@@ -75,6 +66,9 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
     item.node.dataset.reveal = "queued";
   }
   function settleGroup(group: Group) {
+    // React's development cleanup/remount must not finish an already visible
+    // CSS entrance; its finite browser animation owns its natural completion.
+    if(group.startupOwned&&!disposed)group.items.forEach(({node})=>settleStartupReveal(node));
     if (scrollPortrait(group)) { const figure = portraitFrame(group); if (figure) delete figure.dataset.awaitScroll; }
     group.player?.finish(); group.played = true;
     group.items.forEach(({node}) => { if (!group.player) { node.style.removeProperty("--reveal-from"); delete node.dataset.reveal; } });
@@ -123,7 +117,7 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
       const leaves = lines.length ? lines : node.matches(".hero-identity h1") ? Array.from(node.children) as HTMLElement[] : [node];
       const owner = node.closest<HTMLElement>(groupSelector) ?? node;
       let group = groups.get(owner);
-      if (group?.played && !(languageMotionActive() && restoredGroups.has(owner))) {
+      if (group?.played && !(!collected && group.startupOwned) && !(languageMotionActive() && restoredGroups.has(owner))) {
         group = groups.get(node);
         if (!group) { group = {root:node,items:[],played:false}; groups.set(node,group); }
       }
@@ -136,6 +130,20 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
         group.items.forEach(stage);
       }
       seen.add(node);
+      // A failed/slow enhancement already exposed the readable server HTML.
+      // Never hide it again when late hydration finally arrives.
+      if(startupFallback){group.played=true;group.root.dataset.sequence='complete';return;}
+      if(!collected&&!activeCover()&&!languageMotionActive()&&!scrollPortrait(group)&&inViewport(group)){
+        const ownerGroup=group;
+        const complete=()=>{if(!disposed&&!ownerGroup.root.matches('[data-startup-reveal="owned"]')&&!ownerGroup.root.querySelector('[data-startup-reveal="owned"]'))ownerGroup.root.dataset.sequence='complete';};
+        const claimed=leaves.map(leaf=>claimStartupReveal(leaf,complete));
+        if(group.startupOwned||claimed.some(Boolean)){
+          group.startupOwned=true;group.played=true;group.root.dataset.engine='css-startup';group.root.dataset.sequence='startup';
+          leaves.forEach((leaf,index)=>{if(!claimed[index])leaf.dataset.startupReveal='done';group.items.push(revealPlan(leaf,profile,group.items.length));});
+          complete();
+          return;
+        }
+      }
       // Only already revealed/currently visible groups stay still on a language
       // swap. Unseen groups retain their observer and their future entrance.
       if (checkpoint && languageMotionActive() && (checkpoint.played.has(motionElementKey(group.root, root)) ||
@@ -159,6 +167,7 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
       }
     });
     root.dataset.motionProfile = profile;
+    collected = true;
   }
   function prepare() {
     if (profile === "about" && (prefersReducedMotion() || typeof IntersectionObserver === "undefined")) {
@@ -166,6 +175,8 @@ export function mountPageMotion(root: HTMLElement, profile: PageMotionProfile) {
     }
     collect(); groups.forEach(group => { if (!group.played && inViewport(group)) prepareGroup(group); });
     root.dataset.motionReady = "true";
+    root.dataset.startupClaimed = "true";
+    releaseMotionStartup(root);
   }
   function start(lead = 0) {
     if (!released) { lastScroll = window.scrollY; downTravel = 0; }
