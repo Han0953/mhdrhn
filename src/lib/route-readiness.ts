@@ -16,8 +16,11 @@ export function awaitRouteAssets(main: HTMLElement | null, signal: AbortSignal, 
     signal.addEventListener("abort", abort, { once: true });
     if (main) main.dataset.routeAssets = "pending";
     const images = Array.from(main?.querySelectorAll<HTMLImageElement>("img") ?? []).filter(img => {
+      // Deferred portraits and collapsed content are not part of the first
+      // frame. Waiting for their lazy images holds the curtain until timeout.
+      if (img.closest('[data-await-scroll="true"],[hidden],details:not([open])')) return false;
       const rect = img.getBoundingClientRect();
-      return img.hasAttribute("data-route-critical") || (rect.bottom > 0 && rect.top < window.innerHeight && rect.width > 0);
+      return img.hasAttribute("data-route-critical") || (rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth && rect.width > 0 && rect.height > 0);
     });
     const settled = images.map(img => new Promise<void>(done => {
       const cleanup = () => { img.removeEventListener("load", complete); img.removeEventListener("error", failed); };

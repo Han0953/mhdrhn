@@ -10,9 +10,9 @@ function load(file,globals={},dependencies={}){
  const exports={};vm.runInNewContext(code,{exports,...globals,require(id){if(id in dependencies)return dependencies[id];if(id==="@/i18n/LocaleProvider")return {useTranslation:()=>({locale:"id",t:value=>value})};if(id==="@/i18n/translate")return {translateTree:node=>node};throw Error(id);}},{timeout:1000});return exports;
 }
 function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};}
-function image({lazy=false,visible=true,complete=false}={}){const listeners=new Map();return {loading:lazy?'lazy':'eager',complete,hasAttribute(){return false;},getBoundingClientRect(){return {top:visible?100:2000,bottom:visible?300:2200,width:320};},addEventListener(name,fn){listeners.set(name,fn);},removeEventListener(name){listeners.delete(name);},emit(name){this.complete=true;listeners.get(name)?.();},listeners};}
+function image({lazy=false,visible=true,complete=false,deferred=false,closed=false,hidden=false,critical=false,left=0,height=200}={}){const listeners=new Map();return {loading:lazy?'lazy':'eager',complete,hasAttribute(name){return name==='data-route-critical'&&critical;},closest(selector){return (deferred&&selector.includes('data-await-scroll'))||(closed&&selector.includes('details:not([open])'))||(hidden&&selector.includes('[hidden]'))?{}:null;},getBoundingClientRect(){return {top:visible?100:2000,bottom:visible?300:2200,left,right:left+320,width:320,height};},addEventListener(name,fn){listeners.set(name,fn);},removeEventListener(name){listeners.delete(name);},emit(name){this.complete=true;listeners.get(name)?.();},listeners};}
 function runtime(images=[]){const fonts=deferred(),frames=new Map(),timers=new Map(),main={dataset:{},querySelector(){return {textContent:"Heading"};},querySelectorAll(){return images;}};let n=0;
- const {awaitRouteAssets}=load('src/lib/route-readiness.ts',{document:{fonts:{load(){return fonts.promise;}}},getComputedStyle(){return {fontWeight:"700",fontSize:"64px",fontFamily:"Syne"};},setTimeout(fn,delay){const id=++n;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);},window:{innerHeight:900},requestAnimationFrame(fn){frames.set(++n,fn);return n;},cancelAnimationFrame(id){frames.delete(id);}});
+ const {awaitRouteAssets}=load('src/lib/route-readiness.ts',{document:{fonts:{load(){return fonts.promise;}}},getComputedStyle(){return {fontWeight:"700",fontSize:"64px",fontFamily:"Syne"};},setTimeout(fn,delay){const id=++n;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);},window:{innerHeight:900,innerWidth:1280},requestAnimationFrame(fn){frames.set(++n,fn);return n;},cancelAnimationFrame(id){frames.delete(id);}});
  const controller=new AbortController();const pending=awaitRouteAssets(main,controller.signal);
  return {fonts,frames,timers,main,pending,controller,async flush(){await new Promise(resolve=>setImmediate(resolve));for(let i=0;i<2;i++){const run=[...frames.values()];frames.clear();run.forEach(f=>f());}}};
 }
@@ -22,6 +22,17 @@ await check('fonts and visible image both settle before two paint frames release
 await check('failed images settle instead of trapping the cover',async()=>{const img=image(),t=runtime([img]);img.emit('error');t.fonts.resolve();await t.flush();assert.equal(await t.pending,true);});
 await check('offscreen lazy image does not block, visible lazy image does',async()=>{
  const off=image({lazy:true,visible:false}),visible=image({lazy:true}),t=runtime([off,visible]);assert.equal(off.listeners.size,0);assert.equal(visible.listeners.size,2);t.fonts.resolve();visible.emit('load');await t.flush();assert.equal(await t.pending,true);
+});
+await check('scroll-gated portraits and collapsed or hidden media never hold a ready page',async()=>{
+ const images=[image({lazy:true,deferred:true}),image({closed:true}),image({hidden:true})],t=runtime(images);
+ assert.ok(images.every(img=>img.listeners.size===0));t.fonts.resolve();await t.flush();assert.equal(await t.pending,true);assert.equal(t.main.dataset.routeAssets,'ready');assert.equal(t.timers.size,0);
+});
+await check('horizontal offscreen and zero-height media do not wait for the loading budget',async()=>{
+ const images=[image({left:1400}),image({left:-400}),image({height:0})],t=runtime(images);
+ assert.ok(images.every(img=>img.listeners.size===0));t.fonts.resolve();await t.flush();assert.equal(await t.pending,true);assert.equal(t.main.dataset.routeAssets,'ready');
+});
+await check('explicit critical media still waits outside the viewport',async()=>{
+ const img=image({visible:false,critical:true}),t=runtime([img]);t.fonts.resolve();await t.flush();assert.equal(t.main.dataset.routeAssets,'pending');assert.equal(img.listeners.size,2);img.emit('load');await t.flush();assert.equal(await t.pending,true);
 });
 await check('abort releases image listeners while a font or network is still pending',async()=>{
  const img=image(),t=runtime([img]);t.controller.abort();assert.equal(await t.pending,false);assert.equal(img.listeners.size,0);t.fonts.resolve();await t.flush();assert.equal(t.frames.size,0);
