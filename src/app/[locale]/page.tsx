@@ -1,3 +1,4 @@
+import { OriginLink } from "@/components/ui/OriginAction";
 import { serverTranslator } from "@/i18n/server";
 import { translateTree } from "@/i18n/translate";
 import { requireLocale } from "@/i18n/config";
@@ -52,7 +53,7 @@ export default async function Home({ params: localeParams }: { params: Promise<{
     <section className="section home-closing" data-home-section="closing" aria-labelledby="closing-heading">
       <p className="eyebrow">10 / The next conversation</p>
       <EditorialEntrance><h2 id="closing-heading"><DisplayLines>Ada gagasan<br/>yang ingin<br/>dibahas?</DisplayLines></h2></EditorialEntrance>
-      <div className="closing-bottom"><p>Jika ada karya yang menarik perhatianmu atau topik yang ingin dibicarakan, temukan profil saya di halaman Contact.</p><div className="actions"><SiteLink href="/contact" className="button-primary">Mari terhubung <Arrow/></SiteLink><SiteLink href="/projects" className="text-link">Lihat karya lainnya <Arrow/></SiteLink></div></div>
+      <div className="closing-bottom"><p>Jika ada karya yang menarik perhatianmu atau topik yang ingin dibicarakan, temukan profil saya di halaman Contact.</p><div className="actions"><OriginLink href="/contact">Mari terhubung <Arrow/></OriginLink><SiteLink href="/projects" className="text-link">Lihat karya lainnya <Arrow/></SiteLink></div></div>
     </section>
   </div>,t,locale);
 }

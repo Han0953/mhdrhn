@@ -1,3 +1,4 @@
+import { OriginLink } from "@/components/ui/OriginAction";
 import {localizedMetadata} from "@/i18n/metadata";
 import { serverTranslator } from "@/i18n/server";
 import { translateTree } from "@/i18n/translate";
@@ -27,7 +28,7 @@ export default async function Projects({ params: localeParams, searchParams }: {
       <div className="catalog-results" key={`${category}:${query}:${status}`} data-results-key={`${category}:${query}:${status}`}>
       {!!featured.length && <section aria-labelledby="featured-projects"><h2 id="featured-projects" className="sr-only">Karya pilihan</h2>{featured.map((project, i) => <ProjectSpread locale={locale} key={project.slug} project={project} number={i + 1}/>)}</section>}
       {!!archive.length && <section className="project-archive" aria-labelledby="archive-heading"><p className="eyebrow accent">Project archive</p><h2 id="archive-heading">Proyek lainnya.</h2>{archive.map((project, i) => <article className="archive-row archive-row--media" key={project.slug}><span className="meta archive-number">{String(i + 1).padStart(2, "0")}</span><div className="archive-thumbnail"><ProjectCover locale={locale} project={project} preview sizes="(max-width: 767px) 64px, 144px"/></div><div><h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3><p className="meta">{project.categories.join(" / ")}{project.year ? ` · ${project.year}` : ""}</p></div><SiteLink href={`/projects/${project.slug}`} className="icon-button" aria-label={`Lihat proyek ${project.title}`}><Arrow/></SiteLink></article>)}</section>}
-      {!projects.length && <div className="empty-state"><h2>Proyek tidak ditemukan.</h2><p>Coba kata kunci lain, ubah kategori, atau hapus filter untuk melihat semua proyek.</p><Link href="/projects" className="button-primary">Hapus filter</Link></div>}
+      {!projects.length && <div className="empty-state"><h2>Proyek tidak ditemukan.</h2><p>Coba kata kunci lain, ubah kategori, atau hapus filter untuk melihat semua proyek.</p><OriginLink href="/projects" transition={false}>Hapus filter</OriginLink></div>}
       </div>
     </section></div>,t,locale);
 }

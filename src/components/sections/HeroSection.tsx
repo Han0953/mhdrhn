@@ -6,6 +6,7 @@ import { Arrow } from "@/components/ui/Editorial";
 import { HeroSignal3D } from "./HeroSignal3D";
 import { RotatingRoles } from "./RotatingRoles";
 import { heroRoles } from "@/lib/home-content";
+import { OriginLink } from "@/components/ui/OriginAction";
 export function HeroSection({locale="id"}: {locale?:Locale} = {}) {
   const t=serverTranslator(locale);
   return translateTree((
@@ -15,7 +16,7 @@ export function HeroSection({locale="id"}: {locale?:Locale} = {}) {
       <div className="hero-grid"><div className="hero-identity"><p className="hero-greeting accent">Hi, it’s me,</p><h1 id="home-title" tabIndex={-1}><span>Muhammad</span><span>Rehan<span className="accent">.</span></span></h1><RotatingRoles roles={heroRoles.map(role => role.label)}/></div>
         <div className="hero-signal-frame"><HeroSignal3D/></div>
       </div>
-      <div className="hero-bottom"><p>Saya mengerjakan proyek sambil mempelajari cara kerja teknologi yang ada di baliknya.</p><div className="actions"><SiteLink className="button-primary" href="/projects">Jelajahi karya <Arrow/></SiteLink><SiteLink className="text-link" href="/about">Tentang Rehan <Arrow/></SiteLink></div></div>
+      <div className="hero-bottom"><p>Saya mengerjakan proyek sambil mempelajari cara kerja teknologi yang ada di baliknya.</p><div className="actions"><OriginLink href="/projects">Jelajahi karya <Arrow/></OriginLink><SiteLink className="text-link" href="/about">Tentang Rehan <Arrow/></SiteLink></div></div>
     </section>
   ),t,locale);
 }

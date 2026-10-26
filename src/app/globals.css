@@ -142,6 +142,12 @@ html[data-motion="minimal"] .icon-button:active,html[data-motion="minimal"] .foo
 .actions { display:flex; align-items:center; gap:16px 24px; flex-wrap:wrap; }
 .button-primary,.text-link { min-height:44px; display:inline-flex; align-items:center; gap:20px; font-size:14px; font-weight:600; }
 .button-primary { background:var(--brand); color:var(--on-brand); border:1px solid var(--brand); padding:14px 22px; justify-content:space-between; }
+.origin-action { --origin-base:var(--brand); --origin-fill:var(--ink); --origin-text:var(--canvas); position:relative; isolation:isolate; overflow:hidden; }
+.origin-action .origin-fill { position:absolute; pointer-events:none; border-radius:50%; background:var(--origin-fill); translate:-50% -50%; }
+.origin-action .origin-label { position:relative; display:inline-flex; align-items:center; justify-content:space-between; gap:20px; }
+.button-primary.origin-action:is(:hover,:active) { background:var(--origin-base); }
+.button-primary.origin-action[data-filled="true"] { color:var(--origin-text); border-color:var(--origin-fill); }
+.button-primary.origin-action:disabled { pointer-events:none; }
 @media (hover:hover) and (pointer:fine){
   .button-primary:hover { background:var(--ink); border-color:var(--ink); color:var(--canvas); }
 }
@@ -568,6 +574,9 @@ html[data-motion="minimal"] :is(.azura-panel,.chat-reset-slot) { transition:none
 .home-closing h2 { font-size:clamp(35px,6.3vw,88px); line-height:var(--display-leading); }
 .closing-bottom { display:grid; gap:24px; margin-top:32px; }
 .home-closing .button-primary { background:var(--on-brand); color:var(--brand); border-color:var(--on-brand); }
+.home-closing .origin-action { --origin-base:var(--on-brand); --origin-fill:#000; --origin-text:var(--on-brand); }
+.home-closing .button-primary.origin-action:is(:hover,:active) { background:var(--origin-base); }
+.home-closing .button-primary.origin-action[data-filled="true"] { color:var(--origin-text); border-color:var(--origin-fill); }
 @media (hover:hover) and (pointer:fine){
   .home-closing .button-primary:hover { background:#000; border-color:#000; color:var(--on-brand); }
 }

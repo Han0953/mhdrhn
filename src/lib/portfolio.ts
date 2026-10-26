@@ -3,7 +3,7 @@ export interface ExperienceGroup { id: string; group: string; items: readonly Ex
 export const experienceGroups: readonly ExperienceGroup[] = [
   { id: "laboratorium", group: "Laboratorium", items: [
     { id: "lab-electronics-2026", period: "2026", role: "Asisten Laboratorium", organization: "Laboratorium Elektronika", source: "DATA §5.1", context: "Peran ini menjadi bagian dari pengalaman saya di lingkungan laboratorium elektronika." },
-    { id: "lab-automation-robotics-pvte", role: "Asisten Lab Otomasi Cerdas dan Robotika", organization: "PVTE", source: "DATA §5.2", context: "Saya membantu pengelolaan laboratorium melalui pengecekan barang, alat, dan komponen praktik elektronika, serta memberikan dukungan teknis." },
+    { id: "lab-automation-robotics-pvte", period: "2026", role: "Asisten Lab Otomasi Cerdas dan Robotika", organization: "PVTE", source: "DATA §5.2", context: "Saya membantu pengelolaan laboratorium melalui pengecekan barang, alat, dan komponen praktik elektronika, serta memberikan dukungan teknis." },
   ] },
   { id: "organisasi", group: "Organisasi", items: [
     { id: "himpteka-vice-2025", period: "2025–2026", role: "Wakil Bupati", organization: "HIMPTEKA UMRI", source: "DATA §3.1", context: "Pada kepengurusan 2025–2026, saya menjabat Wakil Bupati HIMPTEKA UMRI, organisasi mahasiswa Pendidikan Vokasional Teknik Elektronika." },
