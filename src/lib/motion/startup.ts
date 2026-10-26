@@ -10,13 +10,16 @@ export const motionStartupStyle=`
 @keyframes mhdrhn-startup-in {from {opacity:0;transform:var(--startup-from,translate3d(0,10px,0));}to {opacity:1;transform:none;}}
 html:is([data-motion-startup="pending"],[data-motion-startup="ready"]) :where(:has(>[data-page-motion]):not([data-startup-claimed])) ${startupTargets},
 [data-startup-reveal="owned"] {animation:mhdrhn-startup-in var(--startup-duration,.65s) cubic-bezier(.22,1,.36,1) var(--startup-delay,0s) both;}
+/* Keep the hero's existing entrance clock at its first frame until the real
+   canvas is ready. Reload still has no route curtain; late/failed JS fails open. */
+html:not([data-motion-startup="fallback"]) .home-hero:has([data-home-scene][data-scene-state="pending"]) ${startupTargets} {animation-play-state:paused;}
 :is(h1,h2,h3,h4,.display-line-content,.hero-identity h1>span) {--startup-from:perspective(900px) translate3d(0,44px,0) rotate(.7deg);--startup-duration:1.05s;}
 .home-hero .hero-identity h1>span {--startup-duration:1.35s;}
 .home-hero .hero-greeting {--startup-delay:.09s;}
 .home-hero .hero-identity h1>span:nth-child(1) {--startup-delay:.18s;}
 .home-hero .hero-identity h1>span:nth-child(2) {--startup-delay:.27s;}
 .home-hero .rotating-roles {--startup-delay:.36s;}
-.home-hero .hero-signal-frame {--startup-delay:.45s;}
+.home-hero .hero-signal-frame {--startup-delay:.12s;--startup-duration:1s;}
 .home-hero .hero-bottom>p {--startup-delay:.54s;}
 .home-hero .hero-bottom .button-primary {--startup-delay:.63s;}
 .home-hero .hero-bottom .text-link {--startup-delay:.72s;}

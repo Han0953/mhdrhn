@@ -55,13 +55,13 @@ export async function mountSignalCore(host:HTMLElement,surface:HTMLElement,onFai
   // An offset outline gives the assembly a spatial frame without a heavy environment map.
   const outlineGeometry=new THREE.BufferGeometry().setFromPoints([[-2.45,-.42,-1.7],[2.45,-.42,-1.7],[2.45,-.42,1.7],[-2.45,-.42,1.7],[-2.45,-.42,-1.7]].map(p=>new THREE.Vector3(...p)));
   geometries.add(outlineGeometry);const outlineMaterial=new THREE.LineBasicMaterial({color:0x888888,transparent:true,opacity:.35});materials.add(outlineMaterial);sculpture.add(new THREE.Line(outlineGeometry,outlineMaterial));
-  let disposed=false,frame=0,last=0,visible=true,dragging=false,moved=false,travel=0,originX=0,originY=0,selected=1;
+  let disposed=false,frame=0,last=0,visible=true,dragging=false,moved=false,travel=0,originX=0,originY=0,selected=0;
   let compiled=false,sizedWidth=0,sizedHeight=0,sizedRatio=0;
-  let angle=-.24,targetAngle=-.24,tilt=0,targetTilt=0,spread=0,targetSpread=0,pulseTime=0,intro=0,started=false;
+  let angle=-.5,targetAngle=-.5,tilt=0,targetTilt=0,spread=0,targetSpread=0,pulseTime=0,intro=0,started=false;
   const root=document.documentElement;
   const reduceMedia=matchMedia('(prefers-reduced-motion: reduce)');
   const reduced=()=>root.dataset.motion==='minimal'||reduceMedia.matches;
-  const covered=()=>!!document.querySelector('.route-transition-viewport[data-active="true"]')||root.dataset.visitIntro==='active'||root.dataset.visitIntro==='leaving'||root.dataset.homeSceneBoot==='pending'||root.dataset.homeSceneBoot==='covered';
+  const covered=()=>host.closest<HTMLElement>('[data-home-scene]')?.dataset.sceneState==='pending'||!!document.querySelector('.route-transition-viewport[data-active="true"]')||root.dataset.visitIntro==='active'||root.dataset.visitIntro==='leaving'||root.dataset.homeSceneBoot==='pending'||root.dataset.homeSceneBoot==='covered';
   const blend=(a:number,b:number,dt:number)=>THREE.MathUtils.damp(a,b,8,dt);
   function theme(){const dark=root.classList.contains('dark');shell.color.setHex(dark?0x32343b:0x29282d);silver.color.setHex(dark?0xdedbd4:0x9b9996);ceramic.color.setHex(dark?0xeee9dd:0xf4f0e7);outlineMaterial.color.setHex(dark?0xaaa8a1:0x77736d);wake();}
   function resize(){
@@ -79,7 +79,7 @@ export async function mountSignalCore(host:HTMLElement,surface:HTMLElement,onFai
   }
   function render(now:number){frame=0;if(disposed||document.hidden||!visible)return;const dt=Math.min((now-last)/1000||.016,.05);last=now;
     const still=reduced(),gate=covered();if(!gate&&!started){started=true;intro=still?1:0;}
-    if(started)intro=still?1:Math.min(1,intro+dt/1.65);
+    if(started)intro=still?1:Math.min(1,intro+dt/1.15);
     angle=still?targetAngle:blend(angle,targetAngle,dt);tilt=still?0:blend(tilt,targetTilt,dt);spread=still?targetSpread:blend(spread,targetSpread,dt);
     const entry=1-Math.pow(1-intro,3);sculpture.rotation.set(.02+tilt+(started?(1-entry)*.18:0),angle,0);sculpture.position.y=started?(1-entry)*-.45:0;
     layers.forEach(({node,y,lift},i)=>{node.position.y=y+spread*lift+(started?(1-entry)*(i*.07):0);});
@@ -96,7 +96,7 @@ export async function mountSignalCore(host:HTMLElement,surface:HTMLElement,onFai
   function leave(){if(!dragging){targetTilt=0;wake();}}
   function pulse(){if(disposed)return;pulseTime=reduced()?0:2.4;targetAngle+=.18;wake();}
   function click(event:MouseEvent){if(event.detail===0||!moved)pulse();}
-  function keyboard(event:KeyboardEvent){if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();targetAngle+=event.key==='ArrowLeft'?-.28:.28;wake();}if(event.key==='Home'){event.preventDefault();targetAngle=-.24;targetTilt=0;wake();}}
+  function keyboard(event:KeyboardEvent){if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();targetAngle+=event.key==='ArrowLeft'?-.28:.28;wake();}if(event.key==='Home'){event.preventDefault();targetAngle=-.5;targetTilt=0;wake();}}
   function visibility(){if(document.hidden||!visible){cancelAnimationFrame(frame);frame=0;host.dataset.sceneLoop='paused';}else{last=0;wake();}}
   function preference(){if(reduced())pulseTime=0;wake();}
   function lost(event:Event){event.preventDefault();dispose();onFailure();}
@@ -104,7 +104,9 @@ export async function mountSignalCore(host:HTMLElement,surface:HTMLElement,onFai
   function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);resizeObserver.disconnect();intersection.disconnect();observer.disconnect();reduceMedia.removeEventListener('change',preference);signal.removeEventListener('abort',dispose);document.removeEventListener('visibilitychange',visibility);surface.removeEventListener('pointerdown',down);surface.removeEventListener('pointermove',move);surface.removeEventListener('pointerup',up);surface.removeEventListener('pointercancel',up);surface.removeEventListener('pointerleave',leave);surface.removeEventListener('click',click);surface.removeEventListener('keydown',keyboard);canvas.removeEventListener('webglcontextlost',lost);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();renderer.forceContextLoss();canvas.remove();host.dataset.sceneLoop='disposed';}
   const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(host);
   const intersection=new IntersectionObserver(entries=>{visible=entries.some(e=>e.isIntersecting);visibility();});intersection.observe(host);
-  const observer=new MutationObserver(()=>{theme();if(reduced())pulseTime=0;wake();});observer.observe(root,{attributes:true,attributeFilter:['class','data-motion','data-visit-intro','data-home-scene-boot']});const curtain=document.querySelector('.route-transition-viewport');if(curtain)observer.observe(curtain,{attributes:true,attributeFilter:['data-active']});
+  const observer=new MutationObserver(()=>{theme();if(reduced())pulseTime=0;wake();});
+  function observePresentation(){observer.disconnect();observer.observe(root,{attributes:true,attributeFilter:['class','data-motion','data-visit-intro','data-home-scene-boot']});const curtain=document.querySelector('.route-transition-viewport');if(curtain)observer.observe(curtain,{attributes:true,attributeFilter:['data-active']});const owner=host.closest<HTMLElement>('[data-home-scene]');if(owner)observer.observe(owner,{attributes:true,attributeFilter:['data-scene-state']});}
+  observePresentation();
   events(surface,true);document.addEventListener('visibilitychange',visibility);canvas.addEventListener('webglcontextlost',lost);
   reduceMedia.addEventListener('change',preference);
   signal.addEventListener('abort',dispose,{once:true});if(signal.aborted)dispose();
@@ -114,6 +116,6 @@ export async function mountSignalCore(host:HTMLElement,surface:HTMLElement,onFai
     if(disposed)return;events(surface,false);resizeObserver.unobserve(host);intersection.unobserve(host);
     const frames=host.dataset.sceneFrames;host=nextHost;surface=nextSurface;onFailure=nextFailure;host.prepend(canvas);host.dataset.sceneInstance=instanceId;host.dataset.sceneFrames=frames??'0';
     resizeObserver.observe(host);intersection.observe(host);visible=true;events(surface,true);resize();renderer.render(scene,camera);
-    observer.disconnect();observer.observe(root,{attributes:true,attributeFilter:['class','data-motion','data-visit-intro','data-home-scene-boot']});const currentCurtain=document.querySelector('.route-transition-viewport');if(currentCurtain)observer.observe(currentCurtain,{attributes:true,attributeFilter:['data-active']});
+    observePresentation();
   }};
 }

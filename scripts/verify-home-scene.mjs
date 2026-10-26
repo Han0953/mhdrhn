@@ -10,7 +10,8 @@ async function check(name,run){await run();results.push({name,status:'PASS'});co
 class Target{dataset={};listeners=new Map();addEventListener(name,fn){if(!this.listeners.has(name))this.listeners.set(name,new Set());this.listeners.get(name).add(fn);}removeEventListener(name,fn){this.listeners.get(name)?.delete(fn);if(!this.listeners.get(name)?.size)this.listeners.delete(name);}emit(name,event={}){for(const fn of [...(this.listeners.get(name)??[])])fn(event);}dispatchEvent(event){this.emit(event.type,event);return true;}}
 const source=ts.transpileModule(fs.readFileSync('src/lib/three/signal-core.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
 function runtime({pendingCompile=false,minimal=false}={}){
- const frames=new Map(),observers=[],renderers=[],root=new Target(),surface=new Target(),host=new Target(),curtain=new Target(),document=new Target(),media=new Target();let tick=0,next=0,compileResolve;
+ const frames=new Map(),observers=[],renderers=[],root=new Target(),surface=new Target(),host=new Target(),owner=new Target(),curtain=new Target(),document=new Target(),media=new Target();let tick=0,next=0,compileResolve;
+ owner.dataset.sceneState='pending';host.closest=()=>owner;
  root.dataset={homeSceneBoot:'pending',motion:minimal?'minimal':'system'};root.classList={contains:()=>false};document.documentElement=root;document.hidden=false;document.querySelector=()=>curtain.dataset.active==='true'?curtain:null;
  let width=450,height=360;
  media.matches=false;surface.setPointerCapture=()=>{};host.getBoundingClientRect=()=>({width,height});surface.getBoundingClientRect=host.getBoundingClientRect;host.children=[];host.prepend=n=>{host.children=host.children.filter(child=>child!==n);host.children.push(n);};
@@ -21,10 +22,14 @@ function runtime({pendingCompile=false,minimal=false}={}){
  const exports={};vm.runInNewContext(source,{exports,...globals,require(id){if(id==='three')return{...THREE,WebGLRenderer:Renderer};if(id.includes('RoundedBoxGeometry'))return{RoundedBoxGeometry};throw Error(id);}});
  const abort=new AbortController();let failures=0;const mounted=exports.mountSignalCore(host,surface,()=>failures++,abort.signal);
  function flush(max=400){for(let i=0;frames.size&&i<max;i++){const batch=[...frames.values()];frames.clear();tick+=16;batch.forEach(fn=>fn(tick));}}
- return{root,surface,host,document,media,curtain,observers,renderers,frames,abort,mounted,flush,resize(w,h){width=w;height=h;observers[0].fn([]);},release(){root.dataset.homeSceneBoot='done';observers.at(-1).fn([]);flush();},compileResolve:()=>compileResolve?.(),failures:()=>failures};
+ return{root,surface,host,owner,document,media,curtain,observers,renderers,frames,abort,mounted,flush,resize(w,h){width=w;height=h;observers[0].fn([]);},release(){root.dataset.homeSceneBoot='done';owner.dataset.sceneState='ready';observers.at(-1).fn([]);flush();},compileResolve:()=>compileResolve?.(),failures:()=>failures};
 }
 function clean(t){assert.equal(t.frames.size,0);assert.equal(t.surface.listeners.size,0);assert.equal(t.document.listeners.size,0);assert.equal(t.media.listeners.size,0);assert.equal(t.host.children.length,0);assert.ok(t.observers.every(o=>!o.active));const r=t.renderers[0];assert.equal(r.disposed,1);assert.equal(r.lost,1);if(r.geometries){assert.equal(r.geometryDisposals,r.geometries);assert.equal(r.materialDisposals,r.materials);}}
 await check('the first frame compiles/renders under cover, then finite entrance settles with no idle RAF',async()=>{const t=runtime(),c=await t.mounted;t.flush();assert.equal(t.host.dataset.sceneLoop,'idle');assert.equal(t.frames.size,0);t.release();assert.equal(t.frames.size,0);assert.equal(t.host.dataset.sceneLoop,'idle');c.dispose();clean(t);});
+await check('Sense is the initial selection; refresh waits for scene readiness before the finite entrance starts',async()=>{
+ const t=runtime(),c=await t.mounted;assert.equal(c.state().selected,0);t.root.dataset.homeSceneBoot='done';t.flush();assert.equal(t.frames.size,0,'pending inline scene must not consume its entrance');
+ t.owner.dataset.sceneState='ready';t.observers.at(-1).fn([]);assert.ok(t.frames.size);t.flush(1);assert.equal(t.host.dataset.sceneLoop,'active');t.flush();assert.equal(t.host.dataset.sceneLoop,'idle');c.dispose();clean(t);
+});
 await check('selection, exploded view, signal and keyboard each animate then return to zero scheduled frames',async()=>{const t=runtime(),c=await t.mounted;t.release();for(const action of [()=>c.select(2),()=>c.explode(true),()=>c.pulse(),()=>t.surface.emit('keydown',{key:'ArrowLeft',preventDefault(){}})]){action();assert.ok(t.frames.size);t.flush();assert.equal(t.frames.size,0);}c.dispose();clean(t);});
 await check('a slow drag accumulates travel and does not accidentally send a click signal on release',async()=>{const t=runtime(),c=await t.mounted;t.release();const before=t.renderers[0].renders;t.surface.emit('pointerdown',{button:0,clientX:0,clientY:0,pointerId:1});for(let i=1;i<=6;i++)t.surface.emit('pointermove',{clientX:i,clientY:0,pointerType:'mouse'});t.surface.emit('pointerup');t.surface.emit('click',{detail:1});t.flush();assert.ok(t.renderers[0].renders-before<100);c.dispose();clean(t);});
 await check('offscreen/hidden render loops pause and resume on visibility, without losing controls',async()=>{const t=runtime(),c=await t.mounted;t.release();c.pulse();t.document.hidden=true;t.document.emit('visibilitychange');assert.equal(t.frames.size,0);t.document.hidden=false;t.document.emit('visibilitychange');t.flush();assert.equal(t.frames.size,0);c.pulse();t.observers[1].fn([{isIntersecting:false}]);assert.equal(t.frames.size,0);t.observers[1].fn([{isIntersecting:true}]);t.flush();assert.equal(t.frames.size,0);c.dispose();clean(t);});
@@ -52,5 +57,15 @@ await check('main staging cannot release the intro while its real canvas is pend
 await check('the document bootstrap covers only Home and cleans its watchdog after release',()=>{
  const {homeSceneStartupScript}=loadMotion('src/lib/motion/home-scene-startup.ts');
  for(const pathname of ['/','/en','/en/','/about','/en/about']){const root={dataset:{}},events=new Map(),timers=new Map();const window={addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name)};vm.runInNewContext(homeSceneStartupScript,{window,document:{documentElement:root},location:{pathname},setTimeout(fn){timers.set(1,fn);return 1;},clearTimeout:id=>timers.delete(id)});if(pathname.includes('about')){assert.equal(root.dataset.homeSceneBoot,undefined);assert.equal(timers.size,0);}else{assert.equal(root.dataset.homeSceneBoot,'pending');root.dataset.homeSceneBoot='covered';events.get('mhdrhn:scene-settled')();assert.equal(root.dataset.homeSceneBoot,'covered');events.get('mhdrhn:home-scene-released')();assert.equal(root.dataset.homeSceneBoot,'done');assert.equal(timers.size,0);assert.equal(events.size,0);}}
+});
+await check('Home reload in either locale never arms the tab curtain or allocates readiness listeners/timers',()=>{
+ const {homeSceneStartupScript}=loadMotion('src/lib/motion/home-scene-startup.ts');
+ for(const pathname of ['/','/id','/id/','/en','/en/']){
+  const root={dataset:{}},events=new Map(),timers=new Map();
+  const window={performance:{getEntriesByType:()=>[{type:'reload'}]},addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name)};
+  const globals={window,document:{documentElement:root},location:{pathname},setTimeout(fn){timers.set(1,fn);return 1;},clearTimeout:id=>timers.delete(id)};
+  vm.runInNewContext(homeSceneStartupScript,globals);vm.runInNewContext(homeSceneStartupScript,globals);
+  assert.equal(root.dataset.homeSceneBoot,undefined);assert.equal(timers.size,0);assert.equal(events.size,0);
+ }
 });
 fs.mkdirSync('docs/execution/evidence/home-3d-2026-10-25',{recursive:true});fs.writeFileSync('docs/execution/evidence/home-3d-2026-10-25/controller-checks.json',JSON.stringify({method:'Actual Three.js geometries/math and source controller with explicit renderer, DOM, observers and RAF doubles; not a GPU benchmark.',results},null,2));console.log(`${results.length} Home scene checks passed.`);

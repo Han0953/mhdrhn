@@ -13,7 +13,7 @@ let retained:{controller:SignalCore;abort:AbortController;timer:ReturnType<typeo
 export function HeroSignal3D(){
   const {locale}=useTranslation(),en=locale==='en';
   const root=useRef<HTMLElement>(null),host=useRef<HTMLDivElement>(null),surface=useRef<HTMLButtonElement>(null),core=useRef<SignalCore|null>(null);
-  const [phase,setPhase]=useState('pending'),[active,setActive]=useState(1),[expanded,setExpanded]=useState(false);
+  const [phase,setPhase]=useState('pending'),[active,setActive]=useState(0),[expanded,setExpanded]=useState(false);
   useLayoutEffect(()=>{
     const element=root.current,stage=host.current,button=surface.current;if(!element||!stage||!button)return;
     // An App Router history cache can retain React state after effects were stopped.
@@ -56,7 +56,7 @@ export function HeroSignal3D(){
     </div>
     <div className="hero-scene-toolbar">
       <div className="hero-scene-steps" role="group" aria-label={en?'Explore the engineering process':'Jelajahi alur engineering'}>{['Sense','Compute','Build'].map((title,index)=><button key={title} type="button" disabled={phase!=='ready'} aria-pressed={active===index} onClick={()=>{setActive(index);core.current?.select(index);}}><span className="meta">0{index+1}</span>{title}</button>)}</div>
-      <div className="hero-scene-actions"><button className="icon-button" type="button" disabled={phase!=='ready'} aria-pressed={expanded} aria-label={en?'Separate the layers':'Pisahkan lapisan'} title={en?'Separate the layers':'Pisahkan lapisan'} onClick={()=>{setExpanded(!expanded);core.current?.explode(!expanded);}}><Layers size={17}/></button><button className="icon-button" type="button" disabled={phase!=='ready'} aria-label={en?'Reset the view':'Atur ulang tampilan'} title={en?'Reset the view':'Atur ulang tampilan'} onClick={()=>{setExpanded(false);setActive(1);core.current?.explode(false);core.current?.select(1);}}><RotateCcw size={16}/></button></div>
+      <div className="hero-scene-actions"><button className="icon-button" type="button" disabled={phase!=='ready'} aria-pressed={expanded} aria-label={en?'Separate the layers':'Pisahkan lapisan'} title={en?'Separate the layers':'Pisahkan lapisan'} onClick={()=>{setExpanded(!expanded);core.current?.explode(!expanded);}}><Layers size={17}/></button><button className="icon-button" type="button" disabled={phase!=='ready'} aria-label={en?'Reset the view':'Atur ulang tampilan'} title={en?'Reset the view':'Atur ulang tampilan'} onClick={()=>{setExpanded(false);setActive(0);core.current?.explode(false);core.current?.select(0);}}><RotateCcw size={16}/></button></div>
     </div>
     <figcaption className="meta">{en?'Drag to explore · Click to send a signal':'Geser untuk menjelajah · Klik untuk mengalirkan sinyal'}</figcaption>
   </figure>;

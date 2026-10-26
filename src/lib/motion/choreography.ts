@@ -36,7 +36,7 @@ export function revealPlan(node: HTMLElement, profile: PageMotionProfile, order:
   const from = `perspective(900px) translate3d(${x}px,${y}px,0) rotate(${rotation}deg) rotateX(${kind === "card" ? 6 : 0}deg) scale(${scale})`;
   const hero = !!node.closest(".home-hero");
   const duration = kind === "portrait" ? 1.35 : kind === "title" ? (hero ? 1.35 : 1.05) : kind === "media" ? 1.1 : kind === "card" ? .85 : kind === "icon" ? .75 : .65;
-  return { node, kind, from, duration, delay: Math.min(order * (hero ? .09 : .065), hero ? 1 : .7) };
+  return { node, kind, from, duration, delay: hero && node.matches('.hero-signal-frame') ? .12 : Math.min(order * (hero ? .09 : .065), hero ? 1 : .7) };
 }
 
 /** Layout effects stage hydrated frames; the parser-time guard covers the SSR gap. */
