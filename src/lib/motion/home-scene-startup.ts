@@ -11,7 +11,7 @@ export const homeSceneStartupScript=`(()=>{
  // Refresh follows every other tab: no route curtain for the current page.
  // A new visit and an actual tab navigation keep their existing readiness gate.
  var nav=window.performance&&window.performance.getEntriesByType('navigation')[0];
- if(nav&&nav.type==='reload')return;
+ if(nav&&nav.type==='reload'){document.documentElement.dataset.homeSceneBoot='reload';return;}
  var root=document.documentElement;root.dataset.homeSceneBoot='pending';
  var timer=setTimeout(finish,10000);
  function finish(){root.dataset.homeSceneBoot='done';clearTimeout(timer);window.removeEventListener('mhdrhn:home-scene-released',finish);window.removeEventListener('pagehide',finish);window.removeEventListener('mhdrhn:scene-settled',settled);}

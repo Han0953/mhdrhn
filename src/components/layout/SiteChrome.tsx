@@ -39,7 +39,7 @@ function ChromeHeader({ pathname, menuOpen, onMenu, onNavigate, onKeyDown, popup
     {!popup && <PageMotion profile="chrome"/>}
     <SiteLink className="wordmark" href="/" aria-label="Rehan — Home" onNavigate={onNavigate}><span className="accent">{"<"}</span>Rehan/<span className="accent">{">"}</span></SiteLink>
     {!popup && <nav className="desktop-nav" aria-label="Navigasi utama">{navigation.map(item => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined}>{item.label}</SiteLink>)}</nav>}
-    <div className="header-controls" data-motion-static><LanguageSwitcher/><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu"><span className="menu-glyph" data-open={menuOpen} aria-hidden="true"><span/><span/><span/></span></button></div>
+    <div className="header-controls-entry"><div className="header-controls" data-motion-static><LanguageSwitcher/><ThemeToggle/><button className="icon-button menu-trigger" type="button" onClick={onMenu} aria-label={menuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={menuOpen} aria-controls="site-menu"><span className="menu-glyph" data-open={menuOpen} aria-hidden="true"><span/><span/><span/></span></button></div></div>
   </div></header>,t,locale);
 }
 const chatHistory = createChatHistory();

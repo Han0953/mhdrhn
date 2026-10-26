@@ -76,6 +76,7 @@ main { min-height:65vh; }
 .wordmark { font-family:var(--font-brand),Arial,sans-serif; font-size:19px; font-weight:600; letter-spacing:-.07em; white-space:nowrap; display:flex; align-items:center; min-height:44px; }
 .header-controls,.theme-controls { display:flex; align-items:center; }
 .header-controls { gap:4px; }
+.header-controls-entry { display:flex; align-items:center; flex-shrink:0; }
 .header-controls .theme-switcher { display:flex; align-items:center; height:44px; }
 .header-controls .icon-button:active { transform:none; }
 .menu-trigger { padding:0; }

@@ -8,7 +8,7 @@ export const revealSelector = [
   ".home-entry-year,.archive-number,.project-number,.award-row>span,.education-award>span,.timeline-row>.meta,.footer-bottom>span",
   ".text-link,.button-primary,.footer-cta,.footer-wordmark,.contact-link,.contact-channel,nav>a",
   ".portrait-photo,.media-gallery-grid .media-frame,.project-spread .media-frame,.archive-thumbnail,.story-media",
-  ".wordmark,.media-enlarge",
+  ".wordmark,.media-enlarge,.header-controls-entry",
   ".text-link>svg,.button-primary>svg,.contact-link>svg,.footer-cta>svg,.icon-button>svg",
   ".hero-signal-frame,.rotating-roles,.hero-top>.meta,.project-facts>div",
 ].join(",");

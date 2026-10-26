@@ -65,7 +65,7 @@ await check('Home reload in either locale never arms the tab curtain or allocate
   const window={performance:{getEntriesByType:()=>[{type:'reload'}]},addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name)};
   const globals={window,document:{documentElement:root},location:{pathname},setTimeout(fn){timers.set(1,fn);return 1;},clearTimeout:id=>timers.delete(id)};
   vm.runInNewContext(homeSceneStartupScript,globals);vm.runInNewContext(homeSceneStartupScript,globals);
-  assert.equal(root.dataset.homeSceneBoot,undefined);assert.equal(timers.size,0);assert.equal(events.size,0);
+  assert.equal(root.dataset.homeSceneBoot,'reload');assert.equal(timers.size,0);assert.equal(events.size,0);
  }
 });
 fs.mkdirSync('docs/execution/evidence/home-3d-2026-10-25',{recursive:true});fs.writeFileSync('docs/execution/evidence/home-3d-2026-10-25/controller-checks.json',JSON.stringify({method:'Actual Three.js geometries/math and source controller with explicit renderer, DOM, observers and RAF doubles; not a GPU benchmark.',results},null,2));console.log(`${results.length} Home scene checks passed.`);

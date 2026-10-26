@@ -10,9 +10,10 @@ export const motionStartupStyle=`
 @keyframes mhdrhn-startup-in {from {opacity:0;transform:var(--startup-from,translate3d(0,10px,0));}to {opacity:1;transform:none;}}
 html:is([data-motion-startup="pending"],[data-motion-startup="ready"]) :where(:has(>[data-page-motion]):not([data-startup-claimed])) ${startupTargets},
 [data-startup-reveal="owned"] {animation:mhdrhn-startup-in var(--startup-duration,.65s) cubic-bezier(.22,1,.36,1) var(--startup-delay,0s) both;}
-/* Keep the hero's existing entrance clock at its first frame until the real
-   canvas is ready. Reload still has no route curtain; late/failed JS fails open. */
-html:not([data-motion-startup="fallback"]) .home-hero:has([data-home-scene][data-scene-state="pending"]) ${startupTargets} {animation-play-state:paused;}
+/* New visits retain the coordinated 3D/intro handoff. On reload, readable
+   content enters with the header; only the actual scene waits for its frame. */
+html:not([data-home-scene-boot="reload"]):not([data-motion-startup="fallback"]) .home-hero:has([data-home-scene][data-scene-state="pending"]) ${startupTargets} {animation-play-state:paused;}
+html:not([data-motion-startup="fallback"]) .home-hero:has([data-home-scene][data-scene-state="pending"]) .hero-signal-frame {animation-play-state:paused;}
 :is(h1,h2,h3,h4,.display-line-content,.hero-identity h1>span) {--startup-from:perspective(900px) translate3d(0,44px,0) rotate(.7deg);--startup-duration:1.05s;}
 .home-hero .hero-identity h1>span {--startup-duration:1.35s;}
 .home-hero .hero-greeting {--startup-delay:.09s;}
@@ -27,6 +28,8 @@ html:not([data-motion-startup="fallback"]) .home-hero:has([data-home-scene][data
 .footer-back-top {--startup-from:translate3d(-8px,18px,0);--startup-duration:.8s;}
 :is(.hero-signal-frame,.story-media,.archive-thumbnail) {--startup-from:translate3d(0,18px,0) scale(.94);--startup-duration:1.1s;}
 .desktop-nav>a:nth-child(2) {--startup-delay:65ms;}.desktop-nav>a:nth-child(3) {--startup-delay:130ms;}.desktop-nav>a:nth-child(4) {--startup-delay:195ms;}.desktop-nav>a:nth-child(5) {--startup-delay:260ms;}.desktop-nav>a:nth-child(6) {--startup-delay:325ms;}.desktop-nav>a:nth-child(7) {--startup-delay:390ms;}
+.header-controls-entry {--startup-delay:455ms;}
+@media(max-width:1279px) {.header-controls-entry {--startup-delay:130ms;}}
 @media(max-width:767px) {:is(h1,h2,h3,h4,.display-line-content,.hero-identity h1>span) {--startup-from:perspective(900px) translate3d(0,24px,0) rotate(.4deg);}}
 `;
 
@@ -69,7 +72,8 @@ export function motionStartupFailed() {
 /** Header/footer readiness cannot release a still-unprepared destination main. */
 export function releaseMotionStartup(root:HTMLElement) {
   const main=root.closest('main');
-  if(main&&!main.querySelector?.('[data-home-scene][data-scene-state="pending"]'))window.dispatchEvent(new Event('mhdrhn:motion-staged'));
+  const reload=root.ownerDocument?.documentElement.dataset.homeSceneBoot==='reload';
+  if(main&&(reload||!main.querySelector?.('[data-home-scene][data-scene-state="pending"]')))window.dispatchEvent(new Event('mhdrhn:motion-staged'));
 }
 
 type StartupClaim={animations:Animation[];complete:()=>void;onComplete:()=>void};
