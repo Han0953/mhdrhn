@@ -36,9 +36,10 @@ html:is([data-visit-intro="active"],[data-visit-intro="leaving"]) :where(:has(>[
 @keyframes visit-column-out {to {transform:translateY(-101%);}}
 `;
 
-/** External/address entry qualifies; reload, history and internal links do not. */
+/** Only external/address entry to Home qualifies; deep links and refresh do not. */
 export const visitIntroScript=`(()=>{
  if(window.__mhdrhnVisitIntroStarted)return;window.__mhdrhnVisitIntroStarted=true;
+ if(!/^\\/(?:en\\/?|id\\/?)?$/.test(location.pathname)){document.documentElement.dataset.visitIntro='skipped';return;}
  var root=document.documentElement,media=window.matchMedia('(prefers-reduced-motion: reduce)'),nav=performance.getEntriesByType('navigation')[0];
  var minimal=false,theme='system';try{minimal=localStorage.getItem('mhdrhn-motion')==='minimal';theme=localStorage.getItem('theme')||'system';}catch{}
  var internal=false;try{internal=!!document.referrer&&new URL(document.referrer).origin===location.origin;}catch{}

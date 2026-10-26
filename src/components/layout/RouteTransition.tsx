@@ -145,11 +145,23 @@ function LinkPendingStatus() {
   return pending ? <SlowLinkStatus/> : null;
 }
 
-export function SiteLink({ href: requestedHref, onNavigate, children, ...props }: ComponentProps<typeof Link>) {
+export function SiteLink({ href: requestedHref, onNavigate, onClick, children, ...props }: ComponentProps<typeof Link>) {
   const {locale,t}=useTranslation();
   const href=typeof requestedHref==="string"?localeHref(requestedHref,locale):requestedHref.host||requestedHref.hostname||requestedHref.protocol?requestedHref:{...requestedHref,pathname:requestedHref.pathname?localeHref(requestedHref.pathname,locale):requestedHref.pathname};
   const begin = useContext(TransitionContext);
-  return translateTree(<Link href={href} {...props} onNavigate={event => {
+  return translateTree(<Link href={href} {...props} onClick={event => {
+    onClick?.(event);
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const anchor = event.currentTarget;
+    if (anchor.hasAttribute("download") || (anchor.target && anchor.target !== "_self")) return;
+    // global-not-found renders outside the normal route tree. A soft push can
+    // change the URL while retaining that tree; recover with a real document.
+    if (!document.querySelector('[data-route-recovery="not-found"]')) return;
+    const destination = new URL(anchor.href, window.location.href);
+    if (destination.origin !== window.location.origin || destination.hash) return;
+    event.preventDefault();
+    window.location.assign(destination.href);
+  }} onNavigate={event => {
     let cancelled = false;
     onNavigate?.({ preventDefault() { cancelled = true; event.preventDefault(); } });
     if (!cancelled && !props.as && begin(href, { scroll: props.scroll, replace: props.replace, prefetch: props.prefetch !== false })) event.preventDefault();

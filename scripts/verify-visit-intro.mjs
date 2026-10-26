@@ -4,12 +4,12 @@ import {loadMotion} from './motion-test-support.mjs';
 const {visitIntroScript}=loadMotion('src/lib/motion/visit-intro.ts');
 let checks=0;
 function check(name,fn){fn();checks++;console.log('PASS '+name);}
-function fixture({type='navigate',referrer='',theme='light',darkSystem=false,minimal=false,reduced=false,blocked=false,io=true}={}){
+function fixture({pathname='/',type='navigate',referrer='',theme='light',darkSystem=false,minimal=false,reduced=false,blocked=false,io=true}={}){
  const timers=new Map(),events=new Map(),domEvents=new Map(),mediaEvents=new Map(),dataset={};let clock=0,id=0;
  const media={matches:reduced,addEventListener:(name,fn)=>mediaEvents.set(name,fn),removeEventListener:name=>mediaEvents.delete(name)};
  const window={addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name),matchMedia:q=>q.includes('reduced')?media:{matches:darkSystem}};
  const document={documentElement:{dataset},referrer,readyState:'loading',addEventListener:(name,fn)=>domEvents.set(name,fn),removeEventListener:name=>domEvents.delete(name)};
- const globals={window,document,performance:{getEntriesByType:()=>type?[{type}]:[]},URL,location:{origin:'https://portfolio.test'},IntersectionObserver:io?class{}:undefined,localStorage:{getItem(key){if(blocked)throw Error('blocked');return key==='theme'?theme:minimal?'minimal':null;}},setTimeout(fn,ms){const next=++id;timers.set(next,{at:clock+ms,fn});return next;},clearTimeout:id=>timers.delete(id)};
+ const globals={window,document,performance:{getEntriesByType:()=>type?[{type}]:[]},URL,location:{origin:'https://portfolio.test',pathname},IntersectionObserver:io?class{}:undefined,localStorage:{getItem(key){if(blocked)throw Error('blocked');return key==='theme'?theme:minimal?'minimal':null;}},setTimeout(fn,ms){const next=++id;timers.set(next,{at:clock+ms,fn});return next;},clearTimeout:id=>timers.delete(id)};
  const run=()=>vm.runInNewContext(visitIntroScript,globals);
  function advance(ms){const end=clock+ms;while(true){const next=[...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;timers.delete(next[0]);clock=next[1].at;next[1].fn();}clock=end;}
  function parsed(){const fn=domEvents.get('DOMContentLoaded');domEvents.delete('DOMContentLoaded');fn?.();}
@@ -17,6 +17,8 @@ function fixture({type='navigate',referrer='',theme='light',darkSystem=false,min
 }
 function clean(f){assert.equal(f.timers.size,0);assert.equal(f.events.size,0);assert.equal(f.mediaEvents.size,0);assert.equal(f.domEvents.size,0);}
 check('new address entry and external search entry qualify without a storage dependency',()=>{for(const options of [{},{referrer:'https://www.google.com/search?q=rehan'},{blocked:true}]){const f=fixture(options);assert.equal(f.dataset.visitIntro,'active');f.fire('pagehide');clean(f);}});
+check('only Home paths in either locale qualify for a fresh direct visit',()=>{for(const pathname of ['/','/en','/en/','/id','/id/']){const f=fixture({pathname});assert.equal(f.dataset.visitIntro,'active',pathname);f.fire('pagehide');clean(f);}});
+check('direct deep links skip the intro without timers or subscriptions in either locale',()=>{for(const path of ['projects','projects/vircuit','about','experience','lab','achievements','contact','project','unknown']){for(const prefix of ['','/en','/id']){const f=fixture({pathname:`${prefix}/${path}`,referrer:'https://www.google.com/search?q=rehan'});assert.equal(f.dataset.visitIntro,'skipped',`${prefix}/${path}`);clean(f);f.run();assert.equal(f.dataset.visitIntro,'skipped');clean(f);}}});
 check('refresh, history, internal full navigation and unknown navigation bypass intro',()=>{for(const options of [{type:'reload'},{type:'back_forward'},{type:null},{referrer:'https://portfolio.test/about'}]){const f=fixture(options);assert.equal(f.dataset.visitIntro,'skipped');clean(f);}});
 check('Minimal, reduced motion and unsupported enhancement bypass without timers',()=>{for(const options of [{minimal:true},{reduced:true},{io:false}]){const f=fixture(options);assert.equal(f.dataset.visitIntro,'skipped');clean(f);}});
 check('intro uses the opposite of saved light/dark and resolved System theme',()=>{for(const [options,tone] of [[{theme:'light'},'dark'],[{theme:'dark'},'light'],[{theme:'system',darkSystem:true},'light'],[{theme:'system',darkSystem:false},'dark']]){const f=fixture(options);assert.equal(f.dataset.visitIntroTone,tone);f.fire('pagehide');clean(f);}});
