@@ -23,6 +23,8 @@ html:not([data-motion-startup="fallback"]) .home-hero:has([data-home-scene][data
 .home-hero .hero-bottom>p {--startup-delay:.54s;}
 .home-hero .hero-bottom .button-primary {--startup-delay:.63s;}
 .home-hero .hero-bottom .text-link {--startup-delay:.72s;}
+.footer-cta {--startup-from:translate3d(-12px,28px,0);--startup-duration:.95s;}
+.footer-back-top {--startup-from:translate3d(-8px,18px,0);--startup-duration:.8s;}
 :is(.hero-signal-frame,.story-media,.archive-thumbnail) {--startup-from:translate3d(0,18px,0) scale(.94);--startup-duration:1.1s;}
 .desktop-nav>a:nth-child(2) {--startup-delay:65ms;}.desktop-nav>a:nth-child(3) {--startup-delay:130ms;}.desktop-nav>a:nth-child(4) {--startup-delay:195ms;}.desktop-nav>a:nth-child(5) {--startup-delay:260ms;}.desktop-nav>a:nth-child(6) {--startup-delay:325ms;}.desktop-nav>a:nth-child(7) {--startup-delay:390ms;}
 @media(max-width:767px) {:is(h1,h2,h3,h4,.display-line-content,.hero-identity h1>span) {--startup-from:perspective(900px) translate3d(0,24px,0) rotate(.4deg);}}

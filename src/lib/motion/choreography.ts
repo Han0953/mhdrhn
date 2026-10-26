@@ -29,13 +29,14 @@ export function revealPlan(node: HTMLElement, profile: PageMotionProfile, order:
   const technical = profile === "lab" || profile === "experience" || !!node.closest(".story-electronics");
   const closing = profile === "contact" || !!node.closest(".home-closing");
   const distance = mobile ? 24 : 44;
-  const x = technical ? (mobile ? -9 : -18) : closing ? (mobile ? -8 : -18) : 0;
-  const y = kind === "portrait" ? (mobile ? 64 : 96) : kind === "title" ? distance : kind === "media" ? 18 : kind === "card" ? 12 : 10;
+  const footerCta=node.matches('.footer-cta'),footerBack=node.matches('.footer-back-top');
+  const x = footerCta ? -12 : footerBack ? -8 : technical ? (mobile ? -9 : -18) : closing ? (mobile ? -8 : -18) : 0;
+  const y = footerCta ? 28 : footerBack ? 18 : kind === "portrait" ? (mobile ? 64 : 96) : kind === "title" ? distance : kind === "media" ? 18 : kind === "card" ? 12 : 10;
   const scale = kind === "icon" ? .48 : kind === "media" ? .94 : kind === "card" ? .97 : 1;
   const rotation = kind === "icon" ? -24 : kind === "title" ? (mobile ? .4 : .7) : 0;
   const from = `perspective(900px) translate3d(${x}px,${y}px,0) rotate(${rotation}deg) rotateX(${kind === "card" ? 6 : 0}deg) scale(${scale})`;
   const hero = !!node.closest(".home-hero");
-  const duration = kind === "portrait" ? 1.35 : kind === "title" ? (hero ? 1.35 : 1.05) : kind === "media" ? 1.1 : kind === "card" ? .85 : kind === "icon" ? .75 : .65;
+  const duration = footerCta ? .95 : footerBack ? .8 : kind === "portrait" ? 1.35 : kind === "title" ? (hero ? 1.35 : 1.05) : kind === "media" ? 1.1 : kind === "card" ? .85 : kind === "icon" ? .75 : .65;
   return { node, kind, from, duration, delay: hero && node.matches('.hero-signal-frame') ? .12 : Math.min(order * (hero ? .09 : .065), hero ? 1 : .7) };
 }
 
