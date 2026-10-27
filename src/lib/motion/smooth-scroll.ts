@@ -5,8 +5,8 @@ import { prefersReducedMotion, subscribeMotion } from "./preferences";
 
 let active: Lenis | undefined;
 /** Programmatic jumps and wheel smoothing share one position owner. */
-export function scrollToPosition(top: number, immediate = false) {
-  if (active) active.scrollTo(top,{immediate,force:true,duration:.9});
+export function scrollToPosition(top: number, immediate = false, transition?: {duration:number;easing:(progress:number)=>number}) {
+  if (active) active.scrollTo(top,{immediate,force:true,duration:.9,...transition});
   else window.scrollTo({top,behavior: immediate || prefersReducedMotion() ? "instant" : "smooth"});
 }
 

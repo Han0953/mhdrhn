@@ -22,7 +22,7 @@ export function ProjectStory({ locale="id", id, number, title, intro, projects, 
         <ol className="story-track">{projects.map((project, index) => {
           return translateTree(<li className="story-card" id={`${id}-project-${index}`} key={project.slug} data-project-slug={project.slug}>
             <div className="story-card-top"><span className="eyebrow accent">{String(index + 1).padStart(2, "0")} / 05</span></div>
-            <div className="story-media"><div className="story-media-motion"><ProjectCover locale={locale} project={project} preview graphicFallback landscapePreview/></div></div>
+            <div className="story-media"><div className="story-media-motion"><ProjectCover locale={locale} project={project} preview graphicFallback landscapePreview sizes="(max-width: 1023px) 100vw, 640px"/></div></div>
             <div className="story-copy">
             <p className="eyebrow story-category">{project.categories.join(" / ")}</p>
             <h3><SiteLink href={`/projects/${project.slug}`}>{project.title}</SiteLink></h3>
