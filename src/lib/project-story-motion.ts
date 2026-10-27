@@ -13,7 +13,7 @@ export function mountProjectStory(root: HTMLElement) {
   const controls = Array.from(root.querySelectorAll?.<HTMLElement>("[data-story-target]") ?? []);
   let centers: number[] = [], viewportWidth = 0, inView = true;
   const desktop = window.matchMedia("(min-width: 1024px)");
-  let travel = 0, scrollDistance = 0, endPause = 0, activeRange = 1, pinned = false, frame = 0, destroyed = false, pinTop = 0, activeIndex = -1;
+  let travel = 0, startOffset = 0, scrollDistance = 0, endPause = 0, activeRange = 1, pinned = false, frame = 0, destroyed = false, pinTop = 0, activeIndex = -1;
   let measuredWidth = window.innerWidth, measuredHeight = window.innerHeight;
   let scrollAnimations: Animation[] = [], lastOffset = Number.NaN;
   const top = () => Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-height"));
@@ -34,29 +34,37 @@ export function mountProjectStory(root: HTMLElement) {
       const timeline = new Timeline({subject:root,axis:"block",inset:`${pinTop}px calc(100% - ${stageEnd}px)`});
       const timing:KeyframeAnimationOptions & {rangeStart:string;rangeEnd:string} = {timeline,rangeStart:"contain 0%",rangeEnd:"contain 100%",fill:"both",easing:"linear"};
       activeRange = scrollDistance / (scrollDistance + endPause);
-      scrollAnimations.push(track.animate([{offset:0,transform:"translate3d(0px,0,0)"},{offset:activeRange,transform:`translate3d(${-travel}px,0,0)`},{offset:1,transform:`translate3d(${-travel}px,0,0)`}],timing));
+      scrollAnimations.push(track.animate([{offset:0,transform:`translate3d(${-startOffset}px,0,0)`},{offset:activeRange,transform:`translate3d(${-(startOffset + travel)}px,0,0)`},{offset:1,transform:`translate3d(${-(startOffset + travel)}px,0,0)`}],timing));
       if (progress) scrollAnimations.push(progress.animate([{offset:0,transform:"scaleX(0)"},{offset:activeRange,transform:"scaleX(1)"},{offset:1,transform:"scaleX(1)"}],timing));
       void scrollAnimations[0].ready?.then(requestDraw,()=>{});
       root.dataset.scrollDriver = "timeline";
     } catch { cancelScrollAnimations(); root.dataset.scrollDriver = "raf"; }
   }
-  function draw() {
-    if (!pinned || destroyed || !inView || document.hidden) return;
+  function draw(measured = false) {
+    if (!pinned || destroyed || (!measured && (!inView || document.hidden))) return;
     const nativeProgress = scrollAnimations[0]?.effect?.getComputedTiming().progress;
     const position = typeof nativeProgress === "number" ? nativeProgress / activeRange : (pinTop - root.getBoundingClientRect().top) / scrollDistance;
-    const offset = travel * Math.min(1, Math.max(0, position));
+    const distance = travel * Math.min(1, Math.max(0, position));
+    const offset = startOffset + distance;
     if (offset === lastOffset) return;
     lastOffset = offset;
     if (!scrollAnimations.length) {
       track.style.transform = `translate3d(${-offset}px,0,0)`;
       // Keep progress updates off the root: inherited custom-property changes
       // force style work through every card and image on each scroll frame.
-      if (progress) progress.style.transform = `scaleX(${travel ? offset / travel : 0})`;
+      if (progress) progress.style.transform = `scaleX(${travel ? distance / travel : 0})`;
     }
     if (desktop.matches) media.forEach((node, index) => node?.style.setProperty("--story-emphasis", String(Math.max(0, 1 - Math.abs(centers[index] - offset - viewportWidth / 2) / (viewportWidth * .7)))));
-    const active = Math.round((travel ? offset / travel : 0) * Math.max(0, cards.length - 1));
+    // The highlighted number follows the card nearest the viewport centre,
+    // including layouts that show several cards or use unequal card widths.
+    const viewportCenter = offset + viewportWidth / 2;
+    const active = centers.reduce((nearest, center, index) => Math.abs(center - viewportCenter) < Math.abs(centers[nearest] - viewportCenter) ? index : nearest, 0);
     if (active === activeIndex) return;
     activeIndex = active;
+    cards.forEach((card, index) => {
+      if (index === active) card.dataset.storyActive = "true";
+      else delete card.dataset.storyActive;
+    });
     controls.forEach((button, index) => {
       if (index === active) { if (button.getAttribute("aria-current") !== "step") button.setAttribute("aria-current", "step"); }
       else button.removeAttribute("aria-current");
@@ -83,27 +91,31 @@ export function mountProjectStory(root: HTMLElement) {
       pinned = false;
       root.dataset.mode = "native";
     }
-    // Flex overflow can omit the trailing padding. Measure the final card and retain its gutter.
+    centers = cards.map(card => card.offsetLeft + card.offsetWidth / 2);
+    viewportWidth = viewport.clientWidth;
+    // Pinned travel runs centre-to-centre, so the first and final cards can
+    // also settle in the middle without clipping or adding a second scroll.
     const lastCard = cards.at(-1);
-    travel = lastCard ? Math.max(0, Math.ceil(lastCard.offsetLeft + lastCard.offsetWidth + gutter - viewport.clientWidth)) : 0;
+    startOffset = pinned && centers.length ? centers[0] - viewportWidth / 2 : 0;
+    travel = pinned && centers.length ? Math.max(0, centers[centers.length - 1] - centers[0]) : lastCard ? Math.max(0, Math.ceil(lastCard.offsetLeft + lastCard.offsetWidth + gutter - viewportWidth)) : 0;
     root.style.setProperty("--story-travel",`${travel}`);
     scrollDistance = desktop.matches ? travel : travel * 1.6;
     root.style.setProperty("--story-scroll-distance",`${scrollDistance}`);
-    centers = cards.map(card => card.offsetLeft + card.offsetWidth / 2);
-    viewportWidth = viewport.clientWidth;
     if (travel <= 0) { pinned = false; root.dataset.mode = "native"; }
     endPause = desktop.matches ? Math.min(160, (measuredHeight - top()) * .15) : Math.min(80, (measuredHeight - top()) * .08);
     root.style.height = pinned ? `${sticky.getBoundingClientRect().height + scrollDistance + endPause}px` : "";
     linkMobileScroll();
-    if (pinned) { viewport.scrollLeft = 0; draw(); }
-    else { activeIndex = -1; track.style.transform = ""; if (progress) progress.style.transform = ""; root.style.removeProperty("--story-progress"); media.forEach(node => node?.style.removeProperty("--story-emphasis")); controls.forEach(button => button.removeAttribute("aria-current")); }
+    // Set the resting position even offscreen after fonts/resize remeasurement.
+    // Scroll updates remain visibility-gated; entering the viewport must not snap.
+    if (pinned) { viewport.scrollLeft = 0; draw(true); }
+    else { activeIndex = -1; track.style.transform = ""; if (progress) progress.style.transform = ""; root.style.removeProperty("--story-progress"); media.forEach(node => node?.style.removeProperty("--story-emphasis")); cards.forEach(card => { delete card.dataset.storyActive; }); controls.forEach(button => button.removeAttribute("aria-current")); }
   }
   function goTo(index: number) {
     const card = cards[Math.max(0, Math.min(cards.length - 1, index))];
     if (!card || root.dataset.view === "list") return;
-    const offset = card === cards.at(-1) ? travel : Math.min(travel, card.offsetLeft - cards[0].offsetLeft);
-    if (pinned) scrollToPosition(window.scrollY + root.getBoundingClientRect().top - pinTop + (travel ? offset / travel * scrollDistance : 0),prefersReducedMotion(),{duration:1.25,easing:p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2});
-    else viewport.scrollTo({ left: card.offsetLeft - cards[0].offsetLeft, behavior: prefersReducedMotion() ? "instant" : "smooth" });
+    const offset = Math.min(travel, Math.max(0, card.offsetLeft + card.offsetWidth / 2 - viewportWidth / 2 - startOffset));
+    if (pinned) scrollToPosition(window.scrollY + root.getBoundingClientRect().top - pinTop + (travel ? offset / travel * scrollDistance : 0),prefersReducedMotion(),{duration:1.05,easing:p=>1-Math.pow(1-p,3)});
+    else viewport.scrollTo({ left: offset, behavior: prefersReducedMotion() ? "instant" : "smooth" });
   }
   function onFocus(event: FocusEvent) {
     const index = cards.findIndex(card => card.contains(event.target as Node));
@@ -161,6 +173,7 @@ export function mountProjectStory(root: HTMLElement) {
     delete root.dataset.mode; root.style.height = ""; track.style.transform = "";
     if (progress) progress.style.transform = "";
     media.forEach(node => node?.style.removeProperty("--story-emphasis"));
+    cards.forEach(card => { delete card.dataset.storyActive; });
     controls.forEach(button => button.removeAttribute("aria-current"));
     for (const property of ["--story-progress", "--story-travel", "--story-scroll-distance", "--story-gutter", "--story-height", "--story-overview-height", "--story-top"]) root.style.removeProperty(property);
   };
