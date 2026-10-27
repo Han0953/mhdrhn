@@ -9,6 +9,11 @@ import {languageMotionActive} from '@/lib/motion/language-checkpoint';
 // A locale commit may remount Home. Move the real renderer, never a screenshot,
 // to the new host; release the short handoff lease if that host never arrives.
 let retained:{controller:SignalCore;abort:AbortController;timer:ReturnType<typeof setTimeout>}|null=null;
+// Start the Home-only renderer chunk while React prepares hydration, rather
+// than waiting for the layout effect before even starting its download.
+let rendererModule:Promise<typeof import('@/lib/three/signal-core')>|undefined;
+const loadRenderer=()=>rendererModule??=import('@/lib/three/signal-core');
+if(typeof window!=='undefined')void loadRenderer().catch(()=>{});
 
 export function HeroSignal3D(){
   const {locale}=useTranslation(),en=locale==='en';
@@ -18,7 +23,7 @@ export function HeroSignal3D(){
     const element=root.current,stage=host.current,button=surface.current;if(!element||!stage||!button)return;
     // An App Router history cache can retain React state after effects were stopped.
     // Re-arm readiness before a new renderer starts, even when phase was "ready".
-    let disposed=false,frame=0;const held=retained;retained=null;
+    let disposed=false;const held=retained;retained=null;
     // A translated host must receive the live canvas before the browser paints.
     // Only a genuinely new renderer needs the pending/readiness barrier.
     if(!held)element.dataset.sceneState='pending';
@@ -29,19 +34,21 @@ export function HeroSignal3D(){
       window.dispatchEvent(new Event('mhdrhn:scene-settled'));
       if(document.querySelector('main [data-motion-ready="true"]'))window.dispatchEvent(new Event('mhdrhn:motion-staged'));
     }
-    function fail(){clearTimeout(timer);cancelAnimationFrame(frame);abort.abort();core.current=null;settle('unavailable');disposed=true;}
+    function fail(){clearTimeout(timer);abort.abort();core.current=null;settle('unavailable');disposed=true;}
     const timer=setTimeout(fail,8000);element.addEventListener('mhdrhn:scene-timeout',fail);
     if(held){
       clearTimeout(held.timer);clearTimeout(timer);core.current=held.controller;held.controller.attach(stage,button,fail);
       element.dataset.sceneState='ready';
       queueMicrotask(()=>{if(!disposed){const state=held.controller.state();setActive(state.selected);setExpanded(state.expanded);settle('ready');}});
-    }else void import('@/lib/three/signal-core').then(async({mountSignalCore})=>{
+    }else void loadRenderer().then(async({mountSignalCore})=>{
       if(disposed)return;
       const controller=await mountSignalCore(stage,button,fail,abort.signal);
       if(disposed){controller.dispose();return;}core.current=controller;
-      frame=requestAnimationFrame(()=>{if(!disposed){clearTimeout(timer);settle('ready');}});
+      // mountSignalCore has compiled and painted the real buffer before resolving.
+      // Release the whole panel now, without an extra frame of readiness delay.
+      clearTimeout(timer);settle('ready');
     }).catch(()=>{clearTimeout(timer);settle('unavailable');});
-    return()=>{disposed=true;cancelAnimationFrame(frame);clearTimeout(timer);element.removeEventListener('mhdrhn:scene-timeout',fail);
+    return()=>{disposed=true;clearTimeout(timer);element.removeEventListener('mhdrhn:scene-timeout',fail);
       const controller=core.current;core.current=null;
       if(controller&&languageMotionActive()){
         if(retained){clearTimeout(retained.timer);retained.abort.abort();retained.controller.dispose();}

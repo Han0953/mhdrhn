@@ -20,6 +20,7 @@ import { getPublishedProjects } from "@/lib/content";
 import { motionStartupScript, motionStartupStyle } from "@/lib/motion/startup";
 import {VisitIntro} from "@/components/motion/VisitIntro";
 import {StartupBootstrap} from "@/components/motion/StartupBootstrap";
+import { CursorEffect } from "@/components/effects/CursorEffect";
 import {visitIntroScript,visitIntroStyle} from "@/lib/motion/visit-intro";
 import {homeSceneStartupScript,homeSceneStartupStyle} from "@/lib/motion/home-scene-startup";
 // Owner-approved pairing: Clash Display Semibold for display text; Manrope for body.
@@ -39,6 +40,6 @@ export default async function RootLayout({ children, params }: Readonly<{ childr
  const {locale}=await params;if(!isLocale(locale))notFound();const t=serverTranslator(locale);
   return <html lang={locale} suppressHydrationWarning className={`${brand.variable} ${body.variable}`}>
     <head><style id="mhdrhn-motion-startup-style" dangerouslySetInnerHTML={{__html:motionStartupStyle+visitIntroStyle+homeSceneStartupStyle}}/><StartupBootstrap source={homeSceneStartupScript+visitIntroScript+motionStartupScript}/></head>
-    <body><VisitIntro/><LocaleProvider locale={locale} messages={locale==="en"?englishUI:{}}><ThemeProvider><MotionPreferences/><LanguageTransition/><LenisProvider><RouteTransition projects={getPublishedProjects().map(({ slug, title }) => ({ slug, title }))}><a className="skip-link" href="#main-content">{t("Lewati ke konten")}</a><SiteChrome/><main id="main-content" tabIndex={-1}>{children}</main><Footer locale={locale}/></RouteTransition></LenisProvider></ThemeProvider></LocaleProvider></body>
+    <body><VisitIntro/><LocaleProvider locale={locale} messages={locale==="en"?englishUI:{}}><ThemeProvider><CursorEffect/><MotionPreferences/><LanguageTransition/><LenisProvider><RouteTransition projects={getPublishedProjects().map(({ slug, title }) => ({ slug, title }))}><a className="skip-link" href="#main-content">{t("Lewati ke konten")}</a><SiteChrome/><main id="main-content" tabIndex={-1}>{children}</main><Footer locale={locale}/></RouteTransition></LenisProvider></ThemeProvider></LocaleProvider></body>
   </html>;
 }

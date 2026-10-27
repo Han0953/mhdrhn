@@ -21,6 +21,7 @@ html:not([data-motion-startup="fallback"]) .home-hero:has([data-home-scene][data
 .home-hero .hero-identity h1>span:nth-child(2) {--startup-delay:.27s;}
 .home-hero .rotating-roles {--startup-delay:.36s;}
 .home-hero .hero-signal-frame {--startup-delay:.12s;--startup-duration:1s;}
+html[data-home-scene-boot="reload"] .home-hero .hero-signal-frame {--startup-delay:0s;--startup-duration:.55s;--startup-from:translate3d(0,10px,0) scale(.98);}
 .home-hero .hero-bottom>p {--startup-delay:.54s;}
 .home-hero .hero-bottom .button-primary {--startup-delay:.63s;}
 .home-hero .hero-bottom .text-link {--startup-delay:.72s;}

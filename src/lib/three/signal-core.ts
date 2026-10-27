@@ -79,7 +79,7 @@ export async function mountSignalCore(host:HTMLElement,surface:HTMLElement,onFai
   }
   function render(now:number){frame=0;if(disposed||document.hidden||!visible)return;const dt=Math.min((now-last)/1000||.016,.05);last=now;
     const still=reduced(),gate=covered();if(!gate&&!started){started=true;intro=still?1:0;}
-    if(started)intro=still?1:Math.min(1,intro+dt/1.15);
+    if(started)intro=still?1:Math.min(1,intro+dt/(root.dataset.homeSceneBoot==='reload'?.7:1.15));
     angle=still?targetAngle:blend(angle,targetAngle,dt);tilt=still?0:blend(tilt,targetTilt,dt);spread=still?targetSpread:blend(spread,targetSpread,dt);
     const entry=1-Math.pow(1-intro,3);sculpture.rotation.set(.02+tilt+(started?(1-entry)*.18:0),angle,0);sculpture.position.y=started?(1-entry)*-.45:0;
     layers.forEach(({node,y,lift},i)=>{node.position.y=y+spread*lift+(started?(1-entry)*(i*.07):0);});
