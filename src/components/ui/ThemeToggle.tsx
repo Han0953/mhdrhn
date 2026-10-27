@@ -12,7 +12,9 @@ import { getMotionPreference, setMotionPreference, subscribeMotion } from "@/lib
 const subscribe = () => () => {};
 // Native focus can scroll a sticky header's ancestor even while the button is visible.
 function focusWithoutScroll(event: ReactPointerEvent<HTMLButtonElement>) {
-  if (event.button !== 0) return;
+  // iOS can blur the previous button after a cancelled touch pointerdown,
+  // before click is delivered. Keep native touch/pen activation intact.
+  if (event.button !== 0 || event.pointerType !== "mouse") return;
   event.preventDefault();
   event.currentTarget.focus({ preventScroll: true });
 }
@@ -71,7 +73,7 @@ export function ThemeToggle() {
   }, [open, close]);
 
   return translateTree(<div className="theme-switcher" ref={root} onKeyDown={onKeyDown}
-    onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) close(); }}
+    onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) close(); }}
     onPointerEnter={event => {
       cancelLeave();
       if (event.pointerType === "mouse" && window.matchMedia("(hover: hover)").matches) {

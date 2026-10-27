@@ -37,7 +37,13 @@ export function mountDialog(dialog: HTMLDialogElement, side = false, anchor?: ()
     const collapsed = source && target && target.width && target.height
       ? `translate(${source.left + source.width / 2 - target.left - target.width / 2}px,${source.top + source.height / 2 - target.top - target.height / 2}px) scale(${source.width / target.width},${source.height / target.height})`
       : transform;
-    const frames = side ? [{ transform: from ?? (exit ? "none" : "translateX(100%)") }, { transform: exit ? "translateX(100%)" : "none" }]
+    // Resolve the side panel's travel after show(), with the same transform
+    // function at both ends. Avoid percentage/none interpolation while WebKit
+    // is establishing the dialog's flex layout and scrollable layer.
+    const sideWidth = side ? panel.getBoundingClientRect().width : 0;
+    const sideAway = `translate3d(${sideWidth}px,0,0)`;
+    const sideRest = "translate3d(0px,0,0)";
+    const frames = side ? [{ transform: from ?? (exit ? sideRest : sideAway) }, { transform: exit ? sideAway : sideRest }]
       : anchor ? [{ opacity: fromOpacity ?? (exit ? 1 : 0), transform: from ?? (exit ? "none" : collapsed) }, { opacity: exit ? 0 : 1, transform: exit ? collapsed : "none" }]
       : [{ opacity: 0, transform: collapsed }, { opacity: 1, transform: "none" }];
     const duration = side ? (exit ? 460 : 620) : exit ? (anchor ? motionTokens.duration.chatClose : motionTokens.duration.modalClose) : motionTokens.duration.modalOpen;

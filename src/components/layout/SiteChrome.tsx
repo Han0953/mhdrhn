@@ -19,6 +19,8 @@ import { requestAnswer } from "@/lib/azura/client";
 import { AI_ERRORS } from "@/lib/azura/protocol";
 import { ProgressiveAnswer } from "@/components/chat/ProgressiveAnswer";
 import { mountChatViewport } from "@/lib/azura/viewport";
+import { mountChatResizeMotion } from "@/lib/azura/resize-motion";
+import { mountInputModality } from "@/lib/ui/input-modality";
 
 function containDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
   if (event.key !== "Tab") return;
@@ -66,6 +68,7 @@ export function SiteChrome() {
   const resetChatSize = useRef(false);
   const menuMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
   const chatMotion = useRef<ReturnType<typeof mountDialog> | null>(null);
+  const chatResizeMotion = useRef<ReturnType<typeof mountChatResizeMotion> | null>(null);
   const typing = messages.some(message => !message.ready);
   const finishReply = useCallback(() => {
     const pending = pendingReply.current;
@@ -103,10 +106,14 @@ export function SiteChrome() {
   },[]);
 
   useEffect(() => {
+    const stopInput = mountInputModality(document.documentElement);
     if (menu.current) menuMotion.current = mountDialog(menu.current, true);
     const cleanViewport = chat.current ? mountChatViewport(chat.current) : undefined;
-    if (chat.current) chatMotion.current = mountDialog(chat.current, false, () => launcher.current);
-    return () => { cleanViewport?.(); menuMotion.current?.dispose(); chatMotion.current?.dispose(); menuMotion.current = null; chatMotion.current = null; };
+    if (chat.current) {
+      chatMotion.current = mountDialog(chat.current, false, () => launcher.current);
+      chatResizeMotion.current = mountChatResizeMotion(chat.current);
+    }
+    return () => { stopInput(); cleanViewport?.(); menuMotion.current?.dispose(); chatMotion.current?.dispose(); chatResizeMotion.current?.dispose(); menuMotion.current = null; chatMotion.current = null; chatResizeMotion.current = null; };
   }, []);
 
   useEffect(() => { menu.current?.close(); chat.current?.close(); }, [pathname]);
@@ -133,7 +140,14 @@ export function SiteChrome() {
     scrollReply();
   }, [messages, scrollReply]);
 
-  function openMenu() { chat.current?.close(); if (menuMotion.current) menuMotion.current.open(); else menu.current?.show(); setMenuOpen(true); }
+  function openMenu() {
+    chat.current?.close();
+    if (menuMotion.current) menuMotion.current.open(); else menu.current?.show();
+    // show() runs native autofocus. Keep focus on the stationary trigger rather
+    // than scrolling an entering link into view (especially on iOS).
+    document.querySelector<HTMLButtonElement>('.site-header:not(.popup-header) .menu-trigger')?.focus({preventScroll:true});
+    setMenuOpen(true);
+  }
   function openChat() { resetChatSize.current = false; menu.current?.close(); if (chatMotion.current) chatMotion.current.open(); else chat.current?.showModal(); setChatOpen(true); }
   async function send(question: string) {
     if (pendingReply.current) return;
@@ -167,8 +181,10 @@ export function SiteChrome() {
   }
   // A new route keeps the menu in place until the route curtain covers it.
   function navigateMenu(href: string) { if (href === pathname) closeMenu(); }
-  function closeChat() { finishReply();resetChatSize.current = true; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
+  function resizeChat() { chatResizeMotion.current?.play(); setChatWide(value => !value); }
+  function closeChat() { chatResizeMotion.current?.stop(); finishReply();resetChatSize.current = true; if (chatMotion.current) chatMotion.current.close(); else chat.current?.close(); }
   function resetChat() {
+    chatResizeMotion.current?.stop();
     followLatest.current=true;setChatAwayFromBottom(false);
     if (pendingReply.current) pendingReply.current.controller.abort();
     pendingReply.current = null; chatHistory.reset(); setDraft(""); setError(""); setResetVersion(value => value + 1);
@@ -181,7 +197,7 @@ export function SiteChrome() {
     <ChromeHeader pathname={pathname} menuOpen={menuOpen} onMenu={menuOpen ? closeMenu : openMenu} onNavigate={menuOpen ? () => navigateMenu("/") : undefined} onKeyDown={menuOpen ? menuKeyboard : undefined}/>
     <div className="header-space" aria-hidden="true" data-motion-static/>
     <dialog ref={menu} id="site-menu" className="chrome-dialog menu-dialog" aria-labelledby="menu-heading" onKeyDown={menuKeyboard} onCancel={event => { event.preventDefault(); closeMenu(); }} onClose={() => { setMenuOpen(false); if (!document.querySelector('.route-transition-viewport[data-active="true"]')) { const trigger = document.querySelector<HTMLElement>('.site-header:not(.popup-header) .menu-trigger'); if (trigger?.getClientRects().length && document.activeElement !== trigger) trigger.focus({ preventScroll: true }); } }} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }}>
-      <div className="menu-panel" data-dialog-panel="menu">
+      <div className="menu-panel" data-dialog-panel="menu" tabIndex={-1} autoFocus>
       <div className="dialog-top"><h2 id="menu-heading">Jelajahi.</h2></div>
       <nav aria-label="Menu navigasi">{navigation.map((item, index) => <SiteLink key={item.href} href={item.href} prefetch={true} aria-current={active(item.href) ? "page" : undefined} onNavigate={() => navigateMenu(item.href)}><span className="meta">0{index + 1}</span>{item.label}<ArrowUpRight size={24} aria-hidden="true"/></SiteLink>)}</nav>
       <p className="meta menu-note">Electronics · Code · Research</p>
@@ -191,7 +207,7 @@ export function SiteChrome() {
     <dialog ref={chat} id="azura-dialog" className="chrome-dialog azura-dialog" data-size={chatWide ? "wide" : "normal"} aria-labelledby="azura-heading" aria-describedby="azura-description" onKeyDown={containDialogFocus} onCancel={event => { event.preventDefault(); closeChat(); }} onClose={() => { finishReply(); setChatOpen(false); if (resetChatSize.current) setChatWide(false); resetChatSize.current = false; }}>
       <div className="azura-panel" data-dialog-panel="azura">
       <div className="dialog-top"><div><p className="eyebrow accent">Asisten portofolio</p><h2 id="azura-heading">Azura.</h2></div><div className="dialog-actions">
-        <button className="icon-button" type="button" onClick={() => setChatWide(value => !value)} aria-label={chatWide ? "Kecilkan panel Azura" : "Lebarkan panel Azura"} title={chatWide ? "Kecilkan panel" : "Lebarkan panel"} aria-pressed={chatWide}>{chatWide ? <Minimize2 size={19} aria-hidden="true"/> : <Maximize2 size={19} aria-hidden="true"/>}</button>
+        <button className="icon-button" type="button" onClick={resizeChat} aria-label={chatWide ? "Kecilkan panel Azura" : "Lebarkan panel Azura"} title={chatWide ? "Kecilkan panel" : "Lebarkan panel"} aria-pressed={chatWide}>{chatWide ? <Minimize2 size={19} aria-hidden="true"/> : <Maximize2 size={19} aria-hidden="true"/>}</button>
         <div className="chat-reset-slot" data-active={messages.length > 0}><AnimatePresence initial={false}>{messages.length > 0 && <motion.button key="reset" className="icon-button reset-chat" type="button" onClick={resetChat} aria-label="Reset chat" title="Reset chat" initial={reduced ? false : {opacity:0,scale:.8}} animate={{opacity:1,scale:1,rotate:0}} exit={{opacity:0,scale:.8,rotate:-90}} transition={{duration:reduced ? 0 : .18}}><RotateCcw size={18} aria-hidden="true"/></motion.button>}</AnimatePresence></div>
         <button className="icon-button" type="button" onClick={closeChat} aria-label="Tutup Azura" title="Tutup"><X size={20} aria-hidden="true"/></button>
       </div></div>
@@ -214,7 +230,7 @@ export function SiteChrome() {
       <AnimatePresence initial={false}>{chatAwayFromBottom && <motion.button key="latest" className="icon-button chat-jump-latest" type="button" onClick={jumpToLatest} aria-label="Ke pesan terbaru" title="Ke pesan terbaru" initial={reduced?false:{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}} transition={{duration:reduced?0:.2}}><ArrowDown size={15} aria-hidden="true"/></motion.button>}</AnimatePresence>
       </div>
       <div className="quick-questions-region" inert={messages.length>0}>
-        <AnimatePresence initial={false}>{messages.length===0 && <motion.div key="suggestions" className="quick-questions" role="group" aria-label="Pertanyaan cepat" initial={reduced ? false : {height:0,opacity:0,marginTop:0,marginBottom:0}} animate={{height:'auto',opacity:1,marginTop:8,marginBottom:8}} exit={{height:0,opacity:0,marginTop:0,marginBottom:0}} transition={{duration:reduced ? 0 : .48,ease:[.25,.1,.25,1]}}>{["Tentang Rehan", "Karya & proyek", "Kompetensi", "Pengalaman", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(t(question))}>{question}</button>)}</motion.div>}</AnimatePresence>
+        <AnimatePresence initial={false}>{messages.length===0 && <motion.div key="suggestions" className="quick-questions" role="group" aria-label="Pertanyaan cepat" initial={reduced ? false : {height:0,opacity:0,marginTop:0,marginBottom:0}} animate={{height:'auto',opacity:1,marginTop:8,marginBottom:8}} exit={{height:0,opacity:0,marginTop:0,marginBottom:0}} transition={{duration:reduced ? 0 : .48,ease:[.25,.1,.25,1]}}>{["Tentang Rehan", "Karya & proyek", "Kompetensi", "Pengalaman", "Kontak"].map(question => <button type="button" key={question} onClick={() => send(t(question))}><span className="quick-question-label">{question}</span></button>)}</motion.div>}</AnimatePresence>
       </div>
       <form onSubmit={submit} className="chat-form" autoComplete="off"><label htmlFor="azura-input" className="sr-only">Pertanyaanmu</label><div className="chat-input-row"><input id="azura-input" name="azura-message" autoComplete="off" value={draft} onChange={event => setDraft(event.target.value)} maxLength={500} placeholder="Tanya tentang karya…" aria-describedby="chat-error" aria-invalid={!!error} disabled={messages.length >= 20}/><button type="submit" className="icon-button" aria-label="Kirim pertanyaan" disabled={typing || messages.length >= 20}><Send size={18} aria-hidden="true"/></button></div><p id="chat-error" className="form-error" role="alert">{error}</p></form>
       </div>
