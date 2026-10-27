@@ -75,7 +75,7 @@ export function ThemeToggle() {
     onPointerEnter={event => {
       cancelLeave();
       if (event.pointerType === "mouse" && window.matchMedia("(hover: hover)").matches) {
-        if (!open) reason.current = "hover";
+        if (!open) { reason.current = "hover"; window.dispatchEvent(new CustomEvent("mhdrhn:popover",{detail:"theme"})); }
         setOpen(true);
       }
     }}
