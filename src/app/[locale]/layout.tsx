@@ -1,4 +1,4 @@
-import {localizedMetadata} from "@/i18n/metadata";
+import {indexingAllowed,localizedMetadata} from "@/i18n/metadata";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { LocaleProvider } from "@/i18n/LocaleProvider";
@@ -29,8 +29,8 @@ const baseMetadata: Metadata = {
   title: { default: "Muhammad Rehan | Creative Engineering", template: "%s | mhdrhn." },
   description: "Website personal Muhammad Rehan dari Pekanbaru. Kenali perjalanan, karya, dan hal-hal yang dipelajarinya melalui pengalaman serta praktik.",
   authors: [{ name: "Muhammad Rehan" }],
-  // Release hostname and indexing are intentionally deferred to the release gate.
-  robots: { index: false, follow: true },
+  // Keep previews/development out of search while allowing the public release.
+  robots: { index: indexingAllowed(), follow: true },
 };
 export function generateStaticParams(){return [{locale:"id"},{locale:"en"}];}
 
