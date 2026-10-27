@@ -380,8 +380,9 @@ html:has(.menu-dialog[open])::-webkit-scrollbar { visibility:hidden; }
 .azura-launcher { position:fixed; z-index:35; bottom:max(16px,env(safe-area-inset-bottom)); right:max(16px,env(safe-area-inset-right)); display:grid; place-items:center; width:44px; height:44px; padding:0; background:var(--ink); color:var(--canvas); border:1px solid var(--canvas); }
 .launcher-note { display:block; font-size:10px; margin-top:3px; }
 .azura-dialog { position:fixed; top:var(--chat-viewport-top,0px); bottom:auto; height:var(--chat-viewport-height,100dvh); max-height:var(--chat-viewport-height,100dvh); padding:12px; }
-.azura-panel { display:flex; flex-direction:column; width:min(560px,100%); max-height:100%; height:720px; min-height:0; flex-shrink:0; margin:auto; padding:16px; background:var(--canvas); border:1px solid var(--rule); overflow:hidden; overscroll-behavior:contain; transition:width 620ms var(--motion-response),height 620ms var(--motion-response); }
-.azura-dialog[data-size="wide"] .azura-panel { width:min(960px,100%); height:820px; }
+.azura-window { display:flex; width:min(560px,100%); max-height:100%; height:720px; min-height:0; flex-shrink:0; margin:auto; transition:width 640ms cubic-bezier(.22,1,.36,1),height 640ms cubic-bezier(.22,1,.36,1); }
+.azura-panel { display:flex; flex-direction:column; width:100%; height:100%; min-height:0; min-width:0; flex-shrink:0; padding:16px; background:var(--canvas); border:1px solid var(--rule); overflow:hidden; overscroll-behavior:contain; }
+.azura-dialog[data-size="wide"] .azura-window { width:min(960px,100%); height:820px; }
 .chat-typing { align-self:flex-start; width:fit-content; padding:8px 12px; background:transparent; border:0; }
 .chat-typing>span[aria-hidden] { display:flex; align-items:center; gap:6px; min-height:23px; }
 .chat-typing i { display:block; width:6px; height:6px; border-radius:50%; background:var(--accent-text); opacity:.4; animation:azura-typing-dot 1s ease-in-out infinite; }
@@ -389,8 +390,8 @@ html:has(.menu-dialog[open])::-webkit-scrollbar { visibility:hidden; }
 .chat-typing i:nth-child(3) { animation-delay:280ms; }
 .chat-typing[data-reduced="true"] i { animation:none; opacity:.65; }
 @keyframes azura-typing-dot { 0%,60%,100% { transform:translateY(0); opacity:.4; } 30% { transform:translateY(-5px); opacity:1; } }
-html[data-motion="minimal"] :is(.azura-panel,.chat-reset-slot) { transition:none; }
-@media(prefers-reduced-motion:reduce) { .azura-panel,.azura-dialog .chat-reset-slot { transition:none; } }
+html[data-motion="minimal"] :is(.azura-window,.chat-reset-slot) { transition:none; }
+@media(prefers-reduced-motion:reduce) { .azura-window,.azura-dialog .chat-reset-slot { transition:none; } }
 .dialog-actions { display:flex; flex-shrink:0; }
 .dialog-actions button { display:grid; place-items:center; width:44px; height:44px; background:transparent; border:0; }
 .azura-dialog .dialog-top { gap:8px; flex-shrink:0; }
@@ -448,7 +449,8 @@ html[data-motion="minimal"] .quick-questions button::after { transition:none; }
   .azura-launcher { width:40px; height:40px; }
   .azura-launcher svg { width:17px; height:17px; }
   .azura-dialog { padding:8px; padding-bottom:max(8px,env(safe-area-inset-bottom)); }
-  .azura-panel { padding:12px; height:100%; }
+  .azura-window { height:100%; }
+  .azura-panel { padding:12px; }
   .azura-dialog .dialog-top h2 { font-size:22px; }
   .azura-dialog .dialog-actions { gap:0; --chat-action-size:40px; }
   .azura-dialog .dialog-actions button { width:40px; min-width:40px; height:40px; }
@@ -483,7 +485,7 @@ html[data-motion="minimal"] .quick-questions button::after { transition:none; }
   .timeline-row { grid-template-columns:1fr 3fr; gap:32px; padding:40px 0; }
   .focus-row { grid-template-columns:40px 1fr 1fr; gap:32px; }
   .award-row { grid-template-columns:minmax(0,1fr) minmax(0,2fr) auto; gap:32px; padding-block:48px; }
-  .azura-panel { margin:auto 24px 24px auto; max-width:calc(100% - 48px); }
+  .azura-window { margin:auto 24px 24px auto; max-width:calc(100% - 48px); }
   .site-footer { padding-top:64px; }
 }
 @media(min-width:1024px) {
@@ -497,7 +499,7 @@ html[data-motion="minimal"] .quick-questions button::after { transition:none; }
 }
 @media(min-width:1280px) {
   .popup-header { display:none; }
-  .azura-panel { max-height:calc(100% - 48px); }
+  .azura-window { max-height:calc(100% - 48px); }
   :root { --header-height:80px; }
   .wrap { width:calc(100% - 112px); }
   .desktop-nav { display:flex; gap:22px; font-size:13px; }

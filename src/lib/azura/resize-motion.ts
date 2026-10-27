@@ -1,47 +1,90 @@
 import { prefersReducedMotion, subscribeMotion } from "@/lib/motion/preferences";
 
-const textSelector = "#azura-heading,.dialog-top .eyebrow,.chat-description,.chat-reply p,.chat-question>[data-no-translate],.chat-request-error,.quick-question-label";
+type Bubble = {
+  node: HTMLElement; body: HTMLElement; height: string; overflow: string;
+  padding: number; target: number; animation?: Animation;
+};
 
-/** Finite text feedback on an explicit resize only. Never remount the transcript
- * or disturb progressive answer spans, input focus, selection or scroll. */
+/** Only active during an explicit panel resize. Observe text wrapping, then
+ * animate the surrounding bubble's real height so subsequent messages flow
+ * smoothly. Never scale or push the text, panel, or right-hand controls. */
 export function mountChatResizeMotion(dialog: HTMLDialogElement) {
-  const animations = new Map<HTMLElement, Animation>();
+  const bubbles: Bubble[] = [];
+  let observer: ResizeObserver | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  function stop() {
-    clearTimeout(timer); timer = undefined;
-    for (const animation of animations.values()) {
-      animation.onfinish = null; animation.oncancel = null; animation.cancel();
-    }
-    animations.clear();
+  let frame = 0;
+  function cancel(bubble: Bubble) {
+    if (!bubble.animation) return;
+    bubble.animation.onfinish = null; bubble.animation.oncancel = null;
+    bubble.animation.cancel(); bubble.animation = undefined;
   }
-  function play() {
-    const current = new Map(Array.from(animations.keys(), node => {
-      const style = getComputedStyle(node);
-      return [node, { opacity: style.opacity, transform: style.transform }] as const;
+  function stop() {
+    observer?.disconnect(); observer = undefined;
+    clearTimeout(timer); timer = undefined;
+    cancelAnimationFrame(frame); frame = 0;
+    for (const bubble of bubbles.splice(0)) {
+      cancel(bubble);
+      bubble.node.style.height = bubble.height;
+      bubble.node.style.overflow = bubble.overflow;
+    }
+  }
+  function update() {
+    frame = 0;
+    if (!dialog.open || document.hidden || prefersReducedMotion()) { stop(); return; }
+    // Read all sizes before applying styles. Text bodies are not height-locked,
+    // so observing them cannot loop on our bubble-height animation.
+    const measurements = bubbles.map(bubble => ({
+      bubble, target: bubble.body.offsetHeight + bubble.padding,
+      from: bubble.node.getBoundingClientRect().height,
     }));
-    stop();
-    if (!dialog.open || dialog.dataset.motionState === "closing" || document.hidden || prefersReducedMotion()) return;
-    const bounds = dialog.getBoundingClientRect();
-    const nodes = Array.from(dialog.querySelectorAll<HTMLElement>(textSelector)).filter(node => {
-      const box = node.getBoundingClientRect();
-      return box.width > 0 && box.height > 0 && box.bottom > bounds.top && box.top < bounds.bottom;
-    }).slice(0, 60);
-    nodes.forEach((node, index) => {
-      if (typeof node.animate !== "function") return;
+    for (const { bubble, target, from } of measurements) {
+      if (Math.abs(target - bubble.target) < .5 && (bubble.animation || Math.abs(target - from) < .5)) continue;
+      cancel(bubble); bubble.target = target;
+      bubble.node.style.height = `${target}px`;
+      if (Math.abs(target - from) < .5) continue;
       try {
-        const animation = node.animate([
-          current.get(node) ?? { opacity: .68, transform: "translate3d(0,6px,0)" },
-          { opacity: 1, transform: "translate3d(0,0,0)" },
-        ], { duration: 640, delay: Math.min(index * 12, 72), easing: "cubic-bezier(.22,1,.36,1)", fill: "both" });
-        animations.set(node, animation);
+        const animation = bubble.node.animate([{ height: `${from}px` }, { height: `${target}px` }], {
+          duration: 360, easing: "cubic-bezier(.22,1,.36,1)", fill: "both",
+        });
+        bubble.animation = animation;
         const done = () => {
-          if (animations.get(node) !== animation) return;
-          animations.delete(node); animation.onfinish = null; animation.oncancel = null; animation.cancel();
+          if (bubble.animation !== animation) return;
+          cancel(bubble);
         };
         animation.onfinish = done; animation.oncancel = done;
-      } catch { /* A missing animation must not block the size change. */ }
+      } catch { /* Keep the natural target height if WAAPI is unavailable. */ }
+    }
+  }
+  function queue() { if (!frame) frame = requestAnimationFrame(update); }
+  function play() {
+    const current = new Map(bubbles.map(bubble => [bubble.node, bubble.node.getBoundingClientRect().height]));
+    stop();
+    if (!dialog.open || dialog.dataset.motionState || document.hidden || prefersReducedMotion() || typeof ResizeObserver === "undefined") return;
+    const bounds = dialog.getBoundingClientRect();
+    for (const node of Array.from(dialog.querySelectorAll<HTMLElement>(".chat-reply,.chat-question")).slice(0, 60)) {
+      const box = node.getBoundingClientRect();
+      const body = node.querySelector<HTMLElement>("p,[data-no-translate]");
+      if (!body || typeof node.animate !== "function" || !box.width || !box.height || box.bottom <= bounds.top || box.top >= bounds.bottom) continue;
+      const style = getComputedStyle(node);
+      const padding = [style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth].reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+      bubbles.push({ node, body, height: node.style.height, overflow: node.style.overflow, padding, target: body.offsetHeight + padding });
+      node.style.height = `${current.get(node) ?? box.height}px`;
+      node.style.overflow = "hidden";
+    }
+    if (!bubbles.length) return;
+    const bodies = new Map(bubbles.map(bubble => [bubble.body, bubble]));
+    observer = new ResizeObserver(entries => {
+      // The panel changes width every frame. Only a real line-wrap/height
+      // change needs another measurement pass; ignore subpixel rounding.
+      if (entries.some(entry => {
+        const bubble = bodies.get(entry.target as HTMLElement);
+        return bubble && Math.abs(entry.contentRect.height - (bubble.target - bubble.padding)) > 1;
+      })) queue();
     });
-    if (animations.size) timer = setTimeout(stop, 820);
+    bubbles.forEach(bubble => observer?.observe(bubble.body));
+    queue();
+    // Panel width settles at 640 ms; a final line-wrap has 360 ms to settle.
+    timer = setTimeout(stop, 1120);
   }
   const preference = () => { if (prefersReducedMotion() || document.hidden) stop(); };
   const unsubscribe = subscribeMotion(preference);
