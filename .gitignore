@@ -38,6 +38,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Local service-account credentials for this Firebase project
+mhdrhn-2a49b-*.json
+
 # vercel & turbopack
 .vercel
 .turbo
@@ -51,5 +54,8 @@ next-env.d.ts
 agent/
 /docs/
 docs/
+/scripts/
+scripts/
 /CODEBASE_AUDIT.md
 /IMPLEMENTATION_PLAN.md
+

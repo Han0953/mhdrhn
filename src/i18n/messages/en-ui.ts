@@ -78,7 +78,7 @@ export const messages = {
   "Tutup Azura": "Close Azura",
   "Tanyakan tentang Rehan dan karyanya.": "Ask about Rehan and his work.",
   "Percakapan dengan Azura": "Conversation with Azura",
-  "Halo, saya Azura. Apa yang ingin kamu ketahui tentang Rehan dan karyanya?": "Hello, I am Azura. What would you like to know about Rehan and his work?",
+  "Halo, aku Azura. Apa yang ingin kamu ketahui tentang Rehan dan karyanya?": "Hello, I am Azura. What would you like to know about Rehan and his work?",
   "Kamu:": "You:",
   "Azura sedang mengetik": "Azura is typing",
   "Pertanyaan tidak valid. Gunakan maksimal 500 karakter.": "Invalid question. Use no more than 500 characters.",

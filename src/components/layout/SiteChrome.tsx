@@ -200,7 +200,7 @@ export function SiteChrome() {
       <div className="chat-log" ref={log} onScroll={chatScrolled} tabIndex={-1} role="log" aria-label="Percakapan dengan Azura" aria-live="polite" aria-relevant="additions text" aria-busy={typing}>
         <div className="chat-log-content">
         <AnimatePresence mode="wait"><motion.div key={resetVersion} className="chat-transcript" initial={reduced || resetVersion === 0 ? false : {opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:reduced ? 0 : .2}}>
-        <div className="chat-reply"><p>Halo, saya Azura. Apa yang ingin kamu ketahui tentang Rehan dan karyanya?</p></div>
+        <div className="chat-reply"><p>Halo, aku Azura. Apa yang ingin kamu ketahui tentang Rehan dan karyanya?</p></div>
         {messages.map(message => <div className="chat-exchange" key={message.id}>
           <motion.div className="chat-question" initial={reduced || message.ready ? false : { opacity: 0, y: 28, x: 16, scale: .86 }} animate={{ opacity: 1, y: 0, x: 0, scale: 1 }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 340, damping: 26, mass: .8, opacity: { duration: .18 } }}><span className="sr-only">Kamu: </span><span data-no-translate>{message.question}</span></motion.div>
           <AnimatePresence initial={false} mode="wait">
