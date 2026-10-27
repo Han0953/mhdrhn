@@ -2,6 +2,9 @@ import { createMotionLifetime } from "./lifecycle";
 import { prefersReducedMotion, subscribeMotion } from "./preferences";
 import { motionTokens } from "./tokens";
 
+const mountedDisclosures = new Map<HTMLDetailsElement, () => void>();
+const sectionOf = (details: HTMLDetailsElement) => details.closest("section") ?? details.parentElement ?? details;
+
 /** Native details remains usable before hydration, without WAAPI, and after teardown. */
 export function mountDisclosure(details: HTMLDetailsElement) {
   const summary = details.querySelector<HTMLElement>("summary")!;
@@ -15,6 +18,12 @@ export function mountDisclosure(details: HTMLDetailsElement) {
   let frame = 0;
   let naturalHeight = target ? body.getBoundingClientRect().height : 0;
 
+  function claimSection() {
+    const section = sectionOf(details);
+    for (const [other, close] of mountedDisclosures) {
+      if (other !== details && sectionOf(other) === section) close();
+    }
+  }
   function cancel() {
     if (animation) { animation.onfinish = null; animation.oncancel = null; animation.cancel(); }
     animation = undefined;
@@ -36,7 +45,7 @@ export function mountDisclosure(details: HTMLDetailsElement) {
     const token = lifetime.advance();
     target = open;
     if (!open && content.contains(document.activeElement)) summary.focus({ preventScroll: true });
-    if (open) details.open = true;
+    if (open) { claimSection(); details.open = true; }
     content.inert = !open;
     const end = open ? body.getBoundingClientRect().height : 0;
     naturalHeight = end;
@@ -62,7 +71,7 @@ export function mountDisclosure(details: HTMLDetailsElement) {
   function onToggle() {
     // Our closing animation temporarily keeps native details open. A native close,
     // or a toggle while idle (e.g. browser Find), must still take precedence.
-    if (!animation || !details.open) { target = details.open; settle(); }
+    if (!animation || !details.open) { target = details.open; if (target) claimSection(); settle(); }
   }
   function onPreference() { if (prefersReducedMotion()) settle(); }
   function onVisibility() { if (document.hidden) settle(); }
@@ -76,11 +85,14 @@ export function mountDisclosure(details: HTMLDetailsElement) {
     });
   });
   observer?.observe(body);
+  mountedDisclosures.set(details, () => { if (target) animateTo(false); });
+  if (target) claimSection();
   summary.addEventListener("click", onClick);
   details.addEventListener("toggle", onToggle);
   document.addEventListener("visibilitychange", onVisibility);
   lifetime.onCleanup(subscribeMotion(onPreference));
   lifetime.onCleanup(() => {
+    mountedDisclosures.delete(details);
     cancelAnimationFrame(frame); observer?.disconnect();
     summary.removeEventListener("click", onClick);
     details.removeEventListener("toggle", onToggle);

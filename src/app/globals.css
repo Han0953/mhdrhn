@@ -794,8 +794,8 @@ html[data-motion="minimal"] .motion-disclosure>summary>svg {transition:none;}
 .story-root[data-mode="pinned"] .story-heading,.story-root[data-mode="pinned"] .story-intro,.story-root[data-mode="pinned"] .story-controls,.story-root[data-mode="pinned"] .story-progress { flex-shrink:0; }
 .story-root[data-mode="pinned"] .story-viewport { overflow:hidden; overflow:clip; scroll-snap-type:none; flex:1; min-height:0; touch-action:pan-y pinch-zoom; }
 .story-root[data-mode="pinned"] .story-track { height:100%; }
-.story-root[data-mode="pinned"] .story-card { height:100%; opacity:.82; transition:opacity 240ms ease,border-color 300ms ease; }
-.story-root[data-mode="pinned"] .story-card[data-story-active="true"],.story-root[data-mode="pinned"] .story-card:focus-within { opacity:1; }
+.story-root[data-mode="pinned"] .story-card { height:100%; opacity:.82; scale:.97; transition:border-color 300ms ease; }
+.story-root[data-mode="pinned"] .story-card:focus-within { opacity:1!important; scale:1!important; translate:0 0!important; }
 .story-root[data-mode="pinned"] .story-media { flex:1; min-height:72px; }
 .story-root[data-mode="pinned"] .story-media-motion,.story-root[data-mode="pinned"] .project-media,.story-root[data-mode="pinned"] .media-frame { height:100%; }
 .story-root[data-mode="pinned"] .media-frame { aspect-ratio:auto; max-height:none; }
