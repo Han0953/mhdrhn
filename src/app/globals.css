@@ -44,16 +44,19 @@ button { cursor:pointer; }
 button:disabled { cursor:not-allowed; opacity:.55; }
 .custom-cursor { display:none; }
 @media(min-width:1024px) and (hover:hover) and (pointer:fine) {
-  .custom-cursor { display:block; position:fixed; inset:0; z-index:10000; pointer-events:none; overflow:clip; visibility:hidden; opacity:0; color:var(--ink); transition:opacity 120ms ease,color 180ms ease; }
-  .custom-cursor[data-visible="true"] { visibility:visible; opacity:1; }
+  /* Leave visibility on until the exit fade finishes; position follows separately. */
+  .custom-cursor { display:block; position:fixed; inset:0; z-index:10000; pointer-events:none; overflow:clip; visibility:hidden; opacity:0; color:var(--ink); transition:opacity 220ms cubic-bezier(.22,1,.36,1),color 180ms ease,visibility 0s linear 220ms; }
+  .custom-cursor[data-visible="true"] { visibility:visible; opacity:1; transition-delay:0s; }
   html[data-custom-cursor="active"],html[data-custom-cursor="active"] * { cursor:none!important; }
   .cursor-ring,.cursor-dot { position:absolute; top:0; left:0; width:0; height:0; transform:translate3d(-100px,-100px,0); }
   .cursor-ring>span,.cursor-dot>span { display:block; position:absolute; left:0; top:0; translate:-50% -50%; border-radius:50%; transition:scale 240ms cubic-bezier(.16,1,.3,1),rotate 560ms cubic-bezier(.16,1,.3,1); }
-  .cursor-ring>span { width:34px; height:34px; rotate:-20deg; }
+  .cursor-ring>span { width:34px; height:34px; scale:.55; rotate:-38deg; }
+  .custom-cursor[data-visible="true"] :is(.cursor-ring,.cursor-dot)>span { scale:1; }
+  .custom-cursor[data-visible="true"] .cursor-ring>span { rotate:-20deg; }
   .cursor-ring>span::before,.cursor-ring>span::after { content:""; position:absolute; border:1px solid transparent; border-radius:50%; transition:rotate 560ms cubic-bezier(.16,1,.3,1); }
   .cursor-ring>span::before { inset:0; border-top-color:currentColor; border-right-color:currentColor; }
   .cursor-ring>span::after { inset:6px; border-bottom-color:currentColor; border-left-color:currentColor; rotate:15deg; opacity:.68; }
-  .cursor-dot>span { width:5px; height:5px; background:currentColor; box-shadow:0 0 0 1px var(--canvas); }
+  .cursor-dot>span { width:5px; height:5px; scale:.25; background:currentColor; box-shadow:0 0 0 1px var(--canvas); }
   .custom-cursor[data-interactive="true"] { color:var(--accent-text); }
   .custom-cursor[data-interactive="true"] .cursor-ring>span { scale:1.2; rotate:100deg; }
   .custom-cursor[data-interactive="true"] .cursor-ring>span::after { rotate:-60deg; }
