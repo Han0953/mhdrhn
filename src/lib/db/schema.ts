@@ -20,6 +20,7 @@ export interface DbProject {
   source: string;
   status?: ProjectStatus;
   format?: "summary";
+  coverImage?: string;
   homeCollection?: "latest" | "electronics" | "none";
   orderIndex: number;
   visible: boolean;
