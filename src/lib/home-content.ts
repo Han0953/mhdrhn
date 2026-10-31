@@ -56,3 +56,125 @@ export const homeAchievements = [
 ];
 
 // Explicitly requested category previews. These are not credential records.
+
+import { getCachedHomeSettingsDb, getCachedProjectsDb } from "./db/repository";
+
+export async function getLiveHomeData() {
+  try {
+    const [settings, dbProjects] = await Promise.all([
+      getCachedHomeSettingsDb().catch(() => null),
+      getCachedProjectsDb().catch(() => []),
+    ]);
+
+    let liveLatest: readonly Project[] = latestProjects;
+    let liveElectronics: readonly Project[] = electronicsProjects;
+    let liveRoles: string[] = heroRoles.map(r => r.label);
+    let liveIntros: { latest: string; electronics: string } = {
+      latest: projectSectionIntros.latest,
+      electronics: projectSectionIntros.electronics,
+    };
+    let sectionOrder: string[] = [
+      'hero',
+      'intro',
+      'technologies',
+      'latest-projects',
+      'electronics-projects',
+      'education',
+      'experience',
+      'achievements',
+      'certificates',
+      'closing',
+    ];
+
+    if (dbProjects && dbProjects.length > 0) {
+      const customLatest = dbProjects.filter(p => p.visible !== false && p.homeCollection === 'latest');
+      if (customLatest.length > 0) {
+        liveLatest = customLatest.map(p => ({
+          slug: p.slug,
+          title: p.title,
+          subtitle: p.subtitle,
+          summary: p.summary,
+          categories: p.categories,
+          year: p.year,
+          context: p.context,
+          role: p.role,
+          technologies: p.technologies,
+          approach: p.approach,
+          limitation: p.limitation,
+          featured: p.featured,
+          visual: p.visual,
+          link: p.link,
+          source: p.source,
+          status: p.status,
+        }));
+      }
+
+      const customElectronics = dbProjects.filter(p => p.visible !== false && p.homeCollection === 'electronics');
+      if (customElectronics.length > 0) {
+        liveElectronics = customElectronics.map(p => ({
+          slug: p.slug,
+          title: p.title,
+          subtitle: p.subtitle,
+          summary: p.summary,
+          categories: p.categories,
+          year: p.year,
+          context: p.context,
+          role: p.role,
+          technologies: p.technologies,
+          approach: p.approach,
+          limitation: p.limitation,
+          featured: p.featured,
+          visual: p.visual,
+          link: p.link,
+          source: p.source,
+          status: p.status,
+        }));
+      }
+    }
+
+    if (settings) {
+      if (settings.heroRoles && settings.heroRoles.length > 0) {
+        liveRoles = settings.heroRoles.map(r => r.label);
+      }
+      if (settings.latestIntro || settings.electronicsIntro) {
+        liveIntros = {
+          latest: settings.latestIntro || projectSectionIntros.latest,
+          electronics: settings.electronicsIntro || projectSectionIntros.electronics,
+        };
+      }
+      if (settings.sectionOrder && settings.sectionOrder.length > 0) {
+        sectionOrder = settings.sectionOrder;
+      }
+    }
+
+    return {
+      latestProjects: liveLatest,
+      electronicsProjects: liveElectronics,
+      heroRoles: liveRoles,
+      sectionIntros: liveIntros,
+      sectionOrder,
+    };
+  } catch {
+    return {
+      latestProjects,
+      electronicsProjects,
+      heroRoles: heroRoles.map(r => r.label),
+      sectionIntros: {
+        latest: projectSectionIntros.latest,
+        electronics: projectSectionIntros.electronics,
+      },
+      sectionOrder: [
+        'hero',
+        'intro',
+        'technologies',
+        'latest-projects',
+        'electronics-projects',
+        'education',
+        'experience',
+        'achievements',
+        'certificates',
+        'closing',
+      ],
+    };
+  }
+}

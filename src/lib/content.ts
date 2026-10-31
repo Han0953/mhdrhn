@@ -103,7 +103,44 @@ export function getPublishedProjects(): readonly Project[] { return projects; }
 export function getProjectBySlug(slug: string): Project | undefined { return projects.find(project => project.slug === slug); }
 export function getFeaturedProjects(): Project[] { return projects.filter(project => project.featured !== undefined).sort((a, b) => a.featured! - b.featured!); }
 export function filterProjects(category: string, query: string, status = "Semua", translate: (value:string)=>string = value=>value): readonly Project[] {
+  return filterProjectList(projects, category, query, status, translate);
+}
+export function filterProjectList(list: readonly Project[], category: string, query: string, status = "Semua", translate: (value:string)=>string = value=>value): readonly Project[] {
   const search = query.trim().toLocaleLowerCase("id");
-  return projects.filter(project => (category === "Semua" || project.categories.includes(category as Exclude<Category, "Semua">)) && (status === "Semua" || (project.status ?? "Belum dipublikasikan") === status) && `${project.title} ${translate(project.subtitle)} ${translate(project.summary)} ${project.technologies.join(" ")}`.toLocaleLowerCase("id").includes(search));
+  return list.filter(project => (category === "Semua" || project.categories.includes(category as Exclude<Category, "Semua">)) && (status === "Semua" || (project.status ?? "Belum dipublikasikan") === status) && `${project.title} ${translate(project.subtitle)} ${translate(project.summary)} ${project.technologies.join(" ")}`.toLocaleLowerCase("id").includes(search));
 }
 export function getRelatedProjects(project: Project) { return projects.filter(item => item.slug !== project.slug && item.categories.some(category => project.categories.includes(category))).slice(0, 2); }
+
+import { getCachedProjectsDb } from "./db/repository";
+
+export async function getLiveProjects(): Promise<readonly Project[]> {
+  try {
+    const dbProjects = await getCachedProjectsDb().catch(() => []);
+    if (dbProjects && dbProjects.length > 0) {
+      return dbProjects
+        .filter(p => p.visible !== false)
+        .map(p => ({
+          slug: p.slug,
+          title: p.title,
+          subtitle: p.subtitle,
+          summary: p.summary,
+          categories: p.categories,
+          year: p.year,
+          context: p.context,
+          role: p.role,
+          technologies: p.technologies,
+          approach: p.approach,
+          limitation: p.limitation,
+          featured: p.featured,
+          visual: p.visual,
+          link: p.link,
+          source: p.source,
+          status: p.status,
+          format: p.format,
+        }));
+    }
+  } catch {
+    // Fallback to static projects
+  }
+  return projects;
+}

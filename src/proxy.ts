@@ -4,6 +4,17 @@ const projectSlugs=new Set(getPublishedProjects().map(project=>project.slug));
 /** Only public documents are rewritten; explicit language URLs always win. */
 export function proxy(request:NextRequest){
  const path=request.nextUrl.pathname;
+ if(path.startsWith("/admin")||path.startsWith("/api/admin")){
+  if(path.startsWith("/admin")&&path!=="/admin/login"){
+   const session=request.cookies.get("mhdrhn_session")?.value;
+   if(!session){
+    const loginUrl=request.nextUrl.clone();
+    loginUrl.pathname="/admin/login";
+    return NextResponse.redirect(loginUrl);
+   }
+  }
+  return NextResponse.next();
+ }
  const headers=new Headers(request.headers);headers.set("x-mhdrhn-locale",/^\/en(?:\/|$)/.test(path)?"en":"id");
  const projectPath=path.replace(/^\/(?:en|id)(?=\/|$)/,"").match(/^\/projects\/(.+)$/);
  if(projectPath&&!projectSlugs.has(projectPath[1])){const missing=request.nextUrl.clone();missing.pathname=`/${headers.get("x-mhdrhn-locale")}/__missing-project`;return NextResponse.rewrite(missing,{request:{headers}});}

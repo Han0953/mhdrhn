@@ -9,7 +9,7 @@ import Link from "next/link";
 import { ProjectFilters } from "@/components/projects/ProjectFilters";
 import { PageHeading, ProjectSpread, Arrow } from "@/components/ui/Editorial";
 import { SiteLink } from "@/components/layout/RouteTransition";
-import { categories, filterProjects, projectStatuses, projectStatusLabels } from "@/lib/content";
+import { categories, filterProjectList, getLiveProjects, projectStatuses, projectStatusLabels } from "@/lib/content";
 import { ProjectCover } from "@/components/media/ProjectCover";
 const pageMetadata: Metadata = { title: "Proyek", description: "Jelajahi karya Muhammad Rehan beserta gagasan dan proses yang menyertainya. Temukan proyek yang ingin dikenal lebih jauh melalui pencarian dan kategori." };
 export default async function Projects({ params: localeParams, searchParams }: { params: Promise<{locale:string}>; searchParams: Promise<{ category?: string; q?: string; status?: string }> }) {
@@ -18,7 +18,8 @@ export default async function Projects({ params: localeParams, searchParams }: {
   const category = categories.find(item => item === params.category) ?? "Semua";
   const query = typeof params.q === "string" ? params.q.slice(0, 100) : "";
   const status = projectStatuses.find(item => item === params.status) ?? "Semua";
-  const projects = filterProjects(category, query, status,t);
+  const projectList = await getLiveProjects();
+  const projects = filterProjectList(projectList, category, query, status, t);
   const featured = projects.filter(project => project.featured !== undefined);
   const archive = projects.filter(project => project.featured === undefined);
   return translateTree(<div className="wrap"><PageMotion profile="projects"/><PageHeading locale={locale} eyebrow="Project index" description="Tempat saya membagikan karya beserta gagasan dan proses yang menyertainya. Gunakan kategori dan pencarian untuk menjelajahi proyek yang ingin kamu kenal lebih jauh.">Proyek &amp;<br/>eksperimen</PageHeading>
